@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -110,12 +109,13 @@ export function PostCard({ post }: PostCardProps) {
                 <span>{post._count.comments}</span>
               </div>
             </div>
-            <Button variant="link" asChild>
+            <Button variant="outline" size="sm" asChild>
               <Link
                 href={`/posts/${post.id}`}
-                className="text-sm text-right self-end"
+                className="text-sm text-right"
               >
-                See more.
+                <Eye className="size-4" />
+                <span className="ml-1">See more</span>
               </Link>
             </Button>
           </div>
