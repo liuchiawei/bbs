@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkUserIdAvailability } from "@/lib/services/users";
+import { USER_ID_REGEX } from "@/lib/validations";
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,8 +14,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Validate userId format (alphanumeric, 1-12 characters)
-    if (!/^[a-zA-Z0-9]{1,12}$/.test(userId)) {
+    // Validate userId format
+    if (!USER_ID_REGEX.test(userId)) {
       return NextResponse.json(
         { available: false, error: "Invalid User ID format" },
         { status: 400 }

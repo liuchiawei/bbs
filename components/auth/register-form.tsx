@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,26 +9,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { motion } from "motion/react";
 import { toast } from "sonner";
+import {
+  registerSchema as baseRegisterSchema,
+  USER_ID_REGEX,
+  USER_ID_MAX_LENGTH,
+} from "@/lib/validations";
 
-const registerSchema = z.object({
-  userId: z.string()
-    .min(1, "User ID is required")
-    .max(12, "User ID must be 12 characters or less")
-    .regex(/^[a-zA-Z0-9]+$/, "User ID can only contain English letters and numbers"),
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  nickname: z.string().min(2, "Nickname must be at least 2 characters").optional(),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string(),
-  gender: z.string().optional(),
-  birthDate: z.string().optional(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+// Extend base schema with client-only field
+const registerSchema = baseRegisterSchema
+  .extend({
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
@@ -37,12 +41,12 @@ export function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingUserId, setIsCheckingUserId] = useState(false);
   const [userIdError, setUserIdError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-    trigger,
     watch,
     setValue,
   } = useForm<RegisterFormData>({
@@ -53,7 +57,7 @@ export function RegisterForm() {
   const userId = watch("userId");
   const gender = watch("gender");
 
-  // Debounced userId availability check
+  // Debounced userId availability check with abort controller
   useEffect(() => {
     const checkUserId = async () => {
       if (!userId || userId.length === 0) {
@@ -62,23 +66,36 @@ export function RegisterForm() {
       }
 
       // Check format first (client-side validation)
-      if (!/^[a-zA-Z0-9]{1,12}$/.test(userId)) {
+      if (!USER_ID_REGEX.test(userId)) {
         setUserIdError(null); // Let Zod validation handle format errors
         return;
       }
 
+      // Cancel previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      abortControllerRef.current = new AbortController();
       setIsCheckingUserId(true);
       setUserIdError(null);
 
       try {
-        const response = await fetch(`/api/auth/check-userid?userId=${encodeURIComponent(userId)}`);
+        const response = await fetch(
+          `/api/auth/check-userid?userId=${encodeURIComponent(userId)}`,
+          {
+            signal: abortControllerRef.current.signal,
+          }
+        );
         const data = await response.json();
 
         if (response.ok && !data.available) {
           setUserIdError("This User ID is already taken");
         }
       } catch (error) {
-        console.error("Error checking userId:", error);
+        if ((error as Error).name !== "AbortError") {
+          console.error("Error checking userId:", error);
+        }
       } finally {
         setIsCheckingUserId(false);
       }
@@ -87,7 +104,12 @@ export function RegisterForm() {
     // Debounce the API call
     const timeoutId = setTimeout(checkUserId, 500);
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [userId]);
 
   const onSubmit = async (data: RegisterFormData) => {
@@ -99,18 +121,13 @@ export function RegisterForm() {
 
     setIsLoading(true);
     try {
+      // Exclude confirmPassword from submission
+      const { confirmPassword, ...registerData } = data;
+
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: data.userId,
-          name: data.name,
-          nickname: data.nickname,
-          email: data.email,
-          password: data.password,
-          gender: data.gender,
-          birthDate: data.birthDate,
-        }),
+        body: JSON.stringify(registerData),
       });
 
       const result = await response.json();
@@ -120,14 +137,31 @@ export function RegisterForm() {
       }
 
       toast.success("Registration successful!");
-      router.push("/");
-      router.refresh();
+      setTimeout(() => {
+        router.push("/");
+      }, 100);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Registration failed");
+      toast.error(
+        error instanceof Error ? error.message : "Registration failed"
+      );
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Memoize user ID status to prevent unnecessary re-renders
+  const userIdStatus = useMemo(() => {
+    if (errors.userId) {
+      return { type: "error", message: errors.userId.message };
+    }
+    if (userIdError) {
+      return { type: "error", message: userIdError };
+    }
+    if (userId && userId.length > 0 && !isCheckingUserId) {
+      return { type: "success", message: "User ID is available" };
+    }
+    return null;
+  }, [errors.userId, userIdError, userId, isCheckingUserId]);
 
   return (
     <motion.div
@@ -148,10 +182,8 @@ export function RegisterForm() {
                 <Input
                   id="userId"
                   placeholder="Max 12 alphanumeric characters"
-                  maxLength={12}
-                  {...register("userId", {
-                    onChange: () => trigger("userId"),
-                  })}
+                  maxLength={USER_ID_MAX_LENGTH}
+                  {...register("userId")}
                 />
                 {isCheckingUserId && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -159,14 +191,13 @@ export function RegisterForm() {
                   </div>
                 )}
               </div>
-              {errors.userId && (
-                <p className="text-sm text-destructive">{errors.userId.message}</p>
+              {userIdStatus?.type === "error" && (
+                <p className="text-sm text-destructive">
+                  {userIdStatus.message}
+                </p>
               )}
-              {!errors.userId && userIdError && (
-                <p className="text-sm text-destructive">{userIdError}</p>
-              )}
-              {!errors.userId && !userIdError && userId && userId.length > 0 && !isCheckingUserId && (
-                <p className="text-sm text-green-600">User ID is available</p>
+              {userIdStatus?.type === "success" && (
+                <p className="text-sm text-green-600">{userIdStatus.message}</p>
               )}
             </div>
 
@@ -174,7 +205,9 @@ export function RegisterForm() {
               <Label htmlFor="name">Name</Label>
               <Input id="name" {...register("name")} />
               {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.name.message}
+                </p>
               )}
             </div>
 
@@ -182,7 +215,9 @@ export function RegisterForm() {
               <Label htmlFor="nickname">Nickname (Optional)</Label>
               <Input id="nickname" {...register("nickname")} />
               {errors.nickname && (
-                <p className="text-sm text-destructive">{errors.nickname.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.nickname.message}
+                </p>
               )}
             </div>
 
@@ -190,7 +225,9 @@ export function RegisterForm() {
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" {...register("email")} />
               {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
@@ -198,7 +235,9 @@ export function RegisterForm() {
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" {...register("password")} />
               {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
@@ -218,7 +257,10 @@ export function RegisterForm() {
 
             <div className="space-y-2">
               <Label>Gender (Optional)</Label>
-              <Tabs value={gender || ""} onValueChange={(value) => setValue("gender", value)}>
+              <Tabs
+                value={gender || ""}
+                onValueChange={(value) => setValue("gender", value)}
+              >
                 <TabsList className="w-full grid grid-cols-3">
                   <TabsTrigger value="male">Male</TabsTrigger>
                   <TabsTrigger value="female">Female</TabsTrigger>
