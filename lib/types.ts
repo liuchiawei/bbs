@@ -1,3 +1,21 @@
+// Category Types
+export interface Category {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+  displayOrder: number;
+  isActive: boolean;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+}
+
+export interface CategoryWithCount extends Category {
+  _count: {
+    posts: number;
+  };
+}
+
 // User Types
 export interface User {
   id: string;
@@ -25,7 +43,7 @@ export interface Post {
   title: string;
   content: string;
   userId: string;
-  category: string;
+  categoryId: string;
   tags: string[];
   views: number;
   likes: number;
@@ -38,6 +56,11 @@ export interface PostWithUser extends Post {
     id: string;
     name: string;
     avatar?: string | null;
+  };
+  category: {
+    id: string;
+    slug: string;
+    name: string;
   };
   _count: {
     comments: number;
@@ -121,14 +144,14 @@ export interface EditProfileInput {
 export interface CreatePostInput {
   title: string;
   content: string;
-  category: string;
+  categoryId: string;
   tags?: string[];
 }
 
 export interface UpdatePostInput {
   title?: string;
   content?: string;
-  category?: string;
+  categoryId?: string;
   tags?: string[];
 }
 
@@ -142,4 +165,50 @@ export interface CreateCommentInput {
 export interface UploadResponse {
   message: string;
   url: string;
+}
+
+// Admin Types
+export interface AdminUserListItem {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string | null;
+  isAdmin: boolean;
+  isBanned: boolean;
+  createdAt: Date | string;
+  _count: {
+    posts: number;
+    comments: number;
+  };
+}
+
+export interface AdminPostListItem {
+  id: string;
+  title: string;
+  content: string;
+  categoryId: string;
+  views: number;
+  likes: number;
+  createdAt: Date | string;
+  user: {
+    id: string;
+    name: string;
+    avatar?: string | null;
+  };
+  category: {
+    id: string;
+    slug: string;
+    name: string;
+  };
+  _count: {
+    comments: number;
+  };
+}
+
+export interface AdminCategoryForm {
+  slug: string;
+  name: string;
+  description?: string;
+  displayOrder?: number;
+  isActive?: boolean;
 }

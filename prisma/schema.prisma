@@ -40,7 +40,7 @@ model Post {
   title     String
   content   String
   userId    String
-  category  String
+  categoryId String
   tags      String[]
   // statistics
   views     Int      @default(0)
@@ -50,8 +50,11 @@ model Post {
   updatedAt DateTime @updatedAt
   // relationships
   user User @relation(fields: [userId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
   comments Comment[]
   likedBy PostLike[]
+
+  @@index([categoryId])
 }
 
 model Comment {
@@ -99,4 +102,21 @@ model CommentLike {
   @@unique([userId, commentId])
   @@index([userId])
   @@index([commentId])
+}
+
+model Category {
+  // basic information
+  id           String   @id @default(uuid())
+  slug         String   @unique
+  name         String
+  description  String?
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  // timestamps
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  // relationships
+  posts        Post[]
+
+  @@index([isActive, displayOrder])
 }

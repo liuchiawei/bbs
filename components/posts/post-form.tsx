@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,18 +16,25 @@ import { motion } from "motion/react";
 const postSchema = z.object({
   title: z.string().min(1, "Title is required"),
   content: z.string().min(1, "Content is required"),
-  category: z.string().min(1, "Category is required"),
+  categoryId: z.string().min(1, "Category is required"),
   tags: z.string().optional(),
 });
 
 type PostFormData = z.infer<typeof postSchema>;
+
+interface Category {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string | null;
+}
 
 interface PostFormProps {
   initialData?: {
     id: string;
     title: string;
     content: string;
-    category: string;
+    categoryId: string;
     tags: string[];
   };
   mode?: "create" | "edit";
@@ -36,6 +43,7 @@ interface PostFormProps {
 export function PostForm({ initialData, mode = "create" }: PostFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const {
     register,
@@ -47,11 +55,28 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
       ? {
           title: initialData.title,
           content: initialData.content,
-          category: initialData.category,
+          categoryId: initialData.categoryId,
           tags: initialData.tags.join(", "),
         }
       : undefined,
   });
+
+  // Fetch categories on mount
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const response = await fetch("/api/categories");
+        if (response.ok) {
+          const data = await response.json();
+          setCategories(data.data || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+        toast.error("Failed to load categories");
+      }
+    }
+    fetchCategories();
+  }, []);
 
   const onSubmit = async (data: PostFormData) => {
     setIsLoading(true);
@@ -72,7 +97,7 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
         body: JSON.stringify({
           title: data.title,
           content: data.content,
-          category: data.category,
+          categoryId: data.categoryId,
           tags,
         }),
       });
@@ -114,22 +139,21 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="categoryId">Category</Label>
               <select
-                id="category"
-                {...register("category")}
+                id="categoryId"
+                {...register("categoryId")}
                 className="w-full px-3 py-2 border rounded-md bg-background"
               >
                 <option value="">Select category</option>
-                <option value="general">General</option>
-                <option value="tech">Technology</option>
-                <option value="gaming">Gaming</option>
-                <option value="music">Music</option>
-                <option value="art">Art</option>
-                <option value="other">Other</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
               </select>
-              {errors.category && (
-                <p className="text-sm text-destructive">{errors.category.message}</p>
+              {errors.categoryId && (
+                <p className="text-sm text-destructive">{errors.categoryId.message}</p>
               )}
             </div>
 

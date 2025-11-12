@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import type { PostWithUser } from "@/lib/types";
 
 export interface GetPostsOptions {
-  category?: string;
+  categorySlug?: string;
   userId?: string;
   limit?: number;
   page?: number;
@@ -14,10 +14,14 @@ export interface GetPostsOptions {
 export async function getPosts(
   options: GetPostsOptions = {}
 ): Promise<PostWithUser[]> {
-  const { category, userId, limit = 20, page = 1 } = options;
+  const { categorySlug, userId, limit = 20, page = 1 } = options;
 
   const where: any = {};
-  if (category) where.category = category;
+  if (categorySlug) {
+    where.category = {
+      slug: categorySlug,
+    };
+  }
   if (userId) where.userId = userId;
 
   const skip = (page - 1) * limit;
@@ -33,6 +37,13 @@ export async function getPosts(
           id: true,
           name: true,
           avatar: true,
+        },
+      },
+      category: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
         },
       },
       _count: {
@@ -58,6 +69,13 @@ export async function getPostById(id: string) {
           id: true,
           name: true,
           avatar: true,
+        },
+      },
+      category: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
         },
       },
       comments: {
@@ -88,10 +106,14 @@ export async function getPostById(id: string) {
 export async function getPostsCount(
   options: Omit<GetPostsOptions, "limit" | "page"> = {}
 ): Promise<number> {
-  const { category, userId } = options;
+  const { categorySlug, userId } = options;
 
   const where: any = {};
-  if (category) where.category = category;
+  if (categorySlug) {
+    where.category = {
+      slug: categorySlug,
+    };
+  }
   if (userId) where.userId = userId;
 
   return await prisma.post.count({ where });
@@ -100,7 +122,7 @@ export async function getPostsCount(
 /**
  * Create a new post
  */
-export async function createPost(userId: string, data: { title: string; content: string; category: string; tags: string[] }) {
+export async function createPost(userId: string, data: { title: string; content: string; categoryId: string; tags: string[] }) {
   return await prisma.post.create({
     data: {
       ...data,
@@ -114,6 +136,13 @@ export async function createPost(userId: string, data: { title: string; content:
           avatar: true,
         },
       },
+      category: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+        },
+      },
     },
   });
 }
@@ -121,7 +150,7 @@ export async function createPost(userId: string, data: { title: string; content:
 /**
  * Update a post
  */
-export async function updatePost(id: string, data: { title?: string; content?: string; category?: string; tags?: string[] }) {
+export async function updatePost(id: string, data: { title?: string; content?: string; categoryId?: string; tags?: string[] }) {
   return await prisma.post.update({
     where: { id },
     data,
@@ -131,6 +160,13 @@ export async function updatePost(id: string, data: { title?: string; content?: s
           id: true,
           name: true,
           avatar: true,
+        },
+      },
+      category: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
         },
       },
     },
@@ -181,4 +217,61 @@ export async function hasUserLikedPost(userId: string, postId: string): Promise<
   });
 
   return !!like;
+}
+
+/**
+ * Admin: Get all posts with pagination
+ */
+export async function getAllPostsAdmin(options: { page?: number; limit?: number } = {}) {
+  const { page = 1, limit = 20 } = options;
+  const skip = (page - 1) * limit;
+
+  const [posts, total] = await Promise.all([
+    prisma.post.findMany({
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+        category: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+          },
+        },
+        _count: {
+          select: {
+            comments: true,
+          },
+        },
+      },
+    }),
+    prisma.post.count(),
+  ]);
+
+  return {
+    posts,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
+/**
+ * Admin: Delete any post
+ */
+export async function deletePostAdmin(postId: string) {
+  return await prisma.post.delete({
+    where: { id: postId },
+  });
 }
