@@ -62,14 +62,11 @@ export function PostCard({ post }: PostCardProps) {
     >
       <Card className="h-full hover:shadow-lg transition-shadow">
         <CardHeader className="flex items-center justify-between">
-          <Button variant="outline" size="lg" className="rounded-full" asChild>
-            <Link
-              href={`/posts/${post.id}`}
-              className="text-xl font-bold"
-            >
-              {post.title}
-            </Link>
-          </Button>
+          <h1 className="text-2xl md:text-4xl font-bold">
+            {post.title.length > 12 // truncate title to 12 characters
+              ? post.title.substring(0, 12) + "..."
+              : post.title}
+          </h1>
           <Tooltip>
             <TooltipTrigger asChild>
               <Link href={`/users/${post.user.id}`}>
@@ -87,8 +84,8 @@ export function PostCard({ post }: PostCardProps) {
 
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">
-            {contentPreview.length > 20
-              ? contentPreview.substring(0, 20) + "..."
+            {contentPreview.length > 25 // truncate content to 25 characters
+              ? contentPreview.substring(0, 25) + "..."
               : contentPreview}
           </p>
 

@@ -5,11 +5,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { PostCard } from "@/components/posts/post-card";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
-
 async function getUser(id: string) {
   return await prisma.user.findUnique({
     where: { id },
@@ -90,12 +94,16 @@ export default async function UserPage({
             </div>
 
             {isOwnProfile && (
-              <Button variant="outline" asChild>
-                <Link href={`/users/${user.id}/edit`}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Edit Profile
-                </Link>
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon" asChild>
+                    <Link href={`/users/${user.id}/edit`}>
+                      <Settings className="size-4" />
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Edit Profile</TooltipContent>
+              </Tooltip>
             )}
           </div>
         </CardHeader>
@@ -116,7 +124,9 @@ export default async function UserPage({
             </Link>
             <Link href={`/users/${user.id}/likes`}>
               <div className="text-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
-                <p className="text-2xl font-bold">{user._count.likedPosts + user._count.likedComments}</p>
+                <p className="text-2xl font-bold">
+                  {user._count.likedPosts + user._count.likedComments}
+                </p>
                 <p className="text-sm text-muted-foreground">Likes</p>
               </div>
             </Link>
