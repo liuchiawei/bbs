@@ -4,11 +4,17 @@ import { hasUserLikedPost } from "@/lib/services/posts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CommentForm } from "@/components/comments/comment-form";
 import { CommentItem } from "@/components/comments/comment-item";
 import { PostLikeButton } from "@/components/posts/post-like-button";
+import { PostDeleteButton } from "@/components/posts/post-delete-button";
 import { MessageCircle, Eye, Edit } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -62,7 +68,9 @@ export default async function PostPage({
   }
 
   const isOwner = session?.userId === post.user.id;
-  const isLiked = session ? await hasUserLikedPost(session.userId, post.id) : false;
+  const isLiked = session
+    ? await hasUserLikedPost(session.userId, post.id)
+    : false;
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
@@ -94,12 +102,19 @@ export default async function PostPage({
             <div className="flex items-center gap-2">
               <Badge>{post.category}</Badge>
               {isOwner && (
-                <Button size="sm" variant="outline" asChild>
-                  <Link href={`/posts/${post.id}/edit`}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                  </Link>
-                </Button>
+                <>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Button size="icon" variant="outline" asChild>
+                        <Link href={`/posts/${post.id}/edit`}>
+                          <Edit className="size-4" />
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Edit</TooltipContent>
+                  </Tooltip>
+                  <PostDeleteButton postId={post.id} />
+                </>
               )}
             </div>
           </div>
