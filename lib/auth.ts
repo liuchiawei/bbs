@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/db";
 
 const secret = new TextEncoder().encode(
   process.env.JWT_SECRET || "your-secret-key-change-this-in-production"
@@ -56,4 +57,24 @@ export async function setSession(token: string) {
 export async function clearSession() {
   const cookieStore = await cookies();
   cookieStore.delete("token");
+}
+
+export async function getCurrentUser() {
+  const session = await getSession();
+
+  if (!session) return null;
+
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      avatar: true,
+      isAdmin: true,
+      isBanned: true,
+    },
+  });
+
+  return user;
 }

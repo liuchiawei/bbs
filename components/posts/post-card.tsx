@@ -3,8 +3,12 @@
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { Heart, MessageCircle, Eye } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
@@ -35,15 +39,18 @@ export function PostCard({ post }: PostCardProps) {
       setLikes(result.likes);
       toast.success("Post liked!");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to like post");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to like post"
+      );
     } finally {
       setIsLiking(false);
     }
   };
 
-  const contentPreview = post.content.length > 150
-    ? post.content.substring(0, 150) + "..."
-    : post.content;
+  const contentPreview =
+    post.content.length > 150
+      ? post.content.substring(0, 150) + "..."
+      : post.content;
 
   return (
     <motion.div
@@ -53,67 +60,63 @@ export function PostCard({ post }: PostCardProps) {
       transition={{ duration: 0.3 }}
     >
       <Card className="h-full hover:shadow-lg transition-shadow">
-        <CardHeader>
-          <div className="flex items-center gap-3 mb-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={post.user.avatar || undefined} />
-              <AvatarFallback>{post.user.name.charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <Link
-                href={`/users/${post.user.id}`}
-                className="font-medium hover:underline"
-              >
-                {post.user.name}
+        <CardHeader className="flex items-center justify-between">
+          <h1 className="text-2xl md:text-4xl font-bold">
+            {post.title.length > 12 // truncate title to 12 characters
+              ? post.title.substring(0, 12) + "..."
+              : post.title}
+          </h1>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href={`/users/${post.user.id}`}>
+                <Avatar className="size-10">
+                  <AvatarImage src={post.user.avatar || undefined} />
+                  <AvatarFallback>
+                    {post.user.name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
               </Link>
-              <p className="text-sm text-muted-foreground">
-                {new Date(post.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-            <Badge>{post.category}</Badge>
-          </div>
-
-          <Link href={`/posts/${post.id}`}>
-            <h3 className="text-xl font-bold hover:text-primary transition-colors">
-              {post.title}
-            </h3>
-          </Link>
+            </TooltipTrigger>
+            <TooltipContent>{post.user.name}</TooltipContent>
+          </Tooltip>
         </CardHeader>
 
         <CardContent className="space-y-4">
-          <p className="text-muted-foreground">{contentPreview}</p>
+          <p className="text-muted-foreground">
+            {contentPreview.length > 25 // truncate content to 25 characters
+              ? contentPreview.substring(0, 25) + "..."
+              : contentPreview}
+          </p>
 
-          {post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {post.tags.map((tag, index) => (
-                <Badge key={index} variant="outline">
-                  #{tag}
-                </Badge>
-              ))}
-            </div>
-          )}
-
-          <div className="flex items-center justify-between pt-4 border-t">
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Eye className="h-4 w-4" />
-                <span>{post.views}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <MessageCircle className="h-4 w-4" />
+          <div className="flex items-center justify-between pt-4 border-t gap-2">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLike}
+                disabled={isLiking}
+                className="gap-1"
+              >
+                <Heart
+                  className={`size-4 ${
+                    likes > post.likes ? "fill-red-500 text-red-500" : ""
+                  }`}
+                />
+                <span>{likes}</span>
+              </Button>
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <MessageCircle className="size-4" />
                 <span>{post._count.comments}</span>
               </div>
             </div>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLike}
-              disabled={isLiking}
-              className="gap-2"
-            >
-              <Heart className={`h-4 w-4 ${likes > post.likes ? 'fill-red-500 text-red-500' : ''}`} />
-              <span>{likes}</span>
+            <Button variant="outline" size="sm" asChild>
+              <Link
+                href={`/posts/${post.id}`}
+                className="text-sm text-right"
+              >
+                <Eye className="size-4" />
+                <span className="ml-1">See more</span>
+              </Link>
             </Button>
           </div>
         </CardContent>

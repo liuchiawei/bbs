@@ -1,8 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { Heart, MessageCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "motion/react";
@@ -15,6 +22,8 @@ interface CommentItemProps {
   currentUserId?: string;
   onDelete?: () => void;
   level?: number;
+  rootCommentId?: string;
+  onReplyAdded?: () => void;
 }
 
 export function CommentItem({
@@ -23,13 +32,27 @@ export function CommentItem({
   currentUserId,
   onDelete,
   level = 0,
+  rootCommentId,
+  onReplyAdded,
 }: CommentItemProps) {
+  const router = useRouter();
   const [likes, setLikes] = useState(comment.likes);
+  const [isLiked, setIsLiked] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [showReplyForm, setShowReplyForm] = useState(false);
-  const [showReplies, setShowReplies] = useState(false);
   const [replies, setReplies] = useState<any[]>([]);
-  const [repliesLoaded, setRepliesLoaded] = useState(false);
+  const [reloadTrigger, setReloadTrigger] = useState(0);
+
+  // For level 0 comments, they are the root. For level 1, use the passed rootCommentId
+  const effectiveRootId = level === 0 ? comment.id : rootCommentId;
+
+  // Fetch initial like status
+  useEffect(() => {
+    fetch(`/api/comments/${comment.id}/like`)
+      .then((res) => res.json())
+      .then((data) => setIsLiked(data.isLiked))
+      .catch(() => setIsLiked(false));
+  }, [comment.id]);
 
   const handleLike = async () => {
     setIsLiking(true);
@@ -45,9 +68,12 @@ export function CommentItem({
       }
 
       setLikes(result.likes);
-      toast.success("Comment liked!");
+      setIsLiked(result.isLiked);
+      toast.success(result.isLiked ? "Comment liked!" : "Comment unliked!");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to like comment");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to like comment"
+      );
     } finally {
       setIsLiking(false);
     }
@@ -69,32 +95,34 @@ export function CommentItem({
 
       toast.success("Comment deleted!");
       onDelete?.();
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to delete comment");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete comment"
+      );
     }
   };
 
-  const loadReplies = async () => {
-    if (repliesLoaded) {
-      setShowReplies(!showReplies);
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/comments/${comment.id}/replies`);
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error("Failed to load replies");
-      }
-
-      setReplies(result.replies);
-      setRepliesLoaded(true);
-      setShowReplies(true);
-    } catch (error) {
-      toast.error("Failed to load replies");
+  const loadReplies = () => {
+    if (level === 0) {
+      fetch(`/api/comments/${comment.id}/replies`)
+        .then((res) => res.json())
+        .then((result) => {
+          if (result.replies) {
+            setReplies(result.replies);
+          }
+        })
+        .catch(() => {
+          toast.error("Failed to load replies");
+        });
     }
   };
+
+  useEffect(() => {
+    if (comment.replies > 0 && level === 0) {
+      loadReplies();
+    }
+  }, [comment.id, comment.replies, level, reloadTrigger]);
 
   const isOwner = currentUserId === comment.user.id;
 
@@ -106,71 +134,86 @@ export function CommentItem({
       className={`${level > 0 ? "ml-8 border-l-2 pl-4" : ""}`}
     >
       <div className="flex gap-3 p-4 rounded-lg hover:bg-muted/50 transition-colors">
-        <Avatar className="h-10 w-10">
-          <AvatarImage src={comment.user.avatar || undefined} />
-          <AvatarFallback>
-            {comment.user.name.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-
+        <Link href={`/users/${comment.user.id}`}>
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={comment.user.avatar || undefined} />
+            <AvatarFallback>
+              {comment.user.name.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        </Link>
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2">
-            <span className="font-medium">{comment.user.name}</span>
+            <Link
+              href={`/users/${comment.user.id}`}
+              className="hover:underline"
+            >
+              {comment.user.name}
+            </Link>
             <span className="text-sm text-muted-foreground">
               {new Date(comment.createdAt).toLocaleDateString()}
+              {new Date(comment.createdAt).toLocaleTimeString()}
             </span>
           </div>
 
           <p className="text-sm">{comment.content}</p>
 
           <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLike}
-              disabled={isLiking}
-              className="h-8 gap-1"
-            >
-              <Heart className={`h-3 w-3 ${likes > comment.likes ? 'fill-red-500 text-red-500' : ''}`} />
-              <span className="text-xs">{likes}</span>
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLike}
+                  disabled={isLiking}
+                  className="h-8 gap-1"
+                >
+                  <Heart
+                    className={`h-3 w-3 ${
+                      isLiked ? "fill-red-500 text-red-500" : ""
+                    }`}
+                  />
+                  <span className="text-xs">{likes}</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isLiked ? "Unlike" : "Like"}
+              </TooltipContent>
+            </Tooltip>
 
-            {level < 2 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowReplyForm(!showReplyForm)}
-                className="h-8 gap-1"
-              >
-                <MessageCircle className="h-3 w-3" />
-                <span className="text-xs">Reply</span>
-              </Button>
-            )}
-
-            {comment.replies > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={loadReplies}
-                className="h-8 gap-1"
-              >
-                <MessageCircle className="h-3 w-3" />
-                <span className="text-xs">
-                  {showReplies ? "Hide" : "Show"} {comment.replies} {comment.replies === 1 ? "reply" : "replies"}
-                </span>
-              </Button>
-            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setShowReplyForm(!showReplyForm);
+                  }}
+                  className="h-8 gap-1"
+                >
+                  <MessageCircle className="h-3 w-3" />
+                  {comment.replies > 0 && (
+                    <span className="text-xs">{comment.replies}</span>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Reply</TooltipContent>
+            </Tooltip>
 
             {isOwner && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDelete}
-                className="h-8 gap-1 text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-3 w-3" />
-                <span className="text-xs">Delete</span>
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDelete}
+                    className="h-8 gap-1 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Delete</TooltipContent>
+              </Tooltip>
             )}
           </div>
 
@@ -178,11 +221,16 @@ export function CommentItem({
             <div className="mt-4">
               <CommentForm
                 postId={postId}
-                parentId={comment.id}
+                parentId={effectiveRootId}
                 onSuccess={() => {
                   setShowReplyForm(false);
-                  setRepliesLoaded(false);
-                  loadReplies();
+                  if (level === 0) {
+                    // If this is a root comment, reload its replies
+                    setReloadTrigger((prev) => prev + 1);
+                  } else if (onReplyAdded) {
+                    // If this is a reply, tell the root to reload
+                    onReplyAdded();
+                  }
                 }}
                 placeholder="Write a reply..."
               />
@@ -191,7 +239,7 @@ export function CommentItem({
         </div>
       </div>
 
-      {showReplies && replies.length > 0 && (
+      {replies.length > 0 && (
         <div className="space-y-2">
           {replies.map((reply) => (
             <CommentItem
@@ -199,11 +247,10 @@ export function CommentItem({
               comment={reply}
               postId={postId}
               currentUserId={currentUserId}
-              level={level + 1}
-              onDelete={() => {
-                setRepliesLoaded(false);
-                loadReplies();
-              }}
+              level={1}
+              rootCommentId={comment.id}
+              onDelete={onDelete}
+              onReplyAdded={() => setReloadTrigger((prev) => prev + 1)}
             />
           ))}
         </div>

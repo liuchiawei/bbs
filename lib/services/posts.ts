@@ -166,3 +166,19 @@ export async function incrementPostLikes(id: string) {
     select: { likes: true },
   });
 }
+
+/**
+ * Check if a user has liked a post
+ */
+export async function hasUserLikedPost(userId: string, postId: string): Promise<boolean> {
+  const like = await prisma.postLike.findUnique({
+    where: {
+      userId_postId: {
+        userId,
+        postId,
+      },
+    },
+  });
+
+  return !!like;
+}

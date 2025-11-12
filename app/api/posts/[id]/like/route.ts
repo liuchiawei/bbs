@@ -14,19 +14,59 @@ export async function POST(
 
     const { id } = await params;
 
-    const post = await prisma.post.update({
-      where: { id },
-      data: { likes: { increment: 1 } },
+    // Check if user already liked this post
+    const existingLike = await prisma.postLike.findUnique({
+      where: {
+        userId_postId: {
+          userId: session.userId,
+          postId: id,
+        },
+      },
     });
 
+    let isLiked: boolean;
+    let post;
+
+    if (existingLike) {
+      // Unlike: remove the like and decrement the count
+      await prisma.postLike.delete({
+        where: {
+          id: existingLike.id,
+        },
+      });
+
+      post = await prisma.post.update({
+        where: { id },
+        data: { likes: { decrement: 1 } },
+      });
+
+      isLiked = false;
+    } else {
+      // Like: create the like and increment the count
+      await prisma.postLike.create({
+        data: {
+          userId: session.userId,
+          postId: id,
+        },
+      });
+
+      post = await prisma.post.update({
+        where: { id },
+        data: { likes: { increment: 1 } },
+      });
+
+      isLiked = true;
+    }
+
     return NextResponse.json({
-      message: "Post liked successfully",
+      message: isLiked ? "Post liked successfully" : "Post unliked successfully",
       likes: post.likes,
+      isLiked,
     });
   } catch (error) {
-    console.error("Like post error:", error);
+    console.error("Toggle like error:", error);
     return NextResponse.json(
-      { error: "Failed to like post" },
+      { error: "Failed to toggle like" },
       { status: 500 }
     );
   }
