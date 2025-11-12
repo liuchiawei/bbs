@@ -28,7 +28,6 @@ A modern bulletin board system (BBS) built with Next.js 16, featuring a complete
 
 - **Prisma** - Type-safe ORM
   - PostgreSQL database
-  - Custom output directory: `app/generated/prisma`
   - Models: User, Post, Comment
 
 ### Forms & Validation
@@ -62,17 +61,40 @@ A modern bulletin board system (BBS) built with Next.js 16, featuring a complete
 ```text
 bbs/
 ├── app/
-│   ├── generated/prisma/      # Prisma client output
+│   ├── api/                    # API routes (HTTP layer)
+│   │   ├── auth/               # Authentication endpoints
+│   │   ├── posts/              # Post endpoints
+│   │   ├── users/              # User endpoints
+│   │   ├── comments/           # Comment endpoints
+│   │   └── upload/             # File upload endpoint
+│   ├── posts/                  # Post pages
+│   ├── users/                  # User profile pages
+│   ├── settings/               # User settings page
 │   ├── layout.tsx              # Root layout
 │   ├── page.tsx                # Home page
 │   └── globals.css             # Global styles
 ├── components/
-│   └── ui/                     # shadcn/ui components
+│   ├── ui/                     # shadcn/ui components
+│   ├── auth/                   # Authentication components
+│   ├── posts/                  # Post components
+│   ├── comments/               # Comment components
+│   ├── profile/                # Profile components
+│   └── layout/                 # Layout components (navbar, footer)
 ├── lib/
+│   ├── services/               # Business logic & database operations
+│   │   ├── posts.ts            # Post service
+│   │   ├── users.ts            # User service
+│   │   └── comments.ts         # Comment service
+│   ├── validations.ts          # Zod validation schemas
+│   ├── types.ts                # TypeScript type definitions
+│   ├── auth.ts                 # Authentication utilities
+│   ├── db.ts                   # Prisma client instance
 │   └── utils.ts                # Utility functions
 ├── prisma/
 │   ├── schema.prisma           # Database schema
 │   └── migrations/             # Database migrations
+├── public/
+│   └── uploads/                # User uploaded files (gitignored)
 ├── stories/                    # Storybook stories
 ├── .storybook/                 # Storybook configuration
 ├── components.json             # shadcn/ui config
@@ -149,6 +171,21 @@ pnpm dlx shadcn@latest add <component-name>
 - `@/lib` → lib directory
 - `@/hooks` → hooks directory
 
+### Architecture
+
+The project follows a layered architecture pattern:
+
+- **HTTP Layer** (`app/api/`): Handles HTTP requests, authentication, validation, and responses
+- **Service Layer** (`lib/services/`): Contains business logic and database operations
+- **Validation Layer** (`lib/validations.ts`): Centralized Zod schemas for data validation
+- **Type Layer** (`lib/types.ts`): TypeScript interfaces and types
+
+This separation ensures:
+- Code reusability across API routes and Server Components
+- Clear separation of concerns
+- Easier testing and maintenance
+- Better scalability
+
 ### Theme
 
 - **Light Mode**: OKLCH-based color system with gray base
@@ -182,11 +219,14 @@ Required environment variables:
 
 ## Development Status
 
-The project is currently in initial setup phase with:
-
 - ✅ Database schema defined
 - ✅ UI component library installed
 - ✅ Development tools configured
-- ⏳ Authentication implementation pending
-- ⏳ Post management UI pending
-- ⏳ Comment system UI pending
+- ✅ Authentication system implemented (JWT with HTTP-only cookies)
+- ✅ User registration and login
+- ✅ User profile management
+- ✅ Post CRUD operations
+- ✅ Comment system with nested replies
+- ✅ File upload (avatar images)
+- ✅ Like functionality for posts and comments
+- ✅ Layered architecture with service layer
