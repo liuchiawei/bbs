@@ -43,6 +43,8 @@ async function getUser(id: string) {
         select: {
           posts: true,
           comments: true,
+          likedPosts: true,
+          likedComments: true,
         },
       },
     },
@@ -108,12 +110,12 @@ export default async function UserPage({
               <p className="text-2xl font-bold">{user._count.comments}</p>
               <p className="text-sm text-muted-foreground">Comments</p>
             </div>
-            {user.gender && (
-              <div className="text-center p-4 bg-muted rounded-lg">
-                <p className="text-2xl font-bold capitalize">{user.gender}</p>
-                <p className="text-sm text-muted-foreground">Gender</p>
+            <Link href={`/users/${user.id}/likes`}>
+              <div className="text-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
+                <p className="text-2xl font-bold">{user._count.likedPosts + user._count.likedComments}</p>
+                <p className="text-sm text-muted-foreground">Likes</p>
               </div>
-            )}
+            </Link>
           </div>
         </CardContent>
       </Card>

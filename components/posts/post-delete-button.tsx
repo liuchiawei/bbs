@@ -63,7 +63,7 @@ export function PostDeleteButton({ postId }: PostDeleteButtonProps) {
       <Tooltip>
         <TooltipTrigger asChild>
           <AlertDialogTrigger asChild>
-            <Button size="icon" variant="outline">
+            <Button size="icon" variant="destructive">
               <Trash2 className="size-4" />
             </Button>
           </AlertDialogTrigger>

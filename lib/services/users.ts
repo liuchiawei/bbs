@@ -93,3 +93,64 @@ export async function updateUserProfile(
     },
   });
 }
+
+/**
+ * Get user's liked posts
+ */
+export async function getUserLikedPosts(userId: string) {
+  const likes = await prisma.postLike.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    include: {
+      post: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true,
+            },
+          },
+          _count: {
+            select: {
+              comments: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return likes.map((like) => like.post);
+}
+
+/**
+ * Get user's liked comments
+ */
+export async function getUserLikedComments(userId: string) {
+  const likes = await prisma.commentLike.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    include: {
+      comment: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true,
+            },
+          },
+          post: {
+            select: {
+              id: true,
+              title: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return likes.map((like) => like.comment);
+}
