@@ -4,7 +4,7 @@ import { comparePassword, createToken, setSession } from "@/lib/auth";
 import { z } from "zod";
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  userId: z.string().min(1, "User ID is required"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -15,12 +15,12 @@ export async function POST(request: NextRequest) {
 
     // Find user
     const user = await prisma.user.findUnique({
-      where: { email: validatedData.email },
+      where: { userId: validatedData.userId },
     });
 
     if (!user) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
+        { error: "Invalid user ID or password" },
         { status: 401 }
       );
     }
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     if (!isPasswordValid) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
+        { error: "Invalid user ID or password" },
         { status: 401 }
       );
     }

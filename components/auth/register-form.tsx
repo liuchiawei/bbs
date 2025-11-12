@@ -14,7 +14,12 @@ import { motion } from "motion/react";
 import { toast } from "sonner";
 
 const registerSchema = z.object({
+  userId: z.string()
+    .min(1, "User ID is required")
+    .max(8, "User ID must be 8 characters or less")
+    .regex(/^[a-zA-Z0-9]+$/, "User ID can only contain English letters and numbers"),
   name: z.string().min(2, "Name must be at least 2 characters"),
+  nickname: z.string().min(2, "Nickname must be at least 2 characters").optional(),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string(),
@@ -46,7 +51,9 @@ export function RegisterForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          userId: data.userId,
           name: data.name,
+          nickname: data.nickname,
           email: data.email,
           password: data.password,
           gender: data.gender,
@@ -84,10 +91,31 @@ export function RegisterForm() {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="userId">User ID</Label>
+              <Input
+                id="userId"
+                placeholder="Max 8 alphanumeric characters"
+                maxLength={8}
+                {...register("userId")}
+              />
+              {errors.userId && (
+                <p className="text-sm text-destructive">{errors.userId.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input id="name" {...register("name")} />
               {errors.name && (
                 <p className="text-sm text-destructive">{errors.name.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="nickname">Nickname (Optional)</Label>
+              <Input id="nickname" {...register("nickname")} />
+              {errors.nickname && (
+                <p className="text-sm text-destructive">{errors.nickname.message}</p>
               )}
             </div>
 

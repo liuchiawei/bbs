@@ -13,7 +13,7 @@ import { motion } from "motion/react";
 import { toast } from "sonner";
 
 const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  userId: z.string().min(1, "User ID is required"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -70,10 +70,10 @@ export function LoginForm() {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" {...register("email")} />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
+              <Label htmlFor="userId">User ID</Label>
+              <Input id="userId" {...register("userId")} />
+              {errors.userId && (
+                <p className="text-sm text-destructive">{errors.userId.message}</p>
               )}
             </div>
 

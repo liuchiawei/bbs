@@ -19,7 +19,9 @@ export interface CategoryWithCount extends Category {
 // User Types
 export interface User {
   id: string;
+  userId: string;
   name: string;
+  nickname?: string | null;
   email: string;
   gender?: string | null;
   birthDate?: Date | string | null;
@@ -54,7 +56,9 @@ export interface Post {
 export interface PostWithUser extends Post {
   user: {
     id: string;
+    userId: string;
     name: string;
+    nickname?: string | null;
     avatar?: string | null;
   };
   category: {
@@ -87,7 +91,9 @@ export interface Comment {
 export interface CommentWithUser extends Comment {
   user: {
     id: string;
+    userId: string;
     name: string;
+    nickname?: string | null;
     avatar?: string | null;
   };
 }
@@ -121,7 +127,9 @@ export interface SessionPayload {
 }
 
 export interface RegisterInput {
+  userId: string;
   name: string;
+  nickname?: string;
   email: string;
   password: string;
   gender?: string;
@@ -129,7 +137,7 @@ export interface RegisterInput {
 }
 
 export interface LoginInput {
-  email: string;
+  userId: string;
   password: string;
 }
 
@@ -170,7 +178,9 @@ export interface UploadResponse {
 // Admin Types
 export interface AdminUserListItem {
   id: string;
+  userId: string;
   name: string;
+  nickname?: string | null;
   email: string;
   avatar?: string | null;
   isAdmin: boolean;
@@ -192,7 +202,9 @@ export interface AdminPostListItem {
   createdAt: Date | string;
   user: {
     id: string;
+    userId: string;
     name: string;
+    nickname?: string | null;
     avatar?: string | null;
   };
   category: {
