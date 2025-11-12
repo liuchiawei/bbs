@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { hasUserLikedPost } from "@/lib/services/posts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { CommentForm } from "@/components/comments/comment-form";
 import { CommentItem } from "@/components/comments/comment-item";
-import { Heart, MessageCircle, Eye, Edit } from "lucide-react";
+import { PostLikeButton } from "@/components/posts/post-like-button";
+import { MessageCircle, Eye, Edit } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -60,6 +62,7 @@ export default async function PostPage({
   }
 
   const isOwner = session?.userId === post.user.id;
+  const isLiked = session ? await hasUserLikedPost(session.userId, post.id) : false;
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
@@ -67,12 +70,14 @@ export default async function PostPage({
         <CardHeader>
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={post.user.avatar || undefined} />
-                <AvatarFallback>
-                  {post.user.name.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <Link href={`/users/${post.user.id}`}>
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={post.user.avatar || undefined} />
+                  <AvatarFallback>
+                    {post.user.name.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
               <div>
                 <Link
                   href={`/users/${post.user.id}`}
@@ -124,10 +129,12 @@ export default async function PostPage({
               <Eye className="h-5 w-5" />
               <span>{post.views} views</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Heart className="h-5 w-5" />
-              <span>{post.likes} likes</span>
-            </div>
+            <PostLikeButton
+              postId={post.id}
+              initialLikes={post.likes}
+              initialIsLiked={isLiked}
+              isAuthenticated={!!session}
+            />
             <div className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
               <span>{post._count.comments} comments</span>

@@ -59,21 +59,14 @@ export function PostCard({ post }: PostCardProps) {
         <Card className="h-full hover:shadow-lg transition-shadow">
           <CardHeader>
             <div className="flex items-center gap-3 mb-3">
-              <Link href={`/users/${post.user.id}`}>
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={post.user.avatar || undefined} />
-                  <AvatarFallback>
-                    {post.user.name.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </Link>
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={post.user.avatar || undefined} />
+                <AvatarFallback>
+                  {post.user.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               <div className="flex-1">
-                <Link
-                  href={`/users/${post.user.id}`}
-                  className="font-medium hover:underline"
-                >
-                  {post.user.name}
-                </Link>
+                {post.user.name}
                 <p className="text-sm text-muted-foreground">
                   {new Date(post.createdAt).toLocaleDateString()}
                 </p>
