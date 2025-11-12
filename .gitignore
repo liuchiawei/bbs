@@ -51,3 +51,5 @@ storybook-static
 
 # uploaded files
 /public/uploads
+
+.env*.local
