@@ -160,7 +160,7 @@ export function CommentItem({
 
           <div className="flex items-center gap-4">
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -182,7 +182,7 @@ export function CommentItem({
             </Tooltip>
 
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -202,7 +202,7 @@ export function CommentItem({
 
             {isOwner && (
               <Tooltip>
-                <TooltipTrigger>
+                <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
                     size="sm"

@@ -107,6 +107,24 @@ export async function PATCH(
             avatar: true,
           },
         },
+        comments: {
+          where: { parentId: null },
+          orderBy: { createdAt: "desc" },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            comments: true,
+          },
+        },
       },
     });
 
