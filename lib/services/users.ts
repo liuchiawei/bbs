@@ -6,7 +6,7 @@ import type { User, UserWithCounts } from "@/lib/types";
  */
 export async function checkUserIdAvailability(userId: string): Promise<boolean> {
   const existingUser = await prisma.user.findUnique({
-    where: { id: userId },
+    where: { userId: userId },
     select: { id: true },
   });
   return !existingUser;
@@ -20,7 +20,9 @@ export async function getUserById(id: string): Promise<User | null> {
     where: { id },
     select: {
       id: true,
+      userId: true,
       name: true,
+      nickname: true,
       email: true,
       gender: true,
       birthDate: true,
@@ -41,7 +43,9 @@ export async function getUserWithCounts(id: string): Promise<UserWithCounts | nu
     where: { id },
     select: {
       id: true,
+      userId: true,
       name: true,
+      nickname: true,
       email: true,
       gender: true,
       birthDate: true,

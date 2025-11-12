@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Validate userId format (alphanumeric, 1-8 characters)
-    if (!/^[a-zA-Z0-9]{1,8}$/.test(userId)) {
+    // Validate userId format (alphanumeric, 1-12 characters)
+    if (!/^[a-zA-Z0-9]{1,12}$/.test(userId)) {
       return NextResponse.json(
         { available: false, error: "Invalid User ID format" },
         { status: 400 }

@@ -6,7 +6,7 @@ import { z } from "zod";
 const registerSchema = z.object({
   userId: z.string()
     .min(1, "User ID is required")
-    .max(8, "User ID must be 8 characters or less")
+    .max(12, "User ID must be 12 characters or less")
     .regex(/^[a-zA-Z0-9]+$/, "User ID can only contain English letters and numbers"),
   name: z.string().min(2, "Name must be at least 2 characters"),
   nickname: z.string().min(2, "Nickname must be at least 2 characters").optional(),

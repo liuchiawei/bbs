@@ -8,7 +8,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "motion/react";
 import { toast } from "sonner";
@@ -16,7 +16,7 @@ import { toast } from "sonner";
 const registerSchema = z.object({
   userId: z.string()
     .min(1, "User ID is required")
-    .max(8, "User ID must be 8 characters or less")
+    .max(12, "User ID must be 12 characters or less")
     .regex(/^[a-zA-Z0-9]+$/, "User ID can only contain English letters and numbers"),
   name: z.string().min(2, "Name must be at least 2 characters"),
   nickname: z.string().min(2, "Nickname must be at least 2 characters").optional(),
@@ -44,12 +44,14 @@ export function RegisterForm() {
     formState: { errors },
     trigger,
     watch,
+    setValue,
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     mode: "onChange",
   });
 
   const userId = watch("userId");
+  const gender = watch("gender");
 
   // Debounced userId availability check
   useEffect(() => {
@@ -60,7 +62,7 @@ export function RegisterForm() {
       }
 
       // Check format first (client-side validation)
-      if (!/^[a-zA-Z0-9]{1,8}$/.test(userId)) {
+      if (!/^[a-zA-Z0-9]{1,12}$/.test(userId)) {
         setUserIdError(null); // Let Zod validation handle format errors
         return;
       }
@@ -145,8 +147,8 @@ export function RegisterForm() {
               <div className="relative">
                 <Input
                   id="userId"
-                  placeholder="Max 8 alphanumeric characters"
-                  maxLength={8}
+                  placeholder="Max 12 alphanumeric characters"
+                  maxLength={12}
                   {...register("userId", {
                     onChange: () => trigger("userId"),
                   })}
@@ -215,17 +217,14 @@ export function RegisterForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="gender">Gender (Optional)</Label>
-              <select
-                id="gender"
-                {...register("gender")}
-                className="w-full px-3 py-2 border rounded-md bg-background"
-              >
-                <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
+              <Label>Gender (Optional)</Label>
+              <Tabs value={gender || ""} onValueChange={(value) => setValue("gender", value)}>
+                <TabsList className="w-full grid grid-cols-3">
+                  <TabsTrigger value="male">Male</TabsTrigger>
+                  <TabsTrigger value="female">Female</TabsTrigger>
+                  <TabsTrigger value="other">Other</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
 
             <div className="space-y-2">
