@@ -1,40 +1,11 @@
-import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft } from "lucide-react";
-
-async function getUserComments(userId: string) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      name: true,
-      comments: {
-        orderBy: { createdAt: "desc" },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true,
-            },
-          },
-          post: {
-            select: {
-              id: true,
-              title: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  return user;
-}
+import { getCurrentUser } from "@/lib/auth";
+import { DeleteCommentButton } from "@/components/comments/delete-comment-button";
+import { getUserComments } from "@/lib/services/users";
 
 export default async function UserCommentsPage({
   params,
@@ -43,6 +14,7 @@ export default async function UserCommentsPage({
 }) {
   const { id } = await params;
   const user = await getUserComments(id);
+  const currentUser = await getCurrentUser();
 
   if (!user) {
     notFound();
@@ -60,11 +32,10 @@ export default async function UserCommentsPage({
       </div>
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">
-          {user.name}'s Comments
-        </h1>
+        <h1 className="text-3xl font-bold">{user.name}'s Comments</h1>
         <p className="text-muted-foreground mt-2">
-          {user.comments.length} {user.comments.length === 1 ? "comment" : "comments"}
+          {user.comments.length}{" "}
+          {user.comments.length === 1 ? "comment" : "comments"}
         </p>
       </div>
 
@@ -77,42 +48,40 @@ export default async function UserCommentsPage({
           {user.comments.map((comment) => (
             <Card key={comment.id}>
               <CardHeader>
-                <div className="flex items-center gap-3 mb-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={comment.user.avatar || undefined} />
-                    <AvatarFallback>
-                      {comment.user.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <Link
-                      href={`/users/${comment.user.id}`}
-                      className="font-semibold hover:underline"
-                    >
-                      {comment.user.name}
-                    </Link>
-                    <p className="text-xs text-muted-foreground">
-                      on{" "}
-                      <Link
-                        href={`/posts/${comment.post.id}`}
-                        className="hover:underline"
-                      >
-                        {comment.post.title}
-                      </Link>
-                    </p>
-                  </div>
-                  <time className="text-xs text-muted-foreground">
-                    {new Date(comment.createdAt).toLocaleDateString()}
-                  </time>
-                </div>
+                <time className="text-xs text-muted-foreground">
+                  {new Date(comment.createdAt).toLocaleDateString()}
+                  {new Date(comment.createdAt).toLocaleTimeString()}
+                </time>
               </CardHeader>
               <CardContent>
-                <p className="text-sm whitespace-pre-wrap">
-                  {comment.content}
-                </p>
-                <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
-                  <span>{comment.likes} likes</span>
-                  <span>{comment.replies} replies</span>
+                <div className="mb-4 space-y-2">
+                  <Link
+                    href={`/posts/${comment.post.id}`}
+                    className="block w-fit text-2xl md:text-5xl font-bold hover:underline"
+                  >
+                    {comment.post.title}
+                  </Link>
+                  <p className="text-sm text-muted-foreground">
+                    {comment.post.content.length > 25
+                      ? comment.post.content.substring(0, 25) + "..."
+                      : comment.post.content}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between ml-4 md:ml-8 border-l-2 pl-4">
+                  <p className="text-sm whitespace-pre-wrap">
+                    {comment.content}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
+                    <span>{comment.likes} likes</span>
+                    <span>{comment.replies} replies</span>
+                  </div>
+                  {currentUser &&
+                    (currentUser.id === comment.userId ||
+                      currentUser.isAdmin) && (
+                      <DeleteCommentButton commentId={comment.id} />
+                    )}
                 </div>
               </CardContent>
             </Card>

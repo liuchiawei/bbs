@@ -154,3 +154,35 @@ export async function getUserLikedComments(userId: string) {
 
   return likes.map((like) => like.comment);
 }
+
+/**
+ * Get user with their comments
+ */
+export async function getUserComments(userId: string) {
+  return await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      comments: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true,
+            },
+          },
+          post: {
+            select: {
+              id: true,
+              title: true,
+              content: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}
