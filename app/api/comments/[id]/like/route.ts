@@ -13,15 +13,15 @@ export async function GET(
     }
 
     const { id } = await params;
-    const userId = session.userId;
 
     const existingLike = await prisma.commentLike.findUnique({
       where: {
         userId_commentId: {
-          userId,
+          userId: session.userId,
           commentId: id,
         },
       },
+      select: { id: true },
     });
 
     return NextResponse.json({ isLiked: !!existingLike });
@@ -42,54 +42,61 @@ export async function POST(
     }
 
     const { id } = await params;
-    const userId = session.userId;
 
-    // Check if user has already liked this comment
-    const existingLike = await prisma.commentLike.findUnique({
-      where: {
-        userId_commentId: {
-          userId,
-          commentId: id,
+    // Use transaction to ensure atomicity and prevent race conditions
+    const result = await prisma.$transaction(async (tx) => {
+      // Check if user has already liked this comment
+      const existingLike = await tx.commentLike.findUnique({
+        where: {
+          userId_commentId: {
+            userId: session.userId,
+            commentId: id,
+          },
         },
-      },
+        select: { id: true },
+      });
+
+      let comment;
+      let isLiked: boolean;
+
+      if (existingLike) {
+        // Unlike: Remove the like record and decrement count
+        await tx.commentLike.delete({
+          where: { id: existingLike.id },
+        });
+
+        comment = await tx.comment.update({
+          where: { id },
+          data: { likes: { decrement: 1 } },
+          select: { likes: true },
+        });
+
+        isLiked = false;
+      } else {
+        // Like: Create a like record and increment count
+        await tx.commentLike.create({
+          data: {
+            userId: session.userId,
+            commentId: id,
+          },
+        });
+
+        comment = await tx.comment.update({
+          where: { id },
+          data: { likes: { increment: 1 } },
+          select: { likes: true },
+        });
+
+        isLiked = true;
+      }
+
+      return { likes: comment.likes, isLiked };
     });
 
-    let comment;
-    let isLiked: boolean;
-
-    if (existingLike) {
-      // Unlike: Remove the like record and decrement count
-      await prisma.commentLike.delete({
-        where: { id: existingLike.id },
-      });
-
-      comment = await prisma.comment.update({
-        where: { id },
-        data: { likes: { decrement: 1 } },
-      });
-
-      isLiked = false;
-    } else {
-      // Like: Create a like record and increment count
-      await prisma.commentLike.create({
-        data: {
-          userId,
-          commentId: id,
-        },
-      });
-
-      comment = await prisma.comment.update({
-        where: { id },
-        data: { likes: { increment: 1 } },
-      });
-
-      isLiked = true;
-    }
-
     return NextResponse.json({
-      message: isLiked ? "Comment liked successfully" : "Comment unliked successfully",
-      likes: comment.likes,
-      isLiked,
+      message: result.isLiked ? "Comment liked successfully" : "Comment unliked successfully",
+      likes: result.likes,
+      isLiked: result.isLiked,
     });
   } catch (error) {
     console.error("Like comment error:", error);

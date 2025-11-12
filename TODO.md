@@ -14,6 +14,11 @@
   - Users can invest their points to the poll
   - the points user invest can be determined by user himself
   - only admin can create new poll
+- UI layout
+  - 更改發文時的category顯示方式，不要使用drop-sown menu
+  - User page
+    - 將動態路由 [id]改成[userId]
+    - 在card header中新增顯示 nickname 和 @ userId
 - Constraints
   - Create constraints.ts
   - replace fixed content text with constraints.ts.

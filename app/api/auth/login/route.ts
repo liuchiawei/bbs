@@ -1,21 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { comparePassword, createToken, setSession } from "@/lib/auth";
+import { loginSchema } from "@/lib/validations";
 import { z } from "zod";
-
-const loginSchema = z.object({
-  userId: z.string().min(1, "User ID is required"),
-  password: z.string().min(1, "Password is required"),
-});
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const validatedData = loginSchema.parse(body);
 
-    // Find user
+    // Find user - only select necessary fields for authentication
     const user = await prisma.user.findUnique({
       where: { userId: validatedData.userId },
+      select: {
+        id: true,
+        userId: true,
+        email: true,
+        password: true,
+        isBanned: true,
+        name: true,
+        nickname: true,
+        avatar: true,
+        isAdmin: true,
+      },
     });
 
     if (!user) {

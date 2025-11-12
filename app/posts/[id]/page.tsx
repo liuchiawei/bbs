@@ -53,7 +53,9 @@ interface Post {
   createdAt: string;
   user: {
     id: string;
+    userId: string;
     name: string;
+    nickname?: string | null;
     avatar: string | null;
   };
   comments: Array<{
@@ -67,7 +69,9 @@ interface Post {
     parentId: string | null;
     user: {
       id: string;
+      userId: string;
       name: string;
+      nickname?: string | null;
       avatar: string | null;
     };
   }>;

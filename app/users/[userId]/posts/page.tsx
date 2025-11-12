@@ -38,10 +38,10 @@ async function getUserPosts(userId: string) {
 export default async function UserPostsPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ userId: string }>;
 }) {
-  const { id } = await params;
-  const user = await getUserPosts(id);
+  const { userId } = await params;
+  const user = await getUserPosts(userId);
 
   if (!user) {
     notFound();
@@ -51,7 +51,7 @@ export default async function UserPostsPage({
     <div className="container mx-auto px-4 py-12 max-w-5xl">
       <div className="mb-6">
         <Button variant="ghost" asChild>
-          <Link href={`/users/${id}`}>
+          <Link href={`/users/${userId}`}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Profile
           </Link>

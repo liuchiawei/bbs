@@ -71,7 +71,9 @@ export async function getUserProfile(userId: string) {
     where: { id: userId },
     select: {
       id: true,
+      userId: true,
       name: true,
+      nickname: true,
       email: true,
       gender: true,
       birthDate: true,
@@ -105,6 +107,73 @@ export async function updateUserProfile(
       isAdmin: true,
       createdAt: true,
       updatedAt: true,
+    },
+  });
+}
+
+/**
+ * Get a user's full profile page data (optimized single query)
+ * Includes user info, counts, and recent posts
+ */
+export async function getUserProfilePage(userId: string, recentPostsLimit = 6) {
+  return await prisma.user.findUnique({
+    where: { userId },
+    select: {
+      id: true,
+      userId: true,
+      name: true,
+      nickname: true,
+      email: true,
+      gender: true,
+      birthDate: true,
+      avatar: true,
+      isAdmin: true,
+      createdAt: true,
+      posts: {
+        orderBy: { createdAt: "desc" },
+        take: recentPostsLimit,
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          categoryId: true,
+          tags: true,
+          views: true,
+          likes: true,
+          createdAt: true,
+          updatedAt: true,
+          userId: true,
+          category: {
+            select: {
+              id: true,
+              slug: true,
+              name: true,
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              userId: true,
+              name: true,
+              nickname: true,
+              avatar: true,
+            },
+          },
+          _count: {
+            select: {
+              comments: true,
+            },
+          },
+        },
+      },
+      _count: {
+        select: {
+          posts: true,
+          comments: true,
+          likedPosts: true,
+          likedComments: true,
+        },
+      },
     },
   });
 }

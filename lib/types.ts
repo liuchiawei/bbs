@@ -39,6 +39,16 @@ export interface UserWithCounts extends User {
   };
 }
 
+export interface UserProfilePage extends User {
+  posts: PostWithUser[];
+  _count: {
+    posts: number;
+    comments: number;
+    likedPosts: number;
+    likedComments: number;
+  };
+}
+
 // Post Types
 export interface Post {
   id: string;

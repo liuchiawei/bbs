@@ -14,7 +14,9 @@ export async function GET() {
       where: { id: session.userId },
       select: {
         id: true,
+        userId: true,
         name: true,
+        nickname: true,
         email: true,
         gender: true,
         birthDate: true,
@@ -33,9 +35,6 @@ export async function GET() {
     return NextResponse.json({ user });
   } catch (error) {
     console.error("Get user error:", error);
-    return NextResponse.json(
-      { error: "Failed to get user" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to get user" }, { status: 500 });
   }
 }

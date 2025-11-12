@@ -1,9 +1,35 @@
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 
 // Validation Constants
 export const USER_ID_REGEX = /^[a-zA-Z0-9]{1,12}$/;
 export const USER_ID_MIN_LENGTH = 1;
 export const USER_ID_MAX_LENGTH = 12;
+
+// Reusable Prisma Select Fragments
+export const userSelectBasic = {
+  id: true,
+  userId: true,
+  name: true,
+  nickname: true,
+  avatar: true,
+} satisfies Prisma.UserSelect;
+
+export const categorySelectBasic = {
+  id: true,
+  slug: true,
+  name: true,
+} satisfies Prisma.CategorySelect;
+
+export const postIncludeBasic = {
+  user: { select: userSelectBasic },
+  category: { select: categorySelectBasic },
+  _count: { select: { comments: true } },
+} satisfies Prisma.PostInclude;
+
+export const commentIncludeBasic = {
+  user: { select: userSelectBasic },
+} satisfies Prisma.CommentInclude;
 
 // Auth Schemas
 export const registerSchema = z.object({

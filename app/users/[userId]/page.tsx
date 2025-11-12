@@ -1,69 +1,27 @@
-import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { getUserProfilePage } from "@/lib/services/users";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import { PostCard } from "@/components/posts/post-card";
-import type { PostWithUser } from "@/lib/types";
-import { notFound } from "next/navigation";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { PostCard } from "@/components/posts/post-card";
 import { Settings } from "lucide-react";
-async function getUser(id: string) {
-  return await prisma.user.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      gender: true,
-      birthDate: true,
-      avatar: true,
-      isAdmin: true,
-      createdAt: true,
-      posts: {
-        orderBy: { createdAt: "desc" },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true,
-            },
-          },
-          _count: {
-            select: {
-              comments: true,
-            },
-          },
-        },
-      },
-      _count: {
-        select: {
-          posts: true,
-          comments: true,
-          likedPosts: true,
-          likedComments: true,
-        },
-      },
-    },
-  });
-}
+import type { PostWithUser } from "@/lib/types";
 
 export default async function UserPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ userId: string }>;
 }) {
-  const { id } = await params;
-  const session = await getSession();
-  const user = await getUser(id);
+  const { userId } = await params;
+  const [session, user] = await Promise.all([
+    getSession(),
+    getUserProfilePage(userId),
+  ]);
 
   if (!user) {
     notFound();
@@ -98,19 +56,19 @@ export default async function UserPage({
 
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <Link href={`/users/${user.id}/posts`}>
+            <Link href={`/users/${user.userId}/posts`}>
               <div className="text-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
                 <p className="text-2xl font-bold">{user._count.posts}</p>
                 <p className="text-sm text-muted-foreground">Posts</p>
               </div>
             </Link>
-            <Link href={`/users/${user.id}/comments`}>
+            <Link href={`/users/${user.userId}/comments`}>
               <div className="text-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
                 <p className="text-2xl font-bold">{user._count.comments}</p>
                 <p className="text-sm text-muted-foreground">Comments</p>
               </div>
             </Link>
-            <Link href={`/users/${user.id}/likes`}>
+            <Link href={`/users/${user.userId}/likes`}>
               <div className="text-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
                 <p className="text-2xl font-bold">
                   {user._count.likedPosts + user._count.likedComments}
@@ -137,7 +95,7 @@ export default async function UserPage({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="outline" size="icon" asChild>
-                        <Link href={`/users/${user.id}/edit`}>
+                        <Link href={`/users/${user.userId}/edit`}>
                           <Settings className="size-4" />
                         </Link>
                       </Button>
