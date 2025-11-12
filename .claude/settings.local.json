@@ -8,7 +8,8 @@
       "Bash(pnpm prisma generate:*)",
       "Bash(pnpm prisma migrate dev:*)",
       "Bash(pnpm tsc:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(pnpm run:*)"
     ],
     "deny": [],
     "ask": []
