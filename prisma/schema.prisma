@@ -31,6 +31,7 @@ model User {
   posts     Post[]
   comments  Comment[]
   likedPosts PostLike[]
+  likedComments CommentLike[]
 }
 
 model Post {
@@ -69,6 +70,7 @@ model Comment {
   // relationships
   user User @relation(fields: [userId], references: [id])
   post Post @relation(fields: [postId], references: [id])
+  likedBy CommentLike[]
 }
 
 model PostLike {
@@ -83,4 +85,18 @@ model PostLike {
   @@unique([userId, postId])
   @@index([userId])
   @@index([postId])
+}
+
+model CommentLike {
+  id        String   @id @default(uuid())
+  userId    String
+  commentId String
+  createdAt DateTime @default(now())
+  // relationships
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, commentId])
+  @@index([userId])
+  @@index([commentId])
 }
