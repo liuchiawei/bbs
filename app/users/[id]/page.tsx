@@ -102,14 +102,18 @@ export default async function UserPage({
 
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="text-center p-4 bg-muted rounded-lg">
-              <p className="text-2xl font-bold">{user._count.posts}</p>
-              <p className="text-sm text-muted-foreground">Posts</p>
-            </div>
-            <div className="text-center p-4 bg-muted rounded-lg">
-              <p className="text-2xl font-bold">{user._count.comments}</p>
-              <p className="text-sm text-muted-foreground">Comments</p>
-            </div>
+            <Link href={`/users/${user.id}/posts`}>
+              <div className="text-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
+                <p className="text-2xl font-bold">{user._count.posts}</p>
+                <p className="text-sm text-muted-foreground">Posts</p>
+              </div>
+            </Link>
+            <Link href={`/users/${user.id}/comments`}>
+              <div className="text-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
+                <p className="text-2xl font-bold">{user._count.comments}</p>
+                <p className="text-sm text-muted-foreground">Comments</p>
+              </div>
+            </Link>
             <Link href={`/users/${user.id}/likes`}>
               <div className="text-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
                 <p className="text-2xl font-bold">{user._count.likedPosts + user._count.likedComments}</p>
