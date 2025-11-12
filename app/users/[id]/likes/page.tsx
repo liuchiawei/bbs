@@ -1,6 +1,7 @@
 import { getUserLikedPosts, getUserLikedComments } from "@/lib/services/users";
 import { getSession } from "@/lib/auth";
-import { notFound, redirect } from "next/navigation";
+import type { PostWithUser } from "@/lib/types";
+import { redirect } from "next/navigation";
 import { PostCard } from "@/components/posts/post-card";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -57,7 +58,7 @@ export default async function UserLikesPage({
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {likedPosts.map((post) => (
-                <PostCard key={post.id} post={post} />
+                <PostCard key={post.id} post={post as PostWithUser} />
               ))}
             </div>
           )}
