@@ -92,19 +92,6 @@ export default async function UserPage({
                 Joined {new Date(user.createdAt).toLocaleDateString()}
               </p>
             </div>
-
-            {isOwnProfile && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" asChild>
-                    <Link href={`/users/${user.id}/edit`}>
-                      <Settings className="size-4" />
-                    </Link>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Edit Profile</TooltipContent>
-              </Tooltip>
-            )}
           </div>
         </CardHeader>
 
@@ -136,28 +123,28 @@ export default async function UserPage({
 
       <Tabs defaultValue="posts" className="w-full">
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-          <TabsTrigger value="posts">Posts</TabsTrigger>
           <TabsTrigger value="about">About</TabsTrigger>
+          <TabsTrigger value="posts">Posts</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="posts" className="space-y-4 mt-8">
-          {user.posts.length === 0 ? (
-            <p className="text-center text-muted-foreground py-12">
-              No posts yet
-            </p>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {user.posts.map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))}
-            </div>
-          )}
-        </TabsContent>
 
         <TabsContent value="about" className="mt-8">
           <Card>
             <CardHeader>
-              <CardTitle>About</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xl md:text-3xl font-bold">About</CardTitle>
+                {isOwnProfile && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="outline" size="icon" asChild>
+                        <Link href={`/users/${user.id}/edit`}>
+                          <Settings className="size-4" />
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Edit Profile</TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {user.birthDate && (
@@ -176,6 +163,20 @@ export default async function UserPage({
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="posts" className="space-y-4 mt-8">
+          {user.posts.length === 0 ? (
+            <p className="text-center text-muted-foreground py-12">
+              No posts yet
+            </p>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {user.posts.map((post) => (
+                <PostCard key={post.id} post={post} />
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
