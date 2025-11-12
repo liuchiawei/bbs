@@ -104,7 +104,7 @@ export async function updateCategory(
   data: {
     slug?: string;
     name?: string;
-    description?: string;
+    description?: string | null;
     displayOrder?: number;
     isActive?: boolean;
   }

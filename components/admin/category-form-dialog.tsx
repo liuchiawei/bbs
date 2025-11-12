@@ -25,7 +25,7 @@ const categoryFormSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens"),
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
-  displayOrder: z.coerce.number().int().min(0).optional(),
+  displayOrder: z.number().int().min(0).optional(),
 });
 
 type CategoryFormData = z.infer<typeof categoryFormSchema>;
@@ -156,7 +156,7 @@ export function CategoryFormDialog({
             <Input
               id="displayOrder"
               type="number"
-              {...register("displayOrder")}
+              {...register("displayOrder", { valueAsNumber: true })}
               placeholder="0"
             />
             {errors.displayOrder && (

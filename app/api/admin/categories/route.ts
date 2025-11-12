@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     const category = await createCategory(validatedData);
 
     // Revalidate categories cache
-    revalidateTag("categories");
+    revalidateTag("categories", "default");
 
     return NextResponse.json({
       message: "Category created successfully",
@@ -83,7 +83,7 @@ export async function PATCH(request: NextRequest) {
     const category = await updateCategory(id, validatedData);
 
     // Revalidate categories cache
-    revalidateTag("categories");
+    revalidateTag("categories", "default");
 
     return NextResponse.json({
       message: "Category updated successfully",
