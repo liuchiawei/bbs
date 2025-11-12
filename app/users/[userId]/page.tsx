@@ -47,9 +47,14 @@ export default async function UserPage({
                 {user.isAdmin && <Badge variant="destructive">Admin</Badge>}
               </div>
               <p className="text-muted-foreground">{user.email}</p>
-              <p className="text-sm text-muted-foreground">
-                Joined {new Date(user.createdAt).toLocaleDateString()}
-              </p>
+              <div className="flex items-center gap-4">
+                <p className="text-sm text-muted-foreground">
+                  Joined {new Date(user.createdAt).toLocaleDateString()}
+                </p>
+                <Badge variant="secondary" className="text-sm">
+                  {user.points ?? 0} Points
+                </Badge>
+              </div>
             </div>
           </div>
         </CardHeader>
