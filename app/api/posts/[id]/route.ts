@@ -6,7 +6,7 @@ import { z } from "zod";
 const updatePostSchema = z.object({
   title: z.string().min(1, "Title is required").optional(),
   content: z.string().min(1, "Content is required").optional(),
-  category: z.string().min(1, "Category is required").optional(),
+  categoryId: z.string().min(1, "Category is required").optional(),
   tags: z.array(z.string()).optional(),
 });
 
@@ -31,6 +31,13 @@ export async function GET(
             id: true,
             name: true,
             avatar: true,
+          },
+        },
+        category: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
           },
         },
         comments: {
@@ -105,6 +112,13 @@ export async function PATCH(
             id: true,
             name: true,
             avatar: true,
+          },
+        },
+        category: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
           },
         },
         comments: {

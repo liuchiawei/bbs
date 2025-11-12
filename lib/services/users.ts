@@ -186,3 +186,84 @@ export async function getUserComments(userId: string) {
     },
   });
 }
+
+/**
+ * Admin: Get all users with pagination and counts
+ */
+export async function getAllUsers(options: { page?: number; limit?: number } = {}) {
+  const { page = 1, limit = 20 } = options;
+  const skip = (page - 1) * limit;
+
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatar: true,
+        isAdmin: true,
+        isBanned: true,
+        createdAt: true,
+        _count: {
+          select: {
+            posts: true,
+            comments: true,
+          },
+        },
+      },
+    }),
+    prisma.user.count(),
+  ]);
+
+  return {
+    users,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
+/**
+ * Admin: Get total users count
+ */
+export async function getUsersCount(): Promise<number> {
+  return await prisma.user.count();
+}
+
+/**
+ * Admin: Ban a user
+ */
+export async function banUser(userId: string) {
+  return await prisma.user.update({
+    where: { id: userId },
+    data: { isBanned: true },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      isBanned: true,
+    },
+  });
+}
+
+/**
+ * Admin: Unban a user
+ */
+export async function unbanUser(userId: string) {
+  return await prisma.user.update({
+    where: { id: userId },
+    data: { isBanned: false },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      isBanned: true,
+    },
+  });
+}

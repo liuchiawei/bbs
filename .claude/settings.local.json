@@ -5,7 +5,8 @@
       "Bash(findstr:*)",
       "Bash(pnpm dlx:*)",
       "Bash(pnpm add:*)",
-      "Bash(pnpm prisma generate:*)"
+      "Bash(pnpm prisma generate:*)",
+      "Bash(pnpm prisma migrate dev:*)"
     ],
     "deny": [],
     "ask": []

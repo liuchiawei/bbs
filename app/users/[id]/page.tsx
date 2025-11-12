@@ -11,6 +11,7 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { PostCard } from "@/components/posts/post-card";
+import type { PostWithUser } from "@/lib/types";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Settings } from "lucide-react";
@@ -173,7 +174,7 @@ export default async function UserPage({
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {user.posts.map((post) => (
-                <PostCard key={post.id} post={post} />
+                <PostCard key={post.id} post={post as PostWithUser} />
               ))}
             </div>
           )}

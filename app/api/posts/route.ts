@@ -6,7 +6,7 @@ import { z } from "zod";
 const createPostSchema = z.object({
   title: z.string().min(1, "Title is required"),
   content: z.string().min(1, "Content is required"),
-  category: z.string().min(1, "Category is required"),
+  categoryId: z.string().min(1, "Category is required"),
   tags: z.array(z.string()).optional().default([]),
 });
 
@@ -15,13 +15,17 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
-    const category = searchParams.get("category");
+    const categorySlug = searchParams.get("category");
     const userId = searchParams.get("userId");
 
     const skip = (page - 1) * limit;
 
     const where: any = {};
-    if (category) where.category = category;
+    if (categorySlug) {
+      where.category = {
+        slug: categorySlug,
+      };
+    }
     if (userId) where.userId = userId;
 
     const [posts, total] = await Promise.all([
@@ -36,6 +40,13 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               avatar: true,
+            },
+          },
+          category: {
+            select: {
+              id: true,
+              slug: true,
+              name: true,
             },
           },
           _count: {
@@ -80,7 +91,7 @@ export async function POST(request: NextRequest) {
       data: {
         title: validatedData.title,
         content: validatedData.content,
-        category: validatedData.category,
+        categoryId: validatedData.categoryId,
         tags: validatedData.tags,
         userId: session.userId,
       },
@@ -90,6 +101,13 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             avatar: true,
+          },
+        },
+        category: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
           },
         },
       },

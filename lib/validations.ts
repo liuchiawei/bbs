@@ -26,14 +26,14 @@ export const updateUserSchema = z.object({
 export const createPostSchema = z.object({
   title: z.string().min(1, "Title is required"),
   content: z.string().min(1, "Content is required"),
-  category: z.string().min(1, "Category is required"),
+  categoryId: z.string().min(1, "Category is required"),
   tags: z.array(z.string()).optional().default([]),
 });
 
 export const updatePostSchema = z.object({
   title: z.string().min(1, "Title is required").optional(),
   content: z.string().min(1, "Content is required").optional(),
-  category: z.string().min(1, "Category is required").optional(),
+  categoryId: z.string().min(1, "Category is required").optional(),
   tags: z.array(z.string()).optional(),
 });
 
@@ -42,4 +42,20 @@ export const createCommentSchema = z.object({
   content: z.string().min(1, "Content is required"),
   postId: z.string(),
   parentId: z.string().optional(),
+});
+
+// Admin Category Schemas
+export const adminCreateCategorySchema = z.object({
+  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens"),
+  name: z.string().min(1, "Name is required"),
+  description: z.string().optional(),
+  displayOrder: z.number().int().min(0).optional(),
+});
+
+export const adminUpdateCategorySchema = z.object({
+  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Slug must be lowercase alphanumeric with hyphens").optional(),
+  name: z.string().min(1, "Name is required").optional(),
+  description: z.string().optional().nullable(),
+  displayOrder: z.number().int().min(0).optional(),
+  isActive: z.boolean().optional(),
 });
