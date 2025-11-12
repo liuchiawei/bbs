@@ -2,6 +2,17 @@ import { prisma } from "@/lib/db";
 import type { User, UserWithCounts } from "@/lib/types";
 
 /**
+ * Check if a userId is available
+ */
+export async function checkUserIdAvailability(userId: string): Promise<boolean> {
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  });
+  return !existingUser;
+}
+
+/**
  * Get a user by ID
  */
 export async function getUserById(id: string): Promise<User | null> {

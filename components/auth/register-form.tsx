@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,16 +35,66 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 export function RegisterForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingUserId, setIsCheckingUserId] = useState(false);
+  const [userIdError, setUserIdError] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    trigger,
+    watch,
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
+    mode: "onChange",
   });
 
+  const userId = watch("userId");
+
+  // Debounced userId availability check
+  useEffect(() => {
+    const checkUserId = async () => {
+      if (!userId || userId.length === 0) {
+        setUserIdError(null);
+        return;
+      }
+
+      // Check format first (client-side validation)
+      if (!/^[a-zA-Z0-9]{1,8}$/.test(userId)) {
+        setUserIdError(null); // Let Zod validation handle format errors
+        return;
+      }
+
+      setIsCheckingUserId(true);
+      setUserIdError(null);
+
+      try {
+        const response = await fetch(`/api/auth/check-userid?userId=${encodeURIComponent(userId)}`);
+        const data = await response.json();
+
+        if (response.ok && !data.available) {
+          setUserIdError("This User ID is already taken");
+        }
+      } catch (error) {
+        console.error("Error checking userId:", error);
+      } finally {
+        setIsCheckingUserId(false);
+      }
+    };
+
+    // Debounce the API call
+    const timeoutId = setTimeout(checkUserId, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [userId]);
+
   const onSubmit = async (data: RegisterFormData) => {
+    // Prevent submission if userId is already taken
+    if (userIdError) {
+      toast.error(userIdError);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await fetch("/api/auth/register", {
@@ -92,14 +142,29 @@ export function RegisterForm() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="userId">User ID</Label>
-              <Input
-                id="userId"
-                placeholder="Max 8 alphanumeric characters"
-                maxLength={8}
-                {...register("userId")}
-              />
+              <div className="relative">
+                <Input
+                  id="userId"
+                  placeholder="Max 8 alphanumeric characters"
+                  maxLength={8}
+                  {...register("userId", {
+                    onChange: () => trigger("userId"),
+                  })}
+                />
+                {isCheckingUserId && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  </div>
+                )}
+              </div>
               {errors.userId && (
                 <p className="text-sm text-destructive">{errors.userId.message}</p>
+              )}
+              {!errors.userId && userIdError && (
+                <p className="text-sm text-destructive">{userIdError}</p>
+              )}
+              {!errors.userId && !userIdError && userId && userId.length > 0 && !isCheckingUserId && (
+                <p className="text-sm text-green-600">User ID is available</p>
               )}
             </div>
 
