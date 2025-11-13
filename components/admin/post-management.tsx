@@ -25,6 +25,7 @@ import { Eye, MessageCircle, Trash2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import type { AdminPostListItem } from "@/lib/types";
+import { t } from "@/lib/constants";
 
 export function PostManagement() {
   const [posts, setPosts] = useState<AdminPostListItem[]>([]);
@@ -51,11 +52,11 @@ export function PostManagement() {
         setPosts(data.data || []);
         setPagination(data.pagination);
       } else {
-        toast.error("Failed to load posts");
+        toast.error(t("FAILED_TO_LOAD_POSTS"));
       }
     } catch (error) {
       console.error("Failed to fetch posts:", error);
-      toast.error("Failed to load posts");
+      toast.error(t("FAILED_TO_LOAD_POSTS"));
     } finally {
       setIsLoading(false);
     }
@@ -70,14 +71,14 @@ export function PostManagement() {
       });
 
       if (response.ok) {
-        toast.success("Post deleted successfully");
+        toast.success(t("POST_DELETED_SUCCESS"));
         fetchPosts();
       } else {
-        toast.error("Failed to delete post");
+        toast.error(t("FAILED_TO_DELETE_POST"));
       }
     } catch (error) {
       console.error("Failed to delete post:", error);
-      toast.error("Failed to delete post");
+      toast.error(t("FAILED_TO_DELETE_POST"));
     } finally {
       setDeletePostId(null);
     }
@@ -94,7 +95,7 @@ export function PostManagement() {
   if (isLoading) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Loading posts...</p>
+        <p className="text-muted-foreground">{t("LOADING_POSTS")}</p>
       </div>
     );
   }
@@ -102,9 +103,9 @@ export function PostManagement() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Posts Management</h2>
+        <h2 className="text-2xl font-bold">{t("POSTS_MANAGEMENT")}</h2>
         <p className="text-sm text-muted-foreground">
-          Total: {pagination.total} posts
+          {t("TOTAL")}: {pagination.total} {t("POSTS").toLowerCase()}
         </p>
       </div>
 
@@ -112,21 +113,21 @@ export function PostManagement() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Author</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-center">Views</TableHead>
-              <TableHead className="text-center">Likes</TableHead>
-              <TableHead className="text-center">Comments</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t("TITLE")}</TableHead>
+              <TableHead>{t("AUTHOR")}</TableHead>
+              <TableHead>{t("CATEGORY")}</TableHead>
+              <TableHead className="text-center">{t("VIEWS")}</TableHead>
+              <TableHead className="text-center">{t("LIKES")}</TableHead>
+              <TableHead className="text-center">{t("COMMENTS")}</TableHead>
+              <TableHead>{t("CREATED")}</TableHead>
+              <TableHead className="text-right">{t("ACTIONS")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {posts.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                  No posts found
+                  {t("NO_POSTS_FOUND")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -187,10 +188,10 @@ export function PostManagement() {
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
           >
-            Previous
+            {t("PREVIOUS")}
           </Button>
           <span className="text-sm text-muted-foreground">
-            Page {page} of {pagination.totalPages}
+            {t("PAGE")} {page} {t("OF")} {pagination.totalPages}
           </span>
           <Button
             variant="outline"
@@ -198,7 +199,7 @@ export function PostManagement() {
             onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
             disabled={page === pagination.totalPages}
           >
-            Next
+            {t("NEXT")}
           </Button>
         </div>
       )}
@@ -207,15 +208,15 @@ export function PostManagement() {
       <AlertDialog open={!!deletePostId} onOpenChange={() => setDeletePostId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t("ARE_YOU_SURE")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the post and all its comments.
+              {t("DELETE_POST_CONFIRMATION")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("CANCEL")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
+              {t("DELETE")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

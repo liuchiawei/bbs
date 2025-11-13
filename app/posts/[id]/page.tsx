@@ -25,16 +25,12 @@ import { PostDeleteButton } from "@/components/posts/post-delete-button";
 import { MessageCircle, Eye, Edit, X, Save } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { TRANSLATIONS, type Language } from "@/lib/constants";
-
-// TODO: Get language from user preferences or browser settings
-const lang: Language = 'en';
-const t = TRANSLATIONS[lang];
+import { t } from "@/lib/constants";
 
 const postSchema = z.object({
-  title: z.string().min(1, t.TITLE_REQUIRED),
-  content: z.string().min(1, t.CONTENT_REQUIRED),
-  categoryId: z.string().min(1, t.CATEGORY_REQUIRED),
+  title: z.string().min(1, t("TITLE_REQUIRED")),
+  content: z.string().min(1, t("CONTENT_REQUIRED")),
+  categoryId: z.string().min(1, t("CATEGORY_REQUIRED")),
   tags: z.string().optional(),
 });
 
@@ -183,7 +179,7 @@ export default function PostPage({
         });
       } catch (error) {
         console.error("Failed to fetch data:", error);
-        toast.error(t.FAILED_TO_LOAD_POST);
+        toast.error(t("FAILED_TO_LOAD_POST"));
       } finally {
         setIsLoading(false);
       }
@@ -193,7 +189,7 @@ export default function PostPage({
   }, [postId, router, reset]);
 
   const onSubmit = async (data: PostFormData) => {
-    const loadingToast = toast.loading(t.UPDATING_POST);
+    const loadingToast = toast.loading(t("UPDATING_POST"));
     try {
       const tags = data.tags
         ? data.tags
@@ -216,17 +212,17 @@ export default function PostPage({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || t.FAILED_TO_UPDATE_POST);
+        throw new Error(result.error || t("FAILED_TO_UPDATE_POST"));
       }
 
       toast.dismiss(loadingToast);
-      toast.success(t.POST_UPDATED_SUCCESS);
+      toast.success(t("POST_UPDATED_SUCCESS"));
       setPost(result.post);
       setIsEditing(false);
     } catch (error) {
       toast.dismiss(loadingToast);
       toast.error(
-        error instanceof Error ? error.message : t.FAILED_TO_UPDATE_POST
+        error instanceof Error ? error.message : t("FAILED_TO_UPDATE_POST")
       );
     }
   };
@@ -248,7 +244,7 @@ export default function PostPage({
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <Card>
           <CardContent className="p-12 text-center">
-            <p className="text-muted-foreground">{t.LOADING}</p>
+            <p className="text-muted-foreground">{t("LOADING")}</p>
           </CardContent>
         </Card>
       </div>
@@ -304,7 +300,7 @@ export default function PostPage({
                             <Edit className="size-4" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{t.EDIT}</TooltipContent>
+                        <TooltipContent>{t("EDIT")}</TooltipContent>
                       </Tooltip>
                       <PostDeleteButton postId={post.id} />
                     </>
@@ -320,7 +316,7 @@ export default function PostPage({
                             <Save className="size-4" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{t.SAVE}</TooltipContent>
+                        <TooltipContent>{t("SAVE")}</TooltipContent>
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -332,7 +328,7 @@ export default function PostPage({
                             <X className="size-4" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{t.CANCEL}</TooltipContent>
+                        <TooltipContent>{t("CANCEL")}</TooltipContent>
                       </Tooltip>
                     </>
                   )}
@@ -344,7 +340,7 @@ export default function PostPage({
           {isEditing ? (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="title">{t.TITLE}</Label>
+                <Label htmlFor="title">{t("TITLE")}</Label>
                 <Input id="title" {...register("title")} />
                 {errors.title && (
                   <p className="text-sm text-destructive">
@@ -354,13 +350,13 @@ export default function PostPage({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="categoryId">{t.CATEGORY}</Label>
+                <Label htmlFor="categoryId">{t("CATEGORY")}</Label>
                 <select
                   id="categoryId"
                   {...register("categoryId")}
                   className="w-full px-3 py-2 border rounded-md bg-background"
                 >
-                  <option value="">{t.SELECT_CATEGORY}</option>
+                  <option value="">{t("SELECT_CATEGORY")}</option>
                   {categories.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
@@ -375,7 +371,7 @@ export default function PostPage({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="tags">{t.TAGS_COMMA_SEPARATED}</Label>
+                <Label htmlFor="tags">{t("TAGS_COMMA_SEPARATED")}</Label>
                 <Input
                   id="tags"
                   {...register("tags")}
@@ -403,7 +399,7 @@ export default function PostPage({
         <CardContent className="space-y-6">
           {isEditing ? (
             <div className="space-y-2">
-              <Label htmlFor="content">{t.CONTENT}</Label>
+              <Label htmlFor="content">{t("CONTENT")}</Label>
               <Textarea
                 id="content"
                 {...register("content")}
@@ -429,7 +425,7 @@ export default function PostPage({
               <div className="flex items-center gap-6 text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Eye className="h-5 w-5" />
-                  <span>{post.views} {t.VIEWS}</span>
+                  <span>{post.views} {t("VIEWS")}</span>
                 </div>
                 <PostLikeButton
                   postId={post.id}
@@ -439,14 +435,14 @@ export default function PostPage({
                 />
                 <div className="flex items-center gap-2">
                   <MessageCircle className="h-5 w-5" />
-                  <span>{post._count.comments} {t.COMMENTS.toLowerCase()}</span>
+                  <span>{post._count.comments} {t("COMMENTS").toLowerCase()}</span>
                 </div>
               </div>
 
               <Separator />
 
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold">{t.COMMENTS}</h2>
+                <h2 className="text-2xl font-bold">{t("COMMENTS")}</h2>
 
                 {session ? (
                   <CommentForm postId={post.id} />
@@ -457,9 +453,9 @@ export default function PostPage({
                         href="/login"
                         className="text-primary hover:underline"
                       >
-                        {t.LOGIN}
+                        {t("LOGIN")}
                       </Link>{" "}
-                      {t.LOGIN_TO_COMMENT}
+                      {t("LOGIN_TO_COMMENT")}
                     </p>
                   </div>
                 )}
@@ -467,7 +463,7 @@ export default function PostPage({
                 <div className="space-y-4">
                   {post.comments.length === 0 ? (
                     <p className="text-center text-muted-foreground py-8">
-                      {t.NO_COMMENTS_BE_FIRST}
+                      {t("NO_COMMENTS_BE_FIRST")}
                     </p>
                   ) : (
                     post.comments.map((comment) => (

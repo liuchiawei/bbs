@@ -13,7 +13,7 @@ import { AvatarUpload } from "./avatar-upload";
 import { toast } from "sonner";
 import { motion } from "motion/react";
 import type { User } from "@/lib/types";
-import { TRANSLATIONS, type Language } from "@/lib/constants";
+import { t } from "@/lib/constants";
 
 const editProfileSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -31,9 +31,6 @@ export function EditProfileForm({ user }: EditProfileFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(user.avatar);
-  // TODO: Get language from user preferences or browser settings
-  const lang: Language = 'en';
-  const t = TRANSLATIONS[lang];
 
   const {
     register,
@@ -65,13 +62,13 @@ export function EditProfileForm({ user }: EditProfileFormProps) {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || t.ERROR_GENERIC);
+        throw new Error(result.error || t("ERROR_GENERIC"));
       }
 
-      toast.success(t.SUCCESS_UPDATED);
+      toast.success(t("SUCCESS_UPDATED"));
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t.ERROR_GENERIC);
+      toast.error(error instanceof Error ? error.message : t("ERROR_GENERIC"));
     } finally {
       setIsLoading(false);
       redirect(`/users/${user.id}`);
@@ -86,7 +83,7 @@ export function EditProfileForm({ user }: EditProfileFormProps) {
     >
       <Card className="w-full max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>{`${t.EDIT} ${t.PROFILE}`}</CardTitle>
+          <CardTitle>{`${t("EDIT")} ${t("PROFILE")}`}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <AvatarUpload
@@ -97,7 +94,7 @@ export function EditProfileForm({ user }: EditProfileFormProps) {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t("NAME_LABEL")}</Label>
               <Input id="name" {...register("name")} />
               {errors.name && (
                 <p className="text-sm text-destructive">{errors.name.message}</p>
@@ -105,31 +102,31 @@ export function EditProfileForm({ user }: EditProfileFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">{t.EMAIL} (cannot be changed)</Label>
+              <Label htmlFor="email">{t("EMAIL")} ({t("CANNOT_BE_CHANGED")})</Label>
               <Input id="email" value={user.email} disabled />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="gender">Gender</Label>
+              <Label htmlFor="gender">{t("GENDER")}</Label>
               <select
                 id="gender"
                 {...register("gender")}
                 className="w-full px-3 py-2 border rounded-md bg-background"
               >
-                <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
+                <option value="">{t("SELECT_GENDER")}</option>
+                <option value="male">{t("MALE")}</option>
+                <option value="female">{t("FEMALE")}</option>
+                <option value="other">{t("OTHER")}</option>
               </select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="birthDate">Birth Date</Label>
+              <Label htmlFor="birthDate">{t("BIRTH_DATE_OPTIONAL")}</Label>
               <Input id="birthDate" type="date" {...register("birthDate")} />
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? t.LOADING : `${t.EDIT} ${t.PROFILE}`}
+              {isLoading ? t("LOADING") : `${t("EDIT")} ${t("PROFILE")}`}
             </Button>
           </form>
         </CardContent>

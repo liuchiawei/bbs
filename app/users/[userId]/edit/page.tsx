@@ -2,17 +2,13 @@ import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { getUserProfile } from "@/lib/services/users";
 import { EditProfileForm } from "@/components/profile/edit-profile-form";
-import { TRANSLATIONS, type Language } from "@/lib/constants";
+import { t } from "@/lib/constants";
 
 export default async function EditUserPage({
   params,
 }: {
   params: Promise<{ userId: string }>;
 }) {
-  // TODO: Get language from user preferences or browser settings
-  const lang: Language = 'en';
-  const t = TRANSLATIONS[lang];
-
   const session = await getSession();
 
   if (!session) {
@@ -33,7 +29,7 @@ export default async function EditUserPage({
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold mb-8 text-center">{t.EDIT_PROFILE}</h1>
+      <h1 className="text-3xl font-bold mb-8 text-center">{t("EDIT_PROFILE")}</h1>
       <EditProfileForm
         user={{
           ...user,

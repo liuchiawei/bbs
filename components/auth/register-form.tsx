@@ -23,7 +23,7 @@ import {
   USER_ID_REGEX,
   USER_ID_MAX_LENGTH,
 } from "@/lib/validations";
-import { TRANSLATIONS, type Language } from "@/lib/constants";
+import { t } from "@/lib/constants";
 
 // Extend base schema with client-only field
 const registerSchema = baseRegisterSchema
@@ -31,7 +31,7 @@ const registerSchema = baseRegisterSchema
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
+    message: t("PASSWORDS_DO_NOT_MATCH"),
     path: ["confirmPassword"],
   });
 
@@ -43,9 +43,6 @@ export function RegisterForm() {
   const [isCheckingUserId, setIsCheckingUserId] = useState(false);
   const [userIdError, setUserIdError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  // TODO: Get language from user preferences or browser settings
-  const lang: Language = 'en';
-  const t = TRANSLATIONS[lang];
 
   const {
     register,
@@ -94,7 +91,7 @@ export function RegisterForm() {
         const data = await response.json();
 
         if (response.ok && !data.available) {
-          setUserIdError("This User ID is already taken");
+          setUserIdError(t("USER_ID_TAKEN"));
         }
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
@@ -137,16 +134,16 @@ export function RegisterForm() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || t.ERROR_GENERIC);
+        throw new Error(result.error || t("ERROR_GENERIC"));
       }
 
-      toast.success(t.SUCCESS_CREATED);
+      toast.success(t("SUCCESS_CREATED"));
       setTimeout(() => {
         router.push("/");
       }, 100);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : t.ERROR_GENERIC
+        error instanceof Error ? error.message : t("ERROR_GENERIC")
       );
     } finally {
       setIsLoading(false);
@@ -162,7 +159,7 @@ export function RegisterForm() {
       return { type: "error", message: userIdError };
     }
     if (userId && userId.length > 0 && !isCheckingUserId) {
-      return { type: "success", message: "User ID is available" };
+      return { type: "success", message: t("USER_ID_AVAILABLE") };
     }
     return null;
   })();
@@ -175,17 +172,17 @@ export function RegisterForm() {
     >
       <Card className="w-full max-w-md mx-auto">
         <CardHeader>
-          <CardTitle>Create an account</CardTitle>
-          <CardDescription>Enter your details to register</CardDescription>
+          <CardTitle>{t("CREATE_ACCOUNT")}</CardTitle>
+          <CardDescription>{t("ENTER_DETAILS_TO_REGISTER")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="userId">{t.USERNAME}</Label>
+              <Label htmlFor="userId">{t("USERNAME")}</Label>
               <div className="relative">
                 <Input
                   id="userId"
-                  placeholder="Max 12 alphanumeric characters"
+                  placeholder={t("USERNAME_PLACEHOLDER")}
                   maxLength={USER_ID_MAX_LENGTH}
                   {...register("userId")}
                 />
@@ -206,7 +203,7 @@ export function RegisterForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t("NAME_LABEL")}</Label>
               <Input id="name" {...register("name")} />
               {errors.name && (
                 <p className="text-sm text-destructive">
@@ -216,7 +213,7 @@ export function RegisterForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="nickname">Nickname (Optional)</Label>
+              <Label htmlFor="nickname">{t("NICKNAME_LABEL")}</Label>
               <Input id="nickname" {...register("nickname")} />
               {errors.nickname && (
                 <p className="text-sm text-destructive">
@@ -226,7 +223,7 @@ export function RegisterForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">{t.EMAIL}</Label>
+              <Label htmlFor="email">{t("EMAIL")}</Label>
               <Input id="email" type="email" {...register("email")} />
               {errors.email && (
                 <p className="text-sm text-destructive">
@@ -236,7 +233,7 @@ export function RegisterForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">{t.PASSWORD}</Label>
+              <Label htmlFor="password">{t("PASSWORD")}</Label>
               <Input id="password" type="password" {...register("password")} />
               {errors.password && (
                 <p className="text-sm text-destructive">
@@ -246,7 +243,7 @@ export function RegisterForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">{t("CONFIRM_PASSWORD")}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -260,26 +257,26 @@ export function RegisterForm() {
             </div>
 
             <div className="space-y-2">
-              <Label>Gender (Optional)</Label>
+              <Label>{t("GENDER_OPTIONAL")}</Label>
               <Tabs
                 value={gender || ""}
                 onValueChange={(value) => setValue("gender", value)}
               >
                 <TabsList className="w-full grid grid-cols-3">
-                  <TabsTrigger value="male">Male</TabsTrigger>
-                  <TabsTrigger value="female">Female</TabsTrigger>
-                  <TabsTrigger value="other">Other</TabsTrigger>
+                  <TabsTrigger value="male">{t("MALE")}</TabsTrigger>
+                  <TabsTrigger value="female">{t("FEMALE")}</TabsTrigger>
+                  <TabsTrigger value="other">{t("OTHER")}</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="birthDate">Birth Date (Optional)</Label>
+              <Label htmlFor="birthDate">{t("BIRTH_DATE_OPTIONAL")}</Label>
               <Input id="birthDate" type="date" {...register("birthDate")} />
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? t.LOADING : t.REGISTER}
+              {isLoading ? t("LOADING") : t("REGISTER")}
             </Button>
           </form>
         </CardContent>

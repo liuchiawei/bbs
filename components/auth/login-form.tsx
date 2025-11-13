@@ -12,16 +12,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import { loginSchema } from "@/lib/validations";
-import { TRANSLATIONS, type Language } from "@/lib/constants";
+import { t } from "@/lib/constants";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  // TODO: Get language from user preferences or browser settings
-  const lang: Language = 'en';
-  const t = TRANSLATIONS[lang];
 
   const {
     register,
@@ -43,14 +40,14 @@ export function LoginForm() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || t.ERROR_GENERIC);
+        throw new Error(result.error || t("ERROR_GENERIC"));
       }
 
-      toast.success(t.SUCCESS_SAVED);
+      toast.success(t("SUCCESS_SAVED"));
       router.push("/");
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t.ERROR_GENERIC);
+      toast.error(error instanceof Error ? error.message : t("ERROR_GENERIC"));
     } finally {
       setIsLoading(false);
     }
@@ -70,7 +67,7 @@ export function LoginForm() {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="userId">{t.USERNAME}</Label>
+              <Label htmlFor="userId">{t("USERNAME")}</Label>
               <Input
                 id="userId"
                 disabled={isLoading}
@@ -82,7 +79,7 @@ export function LoginForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">{t.PASSWORD}</Label>
+              <Label htmlFor="password">{t("PASSWORD")}</Label>
               <Input
                 id="password"
                 type="password"
@@ -95,7 +92,7 @@ export function LoginForm() {
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? t.LOADING : t.LOGIN}
+              {isLoading ? t("LOADING") : t("LOGIN")}
             </Button>
           </form>
         </CardContent>

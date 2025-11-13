@@ -66,12 +66,42 @@ export const TRANSLATIONS = {
     SHARE: "Share",
     SEE_MORE: "See more",
 
+    // Admin Management
+    POSTS_MANAGEMENT: "Posts Management",
+    USERS_MANAGEMENT: "Users Management",
+    CATEGORIES_MANAGEMENT: "Categories Management",
+    TOTAL: "Total",
+    AUTHOR: "Author",
+    CREATED: "Created",
+    ACTIONS: "Actions",
+    NO_POSTS_FOUND: "No posts found",
+    FAILED_TO_LOAD_POSTS: "Failed to load posts",
+    POST_DELETED_SUCCESS: "Post deleted successfully",
+    FAILED_TO_DELETE_POST: "Failed to delete post",
+    PREVIOUS: "Previous",
+    NEXT: "Next",
+    PAGE: "Page",
+    OF: "of",
+    ARE_YOU_SURE: "Are you sure?",
+    DELETE_POST_CONFIRMATION: "This action cannot be undone. This will permanently delete the post and all its comments.",
+
     // Error messages
     ERROR_GENERIC: "Something went wrong. Please try again.",
     ERROR_UNAUTHORIZED: "You are not authorized to perform this action.",
     ERROR_NOT_FOUND: "The requested resource was not found.",
     ERROR_INVALID_INPUT: "Invalid input. Please check your data.",
     ERROR_NETWORK: "Network error. Please check your connection.",
+
+    // Loading messages
+    LOADING_POSTS: "Loading posts...",
+    LOADING_COMMENTS: "Loading comments...",
+    LOADING_USERS: "Loading users...",
+    LOADING_CATEGORIES: "Loading categories...",
+    LOADING_PROFILE: "Loading profile...",
+    LOADING_ADMIN_DASHBOARD: "Loading admin dashboard...",
+    LOADING_ADMIN_CATEGORIES: "Loading admin categories...",
+    LOADING_ADMIN_POSTS: "Loading admin posts...",
+    LOADING_ADMIN_USERS: "Loading admin users...",
 
     // Success messages
     SUCCESS_SAVED: "Successfully saved!",
@@ -99,6 +129,24 @@ export const TRANSLATIONS = {
     ALREADY_HAVE_ACCOUNT: "Already have an account?",
     DONT_HAVE_ACCOUNT: "Don't have an account?",
 
+    // Register Form
+    CREATE_ACCOUNT: "Create an account",
+    ENTER_DETAILS_TO_REGISTER: "Enter your details to register",
+    USERNAME_PLACEHOLDER: "Max 12 alphanumeric characters",
+    USER_ID_TAKEN: "This User ID is already taken",
+    USER_ID_AVAILABLE: "User ID is available",
+    NAME_LABEL: "Name",
+    NICKNAME_LABEL: "Nickname (Optional)",
+    CONFIRM_PASSWORD: "Confirm Password",
+    PASSWORDS_DO_NOT_MATCH: "Passwords do not match",
+    GENDER_OPTIONAL: "Gender (Optional)",
+    MALE: "Male",
+    FEMALE: "Female",
+    OTHER: "Other",
+    BIRTH_DATE_OPTIONAL: "Birth Date (Optional)",
+    CANNOT_BE_CHANGED: "Cannot be changed",
+    SELECT_GENDER: "Select gender",
+
     // Post
     POST: "Post",
     POSTS: "Posts",
@@ -106,9 +154,10 @@ export const TRANSLATIONS = {
     TITLE: "Title",
     CONTENT: "Content",
     TAGS: "Tags",
+    TAGS_COMMA_SEPARATED: "Tags (comma separated)",
+    TAGS_PLACEHOLDER: "e.g. training, match, diet",
     CATEGORY: "Category",
     SELECT_CATEGORY: "Select category",
-    TAGS_COMMA_SEPARATED: "Tags (comma separated)",
     VIEWS: "views",
     UPDATING_POST: "Updating post...",
     POST_UPDATED_SUCCESS: "Post updated successfully!",
@@ -157,6 +206,15 @@ export const TRANSLATIONS = {
     NO_LIKED_POSTS: "No liked posts yet",
     NO_LIKED_COMMENTS: "No liked comments yet",
     ON: "on",
+    // Avatar Upload
+    AVATAR_UPLOAD: "Upload Avatar",
+    AVATAR_UPLOAD_DESCRIPTION: "Upload your avatar image",
+    AVATAR_UPLOAD_SUCCESS: "Avatar uploaded successfully!",
+    AVATAR_UPLOAD_ERROR: "Failed to upload avatar",
+    AVATAR_UPLOAD_SIZE_ERROR: "File size must be less than 5MB",
+    AVATAR_UPLOAD_TYPE_ERROR: "Please select an image file",
+    AVATAR_CHANGE: "Change Avatar",
+    AVATAR_UPLOADING: "Uploading...",
   },
 
   ja: {
@@ -185,12 +243,42 @@ export const TRANSLATIONS = {
     SHARE: "共有",
     SEE_MORE: "もっと見る",
 
+    // Admin Management
+    POSTS_MANAGEMENT: "投稿管理",
+    USERS_MANAGEMENT: "ユーザー管理",
+    CATEGORIES_MANAGEMENT: "カテゴリー管理",
+    TOTAL: "合計",
+    AUTHOR: "投稿者",
+    CREATED: "作成日",
+    ACTIONS: "操作",
+    NO_POSTS_FOUND: "投稿が見つかりません",
+    FAILED_TO_LOAD_POSTS: "投稿の読み込みに失敗しました",
+    POST_DELETED_SUCCESS: "投稿を削除しました",
+    FAILED_TO_DELETE_POST: "投稿の削除に失敗しました",
+    PREVIOUS: "前へ",
+    NEXT: "次へ",
+    PAGE: "ページ",
+    OF: "/",
+    ARE_YOU_SURE: "本当によろしいですか？",
+    DELETE_POST_CONFIRMATION: "この操作は取り消せません。投稿とすべてのコメントが完全に削除されます。",
+
     // Error messages
     ERROR_GENERIC: "エラーが発生しました。もう一度お試しください。",
     ERROR_UNAUTHORIZED: "この操作を実行する権限がありません。",
     ERROR_NOT_FOUND: "リクエストされたリソースが見つかりませんでした。",
     ERROR_INVALID_INPUT: "入力が無効です。データを確認してください。",
     ERROR_NETWORK: "ネットワークエラーです。接続を確認してください。",
+
+    // Loading messages
+    LOADING_POSTS: "投稿を読み込み中...",
+    LOADING_COMMENTS: "コメントを読み込み中...",
+    LOADING_USERS: "ユーザーを読み込み中...",
+    LOADING_CATEGORIES: "カテゴリーを読み込み中...",
+    LOADING_PROFILE: "プロフィールを読み込み中...",
+    LOADING_ADMIN_DASHBOARD: "管理者ダッシュボードを読み込み中...",
+    LOADING_ADMIN_CATEGORIES: "管理者カテゴリーを読み込み中...",
+    LOADING_ADMIN_POSTS: "管理者投稿を読み込み中...",
+    LOADING_ADMIN_USERS: "管理者ユーザーを読み込み中...",
 
     // Success messages
     SUCCESS_SAVED: "保存しました！",
@@ -218,6 +306,24 @@ export const TRANSLATIONS = {
     ALREADY_HAVE_ACCOUNT: "すでにアカウントをお持ちですか？",
     DONT_HAVE_ACCOUNT: "アカウントをお持ちでないですか？",
 
+    // Register Form
+    CREATE_ACCOUNT: "アカウントを作成",
+    ENTER_DETAILS_TO_REGISTER: "登録情報を入力してください",
+    USERNAME_PLACEHOLDER: "最大12文字の英数字",
+    USER_ID_TAKEN: "このユーザーIDは既に使用されています",
+    USER_ID_AVAILABLE: "ユーザーIDは利用可能です",
+    NAME_LABEL: "名前",
+    NICKNAME_LABEL: "ニックネーム（任意）",
+    CONFIRM_PASSWORD: "パスワード確認",
+    PASSWORDS_DO_NOT_MATCH: "パスワードが一致しません",
+    GENDER_OPTIONAL: "性別（任意）",
+    MALE: "男性",
+    FEMALE: "女性",
+    OTHER: "その他",
+    BIRTH_DATE_OPTIONAL: "生年月日（任意）",
+    CANNOT_BE_CHANGED: "変更できません",
+    SELECT_GENDER: "性別を選択",
+
     // Post
     POST: "投稿",
     POSTS: "投稿一覧",
@@ -225,9 +331,10 @@ export const TRANSLATIONS = {
     TITLE: "タイトル",
     CONTENT: "内容",
     TAGS: "タグ",
+    TAGS_COMMA_SEPARATED: "タグ（カンマ区切り）",
+    TAGS_PLACEHOLDER: "例：トレーニング、試合、ダイエット",
     CATEGORY: "カテゴリー",
     SELECT_CATEGORY: "カテゴリーを選択",
-    TAGS_COMMA_SEPARATED: "タグ（カンマ区切り）",
     VIEWS: "閲覧",
     UPDATING_POST: "投稿を更新中...",
     POST_UPDATED_SUCCESS: "投稿を更新しました！",
@@ -277,6 +384,15 @@ export const TRANSLATIONS = {
     NO_LIKED_POSTS: "まだいいねした投稿がありません",
     NO_LIKED_COMMENTS: "まだいいねしたコメントがありません",
     ON: "の",
+    // Avatar Upload
+    AVATAR_UPLOAD: "アバターをアップロード",
+    AVATAR_UPLOAD_DESCRIPTION: "アバター画像をアップロード",
+    AVATAR_UPLOAD_SUCCESS: "アバターをアップロードしました！",
+    AVATAR_UPLOAD_ERROR: "アバターのアップロードに失敗しました",
+    AVATAR_UPLOAD_SIZE_ERROR: "ファイルサイズは5MB以下にしてください",
+    AVATAR_UPLOAD_TYPE_ERROR: "画像ファイルを選択してください",
+    AVATAR_CHANGE: "アバターを変更",
+    AVATAR_UPLOADING: "アップロード中...",
   },
 
   cn: {
@@ -305,12 +421,42 @@ export const TRANSLATIONS = {
     SHARE: "分享",
     SEE_MORE: "查看更多",
 
+    // Admin Management
+    POSTS_MANAGEMENT: "帖子管理",
+    USERS_MANAGEMENT: "用户管理",
+    CATEGORIES_MANAGEMENT: "分类管理",
+    TOTAL: "总计",
+    AUTHOR: "作者",
+    CREATED: "创建时间",
+    ACTIONS: "操作",
+    NO_POSTS_FOUND: "未找到帖子",
+    FAILED_TO_LOAD_POSTS: "加载帖子失败",
+    POST_DELETED_SUCCESS: "帖子删除成功",
+    FAILED_TO_DELETE_POST: "删除帖子失败",
+    PREVIOUS: "上一页",
+    NEXT: "下一页",
+    PAGE: "第",
+    OF: "页，共",
+    ARE_YOU_SURE: "您确定吗？",
+    DELETE_POST_CONFIRMATION: "此操作无法撤消。这将永久删除帖子及其所有评论。",
+
     // Error messages
     ERROR_GENERIC: "出错了，请重试。",
     ERROR_UNAUTHORIZED: "您没有权限执行此操作。",
     ERROR_NOT_FOUND: "未找到请求的资源。",
     ERROR_INVALID_INPUT: "输入无效，请检查您的数据。",
     ERROR_NETWORK: "网络错误，请检查您的连接。",
+
+    // Loading messages
+    LOADING_POSTS: "帖子加载中...",
+    LOADING_COMMENTS: "评论加载中...",
+    LOADING_USERS: "用户加载中...",
+    LOADING_CATEGORIES: "分类加载中...",
+    LOADING_PROFILE: "个人资料加载中...",
+    LOADING_ADMIN_DASHBOARD: "管理员控制台加载中...",
+    LOADING_ADMIN_CATEGORIES: "管理员分类加载中...",
+    LOADING_ADMIN_POSTS: "管理员帖子加载中...",
+    LOADING_ADMIN_USERS: "管理员用户加载中...",
 
     // Success messages
     SUCCESS_SAVED: "保存成功！",
@@ -338,6 +484,24 @@ export const TRANSLATIONS = {
     ALREADY_HAVE_ACCOUNT: "已有账号？",
     DONT_HAVE_ACCOUNT: "还没有账号？",
 
+    // Register Form
+    CREATE_ACCOUNT: "创建账号",
+    CANNOT_BE_CHANGED: "无法更改",
+    ENTER_DETAILS_TO_REGISTER: "输入您的详细信息以注册",
+    USERNAME_PLACEHOLDER: "最多12个字母数字字符",
+    USER_ID_TAKEN: "此用户ID已被占用",
+    USER_ID_AVAILABLE: "用户ID可用",
+    NAME_LABEL: "姓名",
+    NICKNAME_LABEL: "昵称（可选）",
+    CONFIRM_PASSWORD: "确认密码",
+    PASSWORDS_DO_NOT_MATCH: "密码不匹配",
+    GENDER_OPTIONAL: "性别（可选）",
+    SELECT_GENDER: "选择性别",
+    MALE: "男",
+    FEMALE: "女",
+    OTHER: "其他",
+    BIRTH_DATE_OPTIONAL: "出生日期（可选）",
+
     // Post
     POST: "帖子",
     POSTS: "帖子列表",
@@ -345,9 +509,10 @@ export const TRANSLATIONS = {
     TITLE: "标题",
     CONTENT: "内容",
     TAGS: "标签",
+    TAGS_COMMA_SEPARATED: "标签（逗号分隔）",
+    TAGS_PLACEHOLDER: "例：训练、比赛、饮食",
     CATEGORY: "分类",
     SELECT_CATEGORY: "选择分类",
-    TAGS_COMMA_SEPARATED: "标签（逗号分隔）",
     VIEWS: "浏览",
     UPDATING_POST: "更新帖子中...",
     POST_UPDATED_SUCCESS: "帖子更新成功！",
@@ -396,15 +561,21 @@ export const TRANSLATIONS = {
     NO_LIKED_POSTS: "还没有点赞的帖子",
     NO_LIKED_COMMENTS: "还没有点赞的评论",
     ON: "在",
+    // Avatar Upload
+    AVATAR_UPLOAD: "上传头像",
+    AVATAR_UPLOAD_DESCRIPTION: "上传您的头像图片",
+    AVATAR_UPLOAD_SUCCESS: "头像上传成功！",
+    AVATAR_UPLOAD_ERROR: "头像上传失败",
+    AVATAR_UPLOAD_SIZE_ERROR: "文件大小必须小于5MB",
+    AVATAR_UPLOAD_TYPE_ERROR: "请选择一个图片文件",
+    AVATAR_CHANGE: "更改头像",
+    AVATAR_UPLOADING: "上传中...",
   },
 } as const;
 
-// Helper function to get translated text
-export const t = (
-  key: keyof typeof TRANSLATIONS.en,
-  lang: Language = "en"
-): string => {
-  return TRANSLATIONS[lang][key] as string;
+// Helper function to get translated text, default to Japanese if no language is provided
+export const t = (key: keyof typeof TRANSLATIONS.en, lang?: Language | null): string => {
+  return TRANSLATIONS[lang ?? "ja"][key] ?? key;
 };
 
 export type PostCategory = (typeof APP_CONSTANTS.POST_CATEGORIES)[number];

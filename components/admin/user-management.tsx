@@ -17,7 +17,7 @@ import { ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import type { AdminUserListItem } from "@/lib/types";
-import { TRANSLATIONS, type Language } from "@/lib/constants";
+import { t } from "@/lib/constants";
 
 export function UserManagement() {
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
@@ -29,9 +29,6 @@ export function UserManagement() {
     total: 0,
     totalPages: 0,
   });
-  // TODO: Get language from user preferences or browser settings
-  const lang: Language = 'en';
-  const t = TRANSLATIONS[lang];
 
   useEffect(() => {
     fetchUsers();
@@ -46,11 +43,11 @@ export function UserManagement() {
         setUsers(data.data || []);
         setPagination(data.pagination);
       } else {
-        toast.error(t.ERROR_GENERIC);
+        toast.error(t("ERROR_GENERIC"));
       }
     } catch (error) {
       console.error("Failed to fetch users:", error);
-      toast.error(t.ERROR_GENERIC);
+      toast.error(t("ERROR_GENERIC"));
     } finally {
       setIsLoading(false);
     }
@@ -64,15 +61,15 @@ export function UserManagement() {
       });
 
       if (response.ok) {
-        toast.success(user.isBanned ? t.SUCCESS_UPDATED : t.SUCCESS_UPDATED);
+        toast.success(user.isBanned ? t("SUCCESS_UPDATED") : t("SUCCESS_UPDATED"));
         fetchUsers();
       } else {
         const data = await response.json();
-        toast.error(data.error || t.ERROR_GENERIC);
+        toast.error(data.error || t("ERROR_GENERIC"));
       }
     } catch (error) {
       console.error("Failed to toggle ban:", error);
-      toast.error(t.ERROR_GENERIC);
+      toast.error(t("ERROR_GENERIC"));
     }
   };
 
@@ -87,7 +84,7 @@ export function UserManagement() {
   if (isLoading) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">{t.LOADING}</p>
+        <p className="text-muted-foreground">{t("LOADING")}</p>
       </div>
     );
   }
