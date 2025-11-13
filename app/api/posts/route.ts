@@ -9,17 +9,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
-    const categorySlug = searchParams.get("category");
     const userId = searchParams.get("userId");
 
     const skip = (page - 1) * limit;
 
     const where: any = {};
-    if (categorySlug) {
-      where.category = {
-        slug: categorySlug,
-      };
-    }
     if (userId) where.userId = userId;
 
     const [posts, total] = await Promise.all([
@@ -65,7 +59,6 @@ export async function POST(request: NextRequest) {
       data: {
         title: validatedData.title,
         content: validatedData.content,
-        categoryId: validatedData.categoryId,
         tags: validatedData.tags,
         userId: session.userId,
       },

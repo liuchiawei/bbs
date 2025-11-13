@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,31 +24,22 @@ import { CommentItem } from "@/components/comments/comment-item";
 import { PostLikeButton } from "@/components/posts/post-like-button";
 import { PostDeleteButton } from "@/components/posts/post-delete-button";
 import { MessageCircle, Eye, Edit, X, Save } from "lucide-react";
-import Link from "next/link";
 import { toast } from "sonner";
 import { t } from "@/lib/constants";
 
-const postSchema = z.object({
-  title: z.string().min(1, t("TITLE_REQUIRED")),
-  content: z.string().min(1, t("CONTENT_REQUIRED")),
-  categoryId: z.string().min(1, t("CATEGORY_REQUIRED")),
+// フォーム用のスキーマ（tagsは文字列として扱う）
+const postFormSchema = z.object({
+  title: z.string().min(1, t("ALERT_TITLE_REQUIRED")),
+  content: z.string().min(1, t("ALERT_CONTENT_REQUIRED")),
   tags: z.string().optional(),
 });
 
-type PostFormData = z.infer<typeof postSchema>;
-
-interface Category {
-  id: string;
-  slug: string;
-  name: string;
-}
+type PostFormData = z.infer<typeof postFormSchema>;
 
 interface Post {
   id: string;
   title: string;
   content: string;
-  categoryId: string;
-  category: Category;
   tags: string[];
   views: number;
   likes: number;
@@ -83,7 +75,9 @@ interface Post {
 
 interface Session {
   id: string;
+  userId: string;
   name: string;
+  nickname?: string | null;
   email: string;
   gender: string | null;
   birthDate: string | null;
@@ -106,7 +100,6 @@ export default function PostPage({
   const [isLiked, setIsLiked] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [categories, setCategories] = useState<Category[]>([]);
 
   const {
     register,
@@ -114,7 +107,7 @@ export default function PostPage({
     reset,
     formState: { errors },
   } = useForm<PostFormData>({
-    resolver: zodResolver(postSchema),
+    resolver: zodResolver(postFormSchema),
   });
 
   useEffect(() => {
@@ -124,21 +117,6 @@ export default function PostPage({
     }
     init();
   }, [params]);
-
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const response = await fetch("/api/categories");
-        if (response.ok) {
-          const data = await response.json();
-          setCategories(data.data || []);
-        }
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-      }
-    }
-    fetchCategories();
-  }, []);
 
   useEffect(() => {
     if (!postId) return;
@@ -174,7 +152,6 @@ export default function PostPage({
         reset({
           title: postData.post.title,
           content: postData.post.content,
-          categoryId: postData.post.categoryId,
           tags: postData.post.tags.join(", "),
         });
       } catch (error) {
@@ -191,6 +168,7 @@ export default function PostPage({
   const onSubmit = async (data: PostFormData) => {
     const loadingToast = toast.loading(t("UPDATING_POST"));
     try {
+      // カンマ区切りの文字列を配列に変換
       const tags = data.tags
         ? data.tags
             .split(",")
@@ -204,8 +182,7 @@ export default function PostPage({
         body: JSON.stringify({
           title: data.title,
           content: data.content,
-          categoryId: data.categoryId,
-          tags,
+          tags: tags,
         }),
       });
 
@@ -232,7 +209,6 @@ export default function PostPage({
       reset({
         title: post.title,
         content: post.content,
-        categoryId: post.categoryId,
         tags: post.tags.join(", "),
       });
     }
@@ -285,7 +261,6 @@ export default function PostPage({
             </div>
 
             <div className="flex items-center gap-2">
-              {!isEditing && <Badge>{post.category.name}</Badge>}
               {isOwner && (
                 <>
                   {!isEditing ? (
@@ -350,27 +325,6 @@ export default function PostPage({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="categoryId">{t("CATEGORY")}</Label>
-                <select
-                  id="categoryId"
-                  {...register("categoryId")}
-                  className="w-full px-3 py-2 border rounded-md bg-background"
-                >
-                  <option value="">{t("SELECT_CATEGORY")}</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.categoryId && (
-                  <p className="text-sm text-destructive">
-                    {errors.categoryId.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="tags">{t("TAGS_COMMA_SEPARATED")}</Label>
                 <Input
                   id="tags"
@@ -425,7 +379,9 @@ export default function PostPage({
               <div className="flex items-center gap-6 text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Eye className="h-5 w-5" />
-                  <span>{post.views} {t("VIEWS")}</span>
+                  <span>
+                    {post.views} {t("VIEWS")}
+                  </span>
                 </div>
                 <PostLikeButton
                   postId={post.id}
@@ -435,7 +391,9 @@ export default function PostPage({
                 />
                 <div className="flex items-center gap-2">
                   <MessageCircle className="h-5 w-5" />
-                  <span>{post._count.comments} {t("COMMENTS").toLowerCase()}</span>
+                  <span>
+                    {post._count.comments} {t("COMMENTS").toLowerCase()}
+                  </span>
                 </div>
               </div>
 

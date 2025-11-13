@@ -16,15 +16,8 @@ export const userSelectBasic = {
   avatar: true,
 } satisfies Prisma.UserSelect;
 
-export const categorySelectBasic = {
-  id: true,
-  slug: true,
-  name: true,
-} satisfies Prisma.CategorySelect;
-
 export const postIncludeBasic = {
   user: { select: userSelectBasic },
-  category: { select: categorySelectBasic },
   _count: { select: { comments: true } },
 } satisfies Prisma.PostInclude;
 
@@ -65,10 +58,7 @@ export const registerSchema = z.object({
   email: z.string().email(t("ALERT_INVALID_EMAIL_ADDRESS")),
   password: z
     .string()
-    .min(
-      APP_CONSTANTS.USER_PASSWORD_MIN_LENGTH,
-      t("ALERT_PASSWORD_MIN_LENGTH")
-    )
+    .min(APP_CONSTANTS.USER_PASSWORD_MIN_LENGTH, t("ALERT_PASSWORD_MIN_LENGTH"))
     .max(
       APP_CONSTANTS.USER_PASSWORD_MAX_LENGTH,
       `Password must be ${APP_CONSTANTS.USER_PASSWORD_MAX_LENGTH} characters or less`
@@ -84,26 +74,59 @@ export const loginSchema = z.object({
 
 // User Schemas
 export const updateUserSchema = z.object({
-  name: z.string().min(APP_CONSTANTS.USER_NAME_MIN_LENGTH, `Name must be at least ${APP_CONSTANTS.USER_NAME_MIN_LENGTH} characters`).max(APP_CONSTANTS.USER_NAME_MAX_LENGTH, `Name must be ${APP_CONSTANTS.USER_NAME_MAX_LENGTH} characters or less`).optional(),
-  nickname: z.string().max(APP_CONSTANTS.USER_NICKNAME_MAX_LENGTH, `Nickname must be ${APP_CONSTANTS.USER_NICKNAME_MAX_LENGTH} characters or less`).optional(),
+  name: z
+    .string()
+    .min(
+      APP_CONSTANTS.USER_NAME_MIN_LENGTH,
+      `Name must be at least ${APP_CONSTANTS.USER_NAME_MIN_LENGTH} characters`
+    )
+    .max(
+      APP_CONSTANTS.USER_NAME_MAX_LENGTH,
+      `Name must be ${APP_CONSTANTS.USER_NAME_MAX_LENGTH} characters or less`
+    )
+    .optional(),
+  nickname: z
+    .string()
+    .max(
+      APP_CONSTANTS.USER_NICKNAME_MAX_LENGTH,
+      `Nickname must be ${APP_CONSTANTS.USER_NICKNAME_MAX_LENGTH} characters or less`
+    )
+    .optional(),
   gender: z.string().optional().nullable(),
   birthDate: z.string().optional().nullable(),
   avatar: z.string().optional().nullable(),
 });
 
 // Post Schemas
+// タグを文字列または配列として受け取り、配列に変換する
+const tagsSchema = z.preprocess((val) => {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    return val
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+  }
+  return [];
+}, z.array(z.string()));
+
+export const postSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  content: z.string().min(1, "Content is required"),
+  tags: z.string().optional(),
+});
+
 export const createPostSchema = z.object({
   title: z.string().min(1, t("ALERT_TITLE_REQUIRED")),
   content: z.string().min(1, t("ALERT_CONTENT_REQUIRED")),
-  categoryId: z.string().min(1, t("ALERT_CATEGORY_REQUIRED")),
-  tags: z.array(z.string()).optional().default([]),
+  tags: tagsSchema.optional().default([]),
 });
 
 export const updatePostSchema = z.object({
   title: z.string().min(1, t("ALERT_TITLE_REQUIRED")).optional(),
   content: z.string().min(1, t("ALERT_CONTENT_REQUIRED")).optional(),
-  categoryId: z.string().min(1, t("ALERT_CATEGORY_REQUIRED")).optional(),
-  tags: z.array(z.string()).optional(),
+  tags: tagsSchema.optional(),
 });
 
 // Comment Schemas
@@ -111,27 +134,4 @@ export const createCommentSchema = z.object({
   content: z.string().min(1, t("ALERT_CONTENT_REQUIRED")),
   postId: z.string(),
   parentId: z.string().optional(),
-});
-
-// Admin Category Schemas
-export const adminCreateCategorySchema = z.object({
-  slug: z
-    .string()
-    .min(1, t("ALERT_SLUG_REQUIRED"))
-    .regex(/^[a-z0-9-]+$/, t("ALERT_SLUG_MUST_BE_LOWERCASE_ALPHANUMERIC_WITH_HYPHENS")),
-  name: z.string().min(1, t("ALERT_NAME_REQUIRED")),
-  description: z.string().optional(),
-  displayOrder: z.number().int().min(0).optional(),
-});
-
-export const adminUpdateCategorySchema = z.object({
-  slug: z
-    .string()
-    .min(1, t("ALERT_SLUG_REQUIRED"))
-    .regex(/^[a-z0-9-]+$/, t("ALERT_SLUG_MUST_BE_LOWERCASE_ALPHANUMERIC_WITH_HYPHENS"))
-    .optional(),
-  name: z.string().min(1, t("ALERT_NAME_REQUIRED")).optional(),
-  description: z.string().optional().nullable(),
-  displayOrder: z.number().int().min(0).optional(),
-  isActive: z.boolean().optional(),
 });

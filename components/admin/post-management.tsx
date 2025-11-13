@@ -115,7 +115,6 @@ export function PostManagement() {
             <TableRow>
               <TableHead>{t("TITLE")}</TableHead>
               <TableHead>{t("AUTHOR")}</TableHead>
-              <TableHead>{t("CATEGORY")}</TableHead>
               <TableHead className="text-center">{t("VIEWS")}</TableHead>
               <TableHead className="text-center">{t("LIKES")}</TableHead>
               <TableHead className="text-center">{t("COMMENTS")}</TableHead>
@@ -137,9 +136,6 @@ export function PostManagement() {
                     {post.title}
                   </TableCell>
                   <TableCell>{post.user.name}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{post.category.name}</Badge>
-                  </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-1">
                       <Eye className="h-3 w-3" />

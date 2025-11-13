@@ -1,7 +1,6 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CategoryManagement } from "@/components/admin/category-management";
 import { PostManagement } from "@/components/admin/post-management";
 import { UserManagement } from "@/components/admin/user-management";
 
@@ -13,10 +12,6 @@ export function AdminTabs() {
         <TabsTrigger value="posts">Posts</TabsTrigger>
         <TabsTrigger value="users">Users</TabsTrigger>
       </TabsList>
-
-      <TabsContent value="categories" className="mt-8">
-        <CategoryManagement />
-      </TabsContent>
 
       <TabsContent value="posts" className="mt-8">
         <PostManagement />
