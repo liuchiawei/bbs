@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     const { password: _, ...userWithoutPassword } = user;
 
     return NextResponse.json({
-      message: "User registered successfully",
+      message: t("SUCCESS_REGISTERED"),
       user: userWithoutPassword,
     });
   } catch (error) {
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     console.error("Registration error:", error);
     return NextResponse.json(
-      { error: "Failed to register user" },
+      { error: t("ERROR_FAILED_TO_REGISTER") },
       { status: 500 }
     );
   }

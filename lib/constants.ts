@@ -128,6 +128,7 @@ export const TRANSLATIONS = {
     ERROR_NOT_FOUND: "The requested resource was not found.",
     ERROR_INVALID_INPUT: "Invalid input. Please check your data.",
     ERROR_NETWORK: "Network error. Please check your connection.",
+    ERROR_FAILED_TO_REGISTER: "Failed to register user. Please try again.",
 
     // Loading messages
     LOADING_POSTS: "Loading posts...",
@@ -145,6 +146,7 @@ export const TRANSLATIONS = {
     SUCCESS_DELETED: "Successfully deleted!",
     SUCCESS_UPDATED: "Successfully updated!",
     SUCCESS_CREATED: "Successfully created!",
+    SUCCESS_REGISTERED: "Successfully registered!",
 
     // Categories
     CATEGORY_GENERAL: "General",
@@ -340,6 +342,8 @@ export const TRANSLATIONS = {
     ERROR_NOT_FOUND: "リクエストされたリソースが見つかりませんでした。",
     ERROR_INVALID_INPUT: "入力が無効です。データを確認してください。",
     ERROR_NETWORK: "ネットワークエラーです。接続を確認してください。",
+    ERROR_FAILED_TO_REGISTER:
+      "ユーザーの登録に失敗しました。もう一度お試しください。",
 
     // Loading messages
     LOADING_POSTS: "投稿を読み込み中...",
@@ -357,6 +361,7 @@ export const TRANSLATIONS = {
     SUCCESS_DELETED: "削除しました！",
     SUCCESS_UPDATED: "更新しました！",
     SUCCESS_CREATED: "作成しました！",
+    SUCCESS_REGISTERED: "ユーザーを登録しました！",
 
     // Categories
     CATEGORY_GENERAL: "一般",
@@ -552,6 +557,7 @@ export const TRANSLATIONS = {
     ERROR_NOT_FOUND: "未找到请求的资源。",
     ERROR_INVALID_INPUT: "输入无效，请检查您的数据。",
     ERROR_NETWORK: "网络错误，请检查您的连接。",
+    ERROR_FAILED_TO_REGISTER: "注册失败，请重试。",
 
     // Loading messages
     LOADING_POSTS: "帖子加载中...",
@@ -569,6 +575,7 @@ export const TRANSLATIONS = {
     SUCCESS_DELETED: "删除成功！",
     SUCCESS_UPDATED: "更新成功！",
     SUCCESS_CREATED: "创建成功！",
+    SUCCESS_REGISTERED: "用户注册成功！",
 
     // Categories
     CATEGORY_GENERAL: "综合",
@@ -759,6 +766,7 @@ export const TRANSLATIONS = {
     ERROR_NOT_FOUND: "未找到請求的資源。",
     ERROR_INVALID_INPUT: "輸入無效。請檢查您的數據。",
     ERROR_NETWORK: "網絡錯誤。請檢查您的連接。",
+    ERROR_FAILED_TO_REGISTER: "註冊失敗。請再試一次。",
     // Loading messages
     LOADING_POSTS: "加載帖子中...",
     LOADING_COMMENTS: "加載評論中...",
@@ -770,10 +778,11 @@ export const TRANSLATIONS = {
     LOADING_ADMIN_POSTS: "加載管理員帖子中...",
     LOADING_ADMIN_USERS: "加載管理員用戶中...",
     // Success messages
-    SUCCESS_SAVED: "保存成功！",
+    SUCCESS_SAVED: "成功保存！",
     SUCCESS_DELETED: "刪除成功！",
     SUCCESS_UPDATED: "更新成功！",
-    SUCCESS_CREATED: "創建成功！",
+    SUCCESS_CREATED: "成功建立！",
+    SUCCESS_REGISTERED: "成功註冊！",
     // Categories
     CATEGORY_GENERAL: "一般",
     CATEGORY_QUESTION: "問題",
