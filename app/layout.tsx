@@ -17,8 +17,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BBS - Bulletin Board System",
-  description: "A modern bulletin board system built with Next.js",
+  title: "BBS | Boxing Buddies Society",
+  description: "A boxing community for boxing buddies to share their thoughts and experiences.",
+  // TODO: add open graph metadata
+  // openGraph: {
+  //   title: "BBS | Boxing Buddies Society",
+  //   description: "A boxing community for boxing buddies to share their thoughts and experiences.",
+  //   url: "https://bbs.boxingbuddies.com",
+  // },
 };
 
 export default function RootLayout({
