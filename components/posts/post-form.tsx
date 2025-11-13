@@ -28,6 +28,7 @@ interface Category {
   slug: string;
   name: string;
   description?: string | null;
+  displayOrder: number;
 }
 
 interface PostFormProps {
@@ -79,7 +80,7 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
           // Set default category to "General" if no initial data
           if (!initialData && fetchedCategories.length > 0) {
             const generalCategory = fetchedCategories.find(
-              (cat: Category) => cat.name === "General"
+              (cat: Category) => cat.displayOrder === 1
             );
             if (generalCategory) {
               setValue("categoryId", generalCategory.id);

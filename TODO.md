@@ -34,3 +34,8 @@
 
 - 無限滾動 (infinite scroll to fetch posts)
 - 根據使用者行為調整顯示的posts類型
+
+## i18n 多語言對應
+
+- english/chinese/japanese
+- use i18n

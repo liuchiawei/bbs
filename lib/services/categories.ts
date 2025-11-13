@@ -62,6 +62,26 @@ export async function getCategoryById(id: string) {
 }
 
 /**
+ * Get a single category by display order
+ */
+export async function getCategoriesByDisplayOrder(displayOrder: number) {
+  "use cache";
+  return await prisma.category.findMany({
+    where: {
+      displayOrder,
+      isActive: true,
+    },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      displayOrder: true,
+      description: true,
+    },
+  });
+}
+
+/**
  * Admin: Get all categories (including inactive)
  */
 export async function getAllCategories() {
