@@ -233,12 +233,12 @@ export const TRANSLATIONS = {
   ja: {
     // Application info
     APP_NAME: "ボクシング仲間の会",
-    APP_SHORT_NAME: "BBS",
+    APP_SHORT_NAME: "BBW",
     APP_DESCRIPTION:
       "ボクシング仲間が世界中で考えや経験を共有するためのコミュニティ。",
 
     // Home page
-    HOME_WELCOME: "BBSへようこそ",
+    HOME_WELCOME: "BBWへようこそ",
     HOME_SUBTITLE: "あなたの考えをシェアし、他の人とつながりましょう",
     HOME_NO_POSTS: "まだ投稿がありません",
     HOME_CREATE_FIRST_POST: "最初の投稿を作成",
