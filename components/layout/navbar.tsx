@@ -14,13 +14,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { LogOut, User, Settings, Shield, Search, Menu } from "lucide-react";
 import { toast } from "sonner";
 import { t } from "@/lib/constants";
@@ -34,6 +27,19 @@ export function Navbar() {
 
   useEffect(() => {
     fetchUser();
+
+    // user-updatedイベントを監視して、ユーザーデータを自動更新
+    // revalidateTag()と組み合わせて、UIを即座に更新できるようにする
+    const handleUserUpdated = () => {
+      fetchUser();
+    };
+
+    window.addEventListener("user-updated", handleUserUpdated);
+
+    // クリーンアップ：コンポーネントのアンマウント時にイベントリスナーを削除
+    return () => {
+      window.removeEventListener("user-updated", handleUserUpdated);
+    };
   }, []);
 
   // scroll listener ( performance optimization by throttle )
@@ -73,13 +79,21 @@ export function Navbar() {
 
   const fetchUser = async () => {
     try {
-      const response = await fetch("/api/auth/me");
+      // cache: 'no-store'を使用して、revalidateTag()でクリアされたキャッシュを確実に取得
+      // これにより、サーバー側のrevalidateTag()とクライアント側のfetchが正しく連携する
+      const response = await fetch("/api/auth/me", {
+        cache: "no-store",
+      });
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
+      } else {
+        // 401エラーの場合、ユーザーはログインしていない
+        setUser(null);
       }
     } catch (error) {
       // User not logged in
+      setUser(null);
     } finally {
       setIsLoading(false);
     }

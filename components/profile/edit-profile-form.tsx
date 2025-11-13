@@ -65,6 +65,11 @@ export function EditProfileForm({ user }: { user: User }) {
       }
 
       toast.success(t("SUCCESS_UPDATED"));
+      
+      // user-updatedイベントを発火してNavbarコンポーネントに即座に更新を通知
+      // revalidateTag()と組み合わせて、UIを即座に更新できるようにする
+      window.dispatchEvent(new CustomEvent("user-updated"));
+      
       router.refresh();
       router.push(`/user/${user.userId}`);
     } catch (error) {

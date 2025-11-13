@@ -45,9 +45,12 @@ export function LoginForm() {
 
       toast.success(t("SUCCESS_SAVED"));
       
+      // user-updatedイベントを発火してNavbarコンポーネントに即座に更新を通知
+      // revalidateTag()と組み合わせて、UIを即座に更新できるようにする
+      window.dispatchEvent(new CustomEvent("user-updated"));
+      
       // API routeでrevalidatePath()が呼ばれているため、キャッシュは既に無効化されている
       // router.refresh()で最新データを取得し、その後ホームページに遷移する
-      // これにより、Navbarコンポーネントが最新のユーザー状態を正しく取得できる
       router.refresh();
       router.push("/");
     } catch (error) {

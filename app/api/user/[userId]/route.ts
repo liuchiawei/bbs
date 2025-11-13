@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { z } from "zod";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 const updateUserSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").optional(),
@@ -105,10 +105,14 @@ export async function PATCH(
       },
     });
 
-    // キャッシュを無効化して最新データを反映
+    // Next.js 16のrevalidateTagを使用して特定ユーザーのキャッシュをクリア
+    // パフォーマンス優先：特定のユーザーのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
+    revalidateTag(`user-${user.userId}`);
+    // 関連ページのキャッシュもクリア
     revalidatePath(`/user/${user.userId}`);
     revalidatePath(`/user/${user.userId}/edit`);
     revalidatePath(`/settings`);
+    revalidatePath("/"); // ホームページのキャッシュもクリア
 
     return NextResponse.json({
       message: "User updated successfully",

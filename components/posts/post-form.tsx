@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -28,11 +28,13 @@ interface PostFormProps {
 
 export function PostForm({ initialData, mode = "create" }: PostFormProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(false);
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<PostFormData>({
     resolver: zodResolver(postSchema),
@@ -44,6 +46,18 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
         }
       : undefined,
   });
+
+  // ホームページに戻った時にフォームをクリア
+  // これにより、投稿後に戻った場合でもフォームが空の状態になる
+  useEffect(() => {
+    if (pathname === "/" && mode === "create" && !initialData) {
+      reset({
+        title: "",
+        content: "",
+        tags: "",
+      });
+    }
+  }, [pathname, mode, initialData, reset]);
 
   const onSubmit = async (data: PostFormData) => {
     setIsLoading(true);
@@ -82,6 +96,15 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
         mode === "edit" ? t("SUCCESS_UPDATED") : t("SUCCESS_CREATED")
       );
 
+      // フォームをクリアして、次回の投稿時に空のフォームを表示
+      if (mode === "create") {
+        reset({
+          title: "",
+          content: "",
+          tags: "",
+        });
+      }
+
       // API routeでrevalidatePath()が呼ばれているため、キャッシュは既に無効化されている
       // router.refresh()で最新データを取得し、その後新しい投稿ページに遷移する
       // これにより、ユーザーがブラウザの戻るボタンで戻った場合でも最新データが表示される
@@ -98,7 +121,7 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
     <Card className="w-full max-w-3xl mx-auto">
       <CardHeader>
         <CardTitle>
-          {mode === "edit" ? `${t("EDIT")} ${t("POST")}` : t("NEW_POST")}
+          {mode === "edit" ? `${t("EDIT")}` : t("NEW_POST")}
         </CardTitle>
       </CardHeader>
       <CardContent>

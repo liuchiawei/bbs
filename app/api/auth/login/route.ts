@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { comparePassword, createToken, setSession } from "@/lib/auth";
 import { loginSchema } from "@/lib/validations";
@@ -64,9 +64,10 @@ export async function POST(request: NextRequest) {
     // Set session
     await setSession(token);
 
-    // データベース操作完了後、キャッシュを無効化して最新データを取得できるようにする
-    // パフォーマンス優先：必要なパスのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
-    // Session検証：Navbarコンポーネントが最新のユーザー状態を正しく取得できるようにする
+    // Next.js 16のrevalidateTagを使用して特定ユーザーのキャッシュをクリア
+    // パフォーマンス優先：特定のユーザーのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
+    revalidateTag(`user-${user.userId}`);
+    // ホームページのキャッシュもクリア
     revalidatePath("/");
 
     // Return user without password
