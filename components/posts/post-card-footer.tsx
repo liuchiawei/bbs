@@ -40,6 +40,13 @@ export default function PostCardFooter({
         : diffDays + " " + t("DAYS_AGO")
       : date.toLocaleDateString();
   };
+  const getStringCount = (count: number) => {
+    return count >= 1000000
+      ? (count / 1000000).toFixed(2) + "M"
+      : count >= 1000
+      ? (count / 1000).toFixed(1) + "K"
+      : count.toString();
+  };
 
   return (
     <CardFooter className="flex items-center justify-between">
@@ -63,7 +70,7 @@ export default function PostCardFooter({
             <Button variant="ghost" size="sm" asChild>
               <Link href={`/posts/${post.id}`} className="text-sm text-right">
                 <Eye className="size-4" />
-                <span>{post.views}</span>
+                <span>{getStringCount(post.views)}</span>
               </Link>
             </Button>
           </TooltipTrigger>
@@ -83,7 +90,7 @@ export default function PostCardFooter({
                   isLiked ? "fill-red-500 text-red-500" : ""
                 }`}
               />
-              <span>{likes}</span>
+              <span>{getStringCount(likes)}</span>
             </Button>
           </TooltipTrigger>
           <TooltipContent>{t("LIKE")}</TooltipContent>
@@ -94,7 +101,7 @@ export default function PostCardFooter({
             <Button variant="ghost" size="sm" asChild>
               <Link href={`/posts/${post.id}`} className="text-sm text-right">
                 <MessageCircle className="size-4" />
-                <span>{post._count.comments}</span>
+                <span>{getStringCount(post._count.comments)}</span>
               </Link>
             </Button>
           </TooltipTrigger>
