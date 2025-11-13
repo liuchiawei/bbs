@@ -29,6 +29,7 @@ export async function getUserById(id: string): Promise<User | null> {
       avatar: true,
       isAdmin: true,
       isBanned: true,
+      points: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -51,6 +52,7 @@ export async function getUserWithCounts(id: string): Promise<UserWithCounts | nu
       birthDate: true,
       avatar: true,
       isAdmin: true,
+      points: true,
       createdAt: true,
       updatedAt: true,
       _count: {
@@ -78,6 +80,7 @@ export async function getUserProfile(userId: string) {
       gender: true,
       birthDate: true,
       avatar: true,
+      points: true,
     },
   });
 }
@@ -92,6 +95,7 @@ export async function updateUserProfile(
     gender?: string | null;
     birthDate?: Date | null;
     avatar?: string | null;
+    points?: number;
   }
 ) {
   return await prisma.user.update({
@@ -104,6 +108,7 @@ export async function updateUserProfile(
       gender: true,
       birthDate: true,
       avatar: true,
+      points: true,
       isAdmin: true,
       createdAt: true,
       updatedAt: true,
@@ -128,6 +133,7 @@ export async function getUserProfilePage(userId: string, recentPostsLimit = 6) {
       birthDate: true,
       avatar: true,
       isAdmin: true,
+      points: true,
       createdAt: true,
       posts: {
         orderBy: { createdAt: "desc" },
@@ -285,11 +291,14 @@ export async function getAllUsers(options: { page?: number; limit?: number } = {
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
+        userId: true,
         name: true,
+        nickname: true,
         email: true,
         avatar: true,
         isAdmin: true,
         isBanned: true,
+        points: true,
         createdAt: true,
         _count: {
           select: {

@@ -27,6 +27,8 @@ model User {
   // role
   isAdmin   Boolean  @default(false)
   isBanned  Boolean  @default(false)
+  // points system
+  points    Int      @default(1000)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // relationships

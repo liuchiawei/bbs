@@ -23,6 +23,7 @@ export async function GET() {
         avatar: true,
         isAdmin: true,
         isBanned: true,
+        points: true,
         createdAt: true,
         updatedAt: true,
       },

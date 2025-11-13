@@ -56,6 +56,7 @@ export const updateUserSchema = z.object({
   gender: z.string().optional().nullable(),
   birthDate: z.string().optional().nullable(),
   avatar: z.string().optional().nullable(),
+  points: z.number().int().min(0).optional(),
 });
 
 // Post Schemas

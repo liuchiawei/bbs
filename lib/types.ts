@@ -28,6 +28,7 @@ export interface User {
   avatar?: string | null;
   isAdmin?: boolean;
   isBanned?: boolean;
+  points?: number;
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }

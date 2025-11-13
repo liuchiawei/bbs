@@ -15,14 +15,14 @@ export default async function EditUserPage({
   }
 
   const { userId } = await params;
-  const user = await getUserProfile(userId);
+  const user = await getUserProfile(session.userId);
 
   if (!user) {
     notFound();
   }
 
-  // Check if user is editing their own profile
-  if (session.userId !== userId) {
+  // Check if user is editing their own profile (compare URL userId with user's userId field)
+  if (user.userId !== userId) {
     redirect("/");
   }
 

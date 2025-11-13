@@ -6,7 +6,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { PostCard } from "@/components/posts/post-card";
 import { Settings } from "lucide-react";
@@ -43,13 +47,20 @@ export default async function UserPage({
 
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-bold">{user.name}</h1>
+                <h1 className="text-3xl font-bold">
+                  {user.nickname ? user.nickname : user.name}
+                </h1>
                 {user.isAdmin && <Badge variant="destructive">Admin</Badge>}
               </div>
-              <p className="text-muted-foreground">{user.email}</p>
-              <p className="text-sm text-muted-foreground">
-                Joined {new Date(user.createdAt).toLocaleDateString()}
-              </p>
+              <p className="text-muted-foreground">@{user.userId}</p>
+              <div className="flex items-center gap-4">
+                <p className="text-sm text-muted-foreground">
+                  Joined {new Date(user.createdAt).toLocaleDateString()}
+                </p>
+                <Badge variant="secondary" className="text-sm">
+                  {user.points ?? 0} Points
+                </Badge>
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -90,7 +101,9 @@ export default async function UserPage({
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xl md:text-3xl font-bold">About</CardTitle>
+                <CardTitle className="text-xl md:text-3xl font-bold">
+                  About
+                </CardTitle>
                 {isOwnProfile && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -106,12 +119,24 @@ export default async function UserPage({
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
+              {user.name && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Name</p>
+                  <p className="font-medium">{user.name}</p>
+                </div>
+              )}
               {user.birthDate && (
                 <div>
                   <p className="text-sm text-muted-foreground">Birthday</p>
                   <p className="font-medium">
                     {new Date(user.birthDate).toLocaleDateString()}
                   </p>
+                </div>
+              )}
+              {user.gender && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Gender</p>
+                  <p className="font-medium">{user.gender}</p>
                 </div>
               )}
               <div>
