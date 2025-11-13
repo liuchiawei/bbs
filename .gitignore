@@ -47,9 +47,8 @@ storybook-static
 
 .env*.local
 
-/app/generated/prisma
+# claude
+CLAUDE.md
 
-# uploaded files
-/public/uploads
-
-.env*.local
+# TODO list
+TODO.md
