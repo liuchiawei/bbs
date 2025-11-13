@@ -56,7 +56,7 @@ export function UserManagement() {
   const handleToggleBan = async (user: AdminUserListItem) => {
     try {
       const endpoint = user.isBanned ? "unban" : "ban";
-      const response = await fetch(`/api/admin/users/${user.id}/${endpoint}`, {
+      const response = await fetch(`/api/admin/user/${user.userId}/${endpoint}`, {
         method: "PATCH",
       });
 
@@ -164,7 +164,7 @@ export function UserManagement() {
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/users/${user.id}`} target="_blank">
+                      <Link href={`/user/${user.userId}`} target="_blank">
                         <ExternalLink className="h-4 w-4" />
                       </Link>
                     </Button>

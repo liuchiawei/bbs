@@ -68,19 +68,19 @@ export default async function UserPage({
 
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <Link href={`/users/${user.userId}/posts`}>
+            <Link href={`/user/${user.userId}/posts`}>
               <div className="text-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
                 <p className="text-2xl font-bold">{user._count.posts}</p>
                 <p className="text-sm text-muted-foreground">{t("POSTS")}</p>
               </div>
             </Link>
-            <Link href={`/users/${user.userId}/comments`}>
+            <Link href={`/user/${user.userId}/comments`}>
               <div className="text-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
                 <p className="text-2xl font-bold">{user._count.comments}</p>
                 <p className="text-sm text-muted-foreground">{t("COMMENTS")}</p>
               </div>
             </Link>
-            <Link href={`/users/${user.userId}/likes`}>
+            <Link href={`/user/${user.userId}/likes`}>
               <div className="text-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
                 <p className="text-2xl font-bold">
                   {user._count.likedPosts + user._count.likedComments}
@@ -109,7 +109,7 @@ export default async function UserPage({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="outline" size="icon" asChild>
-                        <Link href={`/users/${user.userId}/edit`}>
+                        <Link href={`/user/${user.userId}/edit`}>
                           <Settings className="size-4" />
                         </Link>
                       </Button>

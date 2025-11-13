@@ -444,7 +444,7 @@ export const TRANSLATIONS = {
     AVATAR: "アバター",
     ADMIN_DASHBOARD: "管理者ダッシュボード",
     MANAGE_CATEGORIES_POSTS_USERS: "カテゴリー、投稿、ユーザーを管理",
-    ABOUT: "について",
+    ABOUT: "基本資料",
     EDIT_PROFILE: "プロフィールを編集",
     NAME: "名前",
     BIRTHDAY: "誕生日",

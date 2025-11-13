@@ -105,7 +105,9 @@ export async function updateUserProfile(
     data,
     select: {
       id: true,
+      userId: true,
       name: true,
+      nickname: true,
       email: true,
       gender: true,
       birthDate: true,
@@ -201,6 +203,7 @@ export async function getUserLikedPosts(userId: string) {
           user: {
             select: {
               id: true,
+              userId: true,
               name: true,
               avatar: true,
             },
@@ -232,6 +235,7 @@ export async function getUserLikedComments(userId: string) {
           user: {
             select: {
               id: true,
+              userId: true,
               name: true,
               avatar: true,
             },
@@ -266,6 +270,7 @@ export async function getUserComments(userId: string) {
           user: {
             select: {
               id: true,
+              userId: true,
               name: true,
               avatar: true,
             },
@@ -344,6 +349,7 @@ export async function banUser(userId: string) {
     data: { isBanned: true },
     select: {
       id: true,
+      userId: true,
       name: true,
       email: true,
       isBanned: true,
@@ -360,6 +366,7 @@ export async function unbanUser(userId: string) {
     data: { isBanned: false },
     select: {
       id: true,
+      userId: true,
       name: true,
       email: true,
       isBanned: true,

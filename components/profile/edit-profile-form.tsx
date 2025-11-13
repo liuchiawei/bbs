@@ -43,7 +43,7 @@ export function EditProfileForm({ user }: { user: User }) {
   const onSubmit = async (data: EditProfileFormData) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/users/${user.id}`, {
+      const response = await fetch(`/api/user/${user.userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -59,12 +59,12 @@ export function EditProfileForm({ user }: { user: User }) {
 
       toast.success(t("SUCCESS_UPDATED"));
       router.refresh();
-      router.push(`/users/${user.id}`);
+      router.push(`/user/${user.userId}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("ERROR_GENERIC"));
     } finally {
       setIsLoading(false);
-      redirect(`/users/${user.id}`);
+      redirect(`/user/${user.userId}`);
     }
   };
 

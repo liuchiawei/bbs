@@ -69,7 +69,7 @@ export function PostCard({ post }: PostCardProps) {
           </h1>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Link href={`/users/${post.user.id}`}>
+              <Link href={`/user/${post.user.userId}`}>
                 <Avatar className="size-10">
                   <AvatarImage src={post.user.avatar || undefined} />
                   <AvatarFallback>

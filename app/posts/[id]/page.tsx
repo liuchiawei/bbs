@@ -263,7 +263,7 @@ export default function PostPage({
         <CardHeader>
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
-              <Link href={`/users/${post.user.id}`}>
+              <Link href={`/user/${post.user.userId}`}>
                 <Avatar className="h-12 w-12">
                   <AvatarImage src={post.user.avatar || undefined} />
                   <AvatarFallback>
@@ -273,7 +273,7 @@ export default function PostPage({
               </Link>
               <div>
                 <Link
-                  href={`/users/${post.user.id}`}
+                  href={`/user/${post.user.userId}`}
                   className="font-medium hover:underline"
                 >
                   {post.user.name}

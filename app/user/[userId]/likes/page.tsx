@@ -32,7 +32,7 @@ export default async function UserLikesPage({
     <div className="container mx-auto px-4 py-12 max-w-5xl">
       <div className="mb-6">
         <Button variant="ghost" asChild>
-          <Link href={`/users/${userId}`}>
+          <Link href={`/user/${userId}`}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t("BACK_TO_PROFILE")}
           </Link>
@@ -84,7 +84,7 @@ export default async function UserLikesPage({
                       </Avatar>
                       <div className="flex-1">
                         <Link
-                          href={`/users/${comment.user.id}`}
+                          href={`/user/${comment.user.userId}`}
                           className="font-semibold hover:underline"
                         >
                           {comment.user.name}

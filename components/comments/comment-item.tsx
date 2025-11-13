@@ -135,7 +135,7 @@ export function CommentItem({
       className={`${level > 0 ? "ml-8 border-l-2 pl-4" : ""}`}
     >
       <div className="flex gap-3 p-4 rounded-lg hover:bg-muted/50 transition-colors">
-        <Link href={`/users/${comment.user.id}`}>
+        <Link href={`/user/${comment.user.userId}`}>
           <Avatar className="h-10 w-10">
             <AvatarImage src={comment.user.avatar || undefined} />
             <AvatarFallback>
@@ -146,7 +146,7 @@ export function CommentItem({
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2">
             <Link
-              href={`/users/${comment.user.id}`}
+              href={`/user/${comment.user.userId}`}
               className="hover:underline"
             >
               {comment.user.name}
