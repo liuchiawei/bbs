@@ -4,7 +4,9 @@ import type { User, UserWithCounts } from "@/lib/types";
 /**
  * Check if a userId is available
  */
-export async function checkUserIdAvailability(userId: string): Promise<boolean> {
+export async function checkUserIdAvailability(
+  userId: string
+): Promise<boolean> {
   const existingUser = await prisma.user.findUnique({
     where: { userId: userId },
     select: { id: true },
@@ -40,7 +42,9 @@ export async function getUserById(id: string): Promise<User | null> {
 /**
  * Get a user with post and comment counts
  */
-export async function getUserWithCounts(id: string): Promise<UserWithCounts | null> {
+export async function getUserWithCounts(
+  id: string
+): Promise<UserWithCounts | null> {
   "use cache";
   return await prisma.user.findUnique({
     where: { id },
@@ -147,20 +151,12 @@ export async function getUserProfilePage(userId: string, recentPostsLimit = 6) {
           id: true,
           title: true,
           content: true,
-          categoryId: true,
           tags: true,
           views: true,
           likes: true,
           createdAt: true,
           updatedAt: true,
           userId: true,
-          category: {
-            select: {
-              id: true,
-              slug: true,
-              name: true,
-            },
-          },
           user: {
             select: {
               id: true,
@@ -291,7 +287,9 @@ export async function getUserComments(userId: string) {
 /**
  * Admin: Get all users with pagination and counts
  */
-export async function getAllUsers(options: { page?: number; limit?: number } = {}) {
+export async function getAllUsers(
+  options: { page?: number; limit?: number } = {}
+) {
   const { page = 1, limit = 20 } = options;
   const skip = (page - 1) * limit;
 

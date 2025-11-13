@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { PostCard } from "@/components/posts/post-card";
 import { Settings } from "lucide-react";
-import type { PostWithUser } from "@/lib/types";
+import type { PostWithUser, UserProfilePage } from "@/lib/types";
 import { t } from "@/lib/constants";
 
 export default async function UserPage({
@@ -23,14 +23,16 @@ export default async function UserPage({
   params: Promise<{ userId: string }>;
 }) {
   const { userId } = await params;
-  const [session, user] = await Promise.all([
+  const [session, userData] = await Promise.all([
     getSession(),
     getUserProfilePage(userId),
   ]);
 
-  if (!user) {
+  if (!userData) {
     notFound();
   }
+
+  const user = userData as UserProfilePage;
 
   const isOwnProfile = session?.userId === user.id;
 
@@ -56,7 +58,8 @@ export default async function UserPage({
               <p className="text-muted-foreground">@{user.userId}</p>
               <div className="flex items-center gap-4">
                 <p className="text-sm text-muted-foreground">
-                  {t("JOINED")} {new Date(user.createdAt).toLocaleDateString()}
+                  {t("JOINED")}{" "}
+                  {new Date(user.createdAt ?? "").toLocaleDateString()}
                 </p>
                 <Badge variant="secondary" className="text-sm">
                   {user.points ?? 0} {t("POINTS")}
@@ -128,7 +131,9 @@ export default async function UserPage({
               )}
               {user.birthDate && (
                 <div>
-                  <p className="text-sm text-muted-foreground">{t("BIRTHDAY")}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("BIRTHDAY")}
+                  </p>
                   <p className="font-medium">
                     {new Date(user.birthDate).toLocaleDateString()}
                   </p>
@@ -141,9 +146,11 @@ export default async function UserPage({
                 </div>
               )}
               <div>
-                <p className="text-sm text-muted-foreground">{t("MEMBER_SINCE")}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("MEMBER_SINCE")}
+                </p>
                 <p className="font-medium">
-                  {new Date(user.createdAt).toLocaleDateString()}
+                  {new Date(user.createdAt ?? "").toLocaleDateString()}
                 </p>
               </div>
             </CardContent>
