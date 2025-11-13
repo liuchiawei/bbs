@@ -5,6 +5,7 @@ import type { CommentWithUser } from "@/lib/types";
  * Get comments for a post
  */
 export async function getCommentsByPostId(postId: string): Promise<CommentWithUser[]> {
+  "use cache";
   const comments = await prisma.comment.findMany({
     where: {
       postId,
@@ -29,6 +30,7 @@ export async function getCommentsByPostId(postId: string): Promise<CommentWithUs
  * Get replies for a comment
  */
 export async function getCommentReplies(commentId: string): Promise<CommentWithUser[]> {
+  "use cache";
   const replies = await prisma.comment.findMany({
     where: { parentId: commentId },
     orderBy: { createdAt: "asc" },
@@ -50,6 +52,7 @@ export async function getCommentReplies(commentId: string): Promise<CommentWithU
  * Get a single comment by ID
  */
 export async function getCommentById(id: string) {
+  "use cache";
   return await prisma.comment.findUnique({
     where: { id },
     include: {

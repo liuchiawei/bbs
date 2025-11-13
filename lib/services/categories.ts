@@ -1,39 +1,33 @@
 import { prisma } from "@/lib/db";
-import { unstable_cache } from "next/cache";
 
 /**
  * Get all active categories, sorted by display order
- * This is cached for 1 hour to reduce database load
+ * This is cached to reduce database load
  */
-export const getCategories = unstable_cache(
-  async () => {
-    return await prisma.category.findMany({
-      where: {
-        isActive: true,
-      },
-      orderBy: {
-        displayOrder: "asc",
-      },
-      select: {
-        id: true,
-        slug: true,
-        name: true,
-        description: true,
-        displayOrder: true,
-      },
-    });
-  },
-  ["categories"],
-  {
-    revalidate: 3600, // Cache for 1 hour
-    tags: ["categories"],
-  }
-);
+export async function getCategories() {
+  "use cache";
+  return await prisma.category.findMany({
+    where: {
+      isActive: true,
+    },
+    orderBy: {
+      displayOrder: "asc",
+    },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      description: true,
+      displayOrder: true,
+    },
+  });
+}
 
 /**
  * Get a single category by slug
  */
 export async function getCategoryBySlug(slug: string) {
+  "use cache";
   return await prisma.category.findUnique({
     where: {
       slug,
@@ -52,6 +46,7 @@ export async function getCategoryBySlug(slug: string) {
  * Get a single category by ID
  */
 export async function getCategoryById(id: string) {
+  "use cache";
   return await prisma.category.findUnique({
     where: {
       id,
@@ -131,6 +126,7 @@ export async function deleteCategory(id: string) {
  * Get category with post count
  */
 export async function getCategoriesWithCount() {
+  "use cache";
   const categories = await prisma.category.findMany({
     where: {
       isActive: true,
