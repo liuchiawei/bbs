@@ -9,7 +9,9 @@
       "Bash(pnpm prisma migrate dev:*)",
       "Bash(pnpm tsc:*)",
       "Bash(find:*)",
-      "Bash(pnpm run:*)"
+      "Bash(pnpm run:*)",
+      "Bash(cmd //c:*)",
+      "Bash(robocopy:*)"
     ],
     "deny": [],
     "ask": []

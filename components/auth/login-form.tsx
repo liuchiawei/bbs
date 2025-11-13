@@ -11,11 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "motion/react";
 import { toast } from "sonner";
-
-const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
-});
+import { loginSchema } from "@/lib/validations";
+import { t } from "@/lib/constants";
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
@@ -43,14 +40,15 @@ export function LoginForm() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Login failed");
+        throw new Error(result.error || t("ERROR_GENERIC"));
       }
 
-      toast.success("Login successful!");
-      router.push("/");
-      router.refresh();
+      toast.success(t("SUCCESS_SAVED"));
+      // Use window.location.href to force a full page refresh
+      // This ensures the Navbar component re-initializes and fetches the updated user state
+      window.location.href = "/";
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Login failed");
+      toast.error(error instanceof Error ? error.message : t("ERROR_GENERIC"));
     } finally {
       setIsLoading(false);
     }
@@ -70,23 +68,32 @@ export function LoginForm() {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" {...register("email")} />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
+              <Label htmlFor="userId">{t("USERNAME")}</Label>
+              <Input
+                id="userId"
+                disabled={isLoading}
+                {...register("userId")}
+              />
+              {errors.userId && (
+                <p className="text-sm text-destructive">{errors.userId.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" {...register("password")} />
+              <Label htmlFor="password">{t("PASSWORD")}</Label>
+              <Input
+                id="password"
+                type="password"
+                disabled={isLoading}
+                {...register("password")}
+              />
               {errors.password && (
                 <p className="text-sm text-destructive">{errors.password.message}</p>
               )}
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Login"}
+              {isLoading ? t("LOADING") : t("LOGIN")}
             </Button>
           </form>
         </CardContent>

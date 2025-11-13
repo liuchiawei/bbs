@@ -21,6 +21,7 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { t } from "@/lib/constants";
 
 interface DeleteCommentButtonProps {
   commentId: string;
@@ -41,15 +42,15 @@ export function DeleteCommentButton({ commentId }: DeleteCommentButtonProps) {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Failed to delete comment");
+        throw new Error(result.error || t("ERROR_GENERIC"));
       }
 
-      toast.success("Comment deleted successfully");
+      toast.success(t("SUCCESS_DELETED"));
       setOpen(false);
       router.refresh();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete comment"
+        error instanceof Error ? error.message : t("ERROR_GENERIC")
       );
       setIsDeleting(false);
       setOpen(false);
@@ -66,24 +67,23 @@ export function DeleteCommentButton({ commentId }: DeleteCommentButtonProps) {
             </Button>
           </AlertDialogTrigger>
         </TooltipTrigger>
-        <TooltipContent>Delete</TooltipContent>
+        <TooltipContent>{t("DELETE")}</TooltipContent>
       </Tooltip>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete Comment</AlertDialogTitle>
+          <AlertDialogTitle>{`${t("DELETE")} ${t("COMMENT")}`}</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete this comment? This action cannot be
-            undone.
+            {t("DELETE_COMMENT_CONFIRM")} {t("ALERT_CANNOT_BE_UNDONE")}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>{t("CANCEL")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             disabled={isDeleting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isDeleting ? "Deleting..." : "Delete"}
+            {isDeleting ? t("LOADING") : t("DELETE")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

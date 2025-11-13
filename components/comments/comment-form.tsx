@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { motion } from "motion/react";
+import { t } from "@/lib/constants";
 
 interface CommentFormProps {
   postId: string;
@@ -28,7 +29,7 @@ export function CommentForm({
     e.preventDefault();
 
     if (!content.trim()) {
-      toast.error("Comment cannot be empty");
+      toast.error(t("ERROR_INVALID_INPUT"));
       return;
     }
 
@@ -47,10 +48,10 @@ export function CommentForm({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Failed to post comment");
+        throw new Error(result.error || t("ERROR_GENERIC"));
       }
 
-      toast.success("Comment posted successfully!");
+      toast.success(t("SUCCESS_CREATED"));
       setContent("");
 
       if (onSuccess) {
@@ -59,7 +60,7 @@ export function CommentForm({
         router.refresh();
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to post comment");
+      toast.error(error instanceof Error ? error.message : t("ERROR_GENERIC"));
     } finally {
       setIsSubmitting(false);
     }
@@ -88,11 +89,11 @@ export function CommentForm({
             onClick={() => setContent("")}
             disabled={isSubmitting}
           >
-            Cancel
+            {t("CANCEL")}
           </Button>
         )}
         <Button type="submit" disabled={isSubmitting || !content.trim()}>
-          {isSubmitting ? "Posting..." : "Post Comment"}
+          {isSubmitting ? t("LOADING") : `${t("SUBMIT")} ${t("COMMENT")}`}
         </Button>
       </div>
     </motion.form>

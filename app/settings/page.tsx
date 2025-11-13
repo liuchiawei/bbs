@@ -1,22 +1,8 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { getUserProfile } from "@/lib/services/users";
 import { EditProfileForm } from "@/components/profile/edit-profile-form";
 import type { User } from "@/lib/types";
-
-async function getUser(userId: string): Promise<User | null> {
-  return await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      gender: true,
-      birthDate: true,
-      avatar: true,
-    },
-  });
-}
 
 export default async function SettingsPage() {
   const session = await getSession();
@@ -25,7 +11,7 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
-  const user = await getUser(session.userId);
+  const user = await getUserProfile(session.userId);
 
   if (!user) {
     redirect("/login");

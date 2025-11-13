@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,29 +12,16 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { motion } from "motion/react";
-
-const postSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  content: z.string().min(1, "Content is required"),
-  categoryId: z.string().min(1, "Category is required"),
-  tags: z.string().optional(),
-});
+import { t } from "@/lib/constants";
+import { postSchema } from "@/lib/validations";
 
 type PostFormData = z.infer<typeof postSchema>;
-
-interface Category {
-  id: string;
-  slug: string;
-  name: string;
-  description?: string | null;
-}
 
 interface PostFormProps {
   initialData?: {
     id: string;
     title: string;
     content: string;
-    categoryId: string;
     tags: string[];
   };
   mode?: "create" | "edit";
@@ -43,7 +30,6 @@ interface PostFormProps {
 export function PostForm({ initialData, mode = "create" }: PostFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
 
   const {
     register,
@@ -55,28 +41,11 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
       ? {
           title: initialData.title,
           content: initialData.content,
-          categoryId: initialData.categoryId,
           tags: initialData.tags.join(", "),
         }
       : undefined,
   });
 
-  // Fetch categories on mount
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const response = await fetch("/api/categories");
-        if (response.ok) {
-          const data = await response.json();
-          setCategories(data.data || []);
-        }
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-        toast.error("Failed to load categories");
-      }
-    }
-    fetchCategories();
-  }, []);
 
   const onSubmit = async (data: PostFormData) => {
     setIsLoading(true);
@@ -97,7 +66,6 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
         body: JSON.stringify({
           title: data.title,
           content: data.content,
-          categoryId: data.categoryId,
           tags,
         }),
       });
@@ -105,14 +73,14 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || `Failed to ${mode} post`);
+        throw new Error(result.error || t("ERROR_GENERIC"));
       }
 
-      toast.success(`Post ${mode === "edit" ? "updated" : "created"} successfully!`);
+      toast.success(mode === "edit" ? t("SUCCESS_UPDATED") : t("SUCCESS_CREATED"));
       router.push(`/posts/${result.post.id}`);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : `Failed to ${mode} post`);
+      toast.error(error instanceof Error ? error.message : t("ERROR_GENERIC"));
     } finally {
       setIsLoading(false);
     }
@@ -126,39 +94,24 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
     >
       <Card className="w-full max-w-3xl mx-auto">
         <CardHeader>
-          <CardTitle>{mode === "edit" ? "Edit Post" : "Create New Post"}</CardTitle>
+          <CardTitle>
+            {mode === "edit" ? `${t("EDIT")} ${t("POST")}` : t("NEW_POST")}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor="title">{t("TITLE")}</Label>
               <Input id="title" {...register("title")} />
               {errors.title && (
-                <p className="text-sm text-destructive">{errors.title.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.title.message}
+                </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="categoryId">Category</Label>
-              <select
-                id="categoryId"
-                {...register("categoryId")}
-                className="w-full px-3 py-2 border rounded-md bg-background"
-              >
-                <option value="">Select category</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-              {errors.categoryId && (
-                <p className="text-sm text-destructive">{errors.categoryId.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="content">Content</Label>
+              <Label htmlFor="content">{t("CONTENT")}</Label>
               <Textarea
                 id="content"
                 {...register("content")}
@@ -166,35 +119,35 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
                 className="resize-y"
               />
               {errors.content && (
-                <p className="text-sm text-destructive">{errors.content.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.content.message}
+                </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tags">Tags (comma separated)</Label>
+              <Label htmlFor="tags">{t("TAGS_COMMA_SEPARATED")}</Label>
               <Input
                 id="tags"
                 {...register("tags")}
-                placeholder="e.g. javascript, react, nextjs"
+                placeholder={t("TAGS_PLACEHOLDER")}
               />
             </div>
 
             <div className="flex gap-2">
               <Button type="submit" disabled={isLoading}>
                 {isLoading
-                  ? mode === "edit"
-                    ? "Updating..."
-                    : "Creating..."
+                  ? t("LOADING")
                   : mode === "edit"
-                  ? "Update Post"
-                  : "Create Post"}
+                  ? `${t("EDIT")} ${t("POST")}`
+                  : `${t("SUBMIT")} ${t("POST")}`}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.back()}
               >
-                Cancel
+                {t("CANCEL")}
               </Button>
             </div>
           </form>

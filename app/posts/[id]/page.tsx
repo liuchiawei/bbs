@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,37 +24,31 @@ import { CommentItem } from "@/components/comments/comment-item";
 import { PostLikeButton } from "@/components/posts/post-like-button";
 import { PostDeleteButton } from "@/components/posts/post-delete-button";
 import { MessageCircle, Eye, Edit, X, Save } from "lucide-react";
-import Link from "next/link";
 import { toast } from "sonner";
+import { t } from "@/lib/constants";
 
-const postSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  content: z.string().min(1, "Content is required"),
-  categoryId: z.string().min(1, "Category is required"),
+// フォーム用のスキーマ（tagsは文字列として扱う）
+const postFormSchema = z.object({
+  title: z.string().min(1, t("ALERT_TITLE_REQUIRED")),
+  content: z.string().min(1, t("ALERT_CONTENT_REQUIRED")),
   tags: z.string().optional(),
 });
 
-type PostFormData = z.infer<typeof postSchema>;
-
-interface Category {
-  id: string;
-  slug: string;
-  name: string;
-}
+type PostFormData = z.infer<typeof postFormSchema>;
 
 interface Post {
   id: string;
   title: string;
   content: string;
-  categoryId: string;
-  category: Category;
   tags: string[];
   views: number;
   likes: number;
   createdAt: string;
   user: {
     id: string;
+    userId: string;
     name: string;
+    nickname?: string | null;
     avatar: string | null;
   };
   comments: Array<{
@@ -67,7 +62,9 @@ interface Post {
     parentId: string | null;
     user: {
       id: string;
+      userId: string;
       name: string;
+      nickname?: string | null;
       avatar: string | null;
     };
   }>;
@@ -78,7 +75,9 @@ interface Post {
 
 interface Session {
   id: string;
+  userId: string;
   name: string;
+  nickname?: string | null;
   email: string;
   gender: string | null;
   birthDate: string | null;
@@ -101,7 +100,6 @@ export default function PostPage({
   const [isLiked, setIsLiked] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [categories, setCategories] = useState<Category[]>([]);
 
   const {
     register,
@@ -109,7 +107,7 @@ export default function PostPage({
     reset,
     formState: { errors },
   } = useForm<PostFormData>({
-    resolver: zodResolver(postSchema),
+    resolver: zodResolver(postFormSchema),
   });
 
   useEffect(() => {
@@ -119,21 +117,6 @@ export default function PostPage({
     }
     init();
   }, [params]);
-
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const response = await fetch("/api/categories");
-        if (response.ok) {
-          const data = await response.json();
-          setCategories(data.data || []);
-        }
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-      }
-    }
-    fetchCategories();
-  }, []);
 
   useEffect(() => {
     if (!postId) return;
@@ -169,12 +152,11 @@ export default function PostPage({
         reset({
           title: postData.post.title,
           content: postData.post.content,
-          categoryId: postData.post.categoryId,
           tags: postData.post.tags.join(", "),
         });
       } catch (error) {
         console.error("Failed to fetch data:", error);
-        toast.error("Failed to load post");
+        toast.error(t("FAILED_TO_LOAD_POST"));
       } finally {
         setIsLoading(false);
       }
@@ -184,8 +166,9 @@ export default function PostPage({
   }, [postId, router, reset]);
 
   const onSubmit = async (data: PostFormData) => {
-    const loadingToast = toast.loading("Updating post...");
+    const loadingToast = toast.loading(t("UPDATING_POST"));
     try {
+      // カンマ区切りの文字列を配列に変換
       const tags = data.tags
         ? data.tags
             .split(",")
@@ -199,25 +182,24 @@ export default function PostPage({
         body: JSON.stringify({
           title: data.title,
           content: data.content,
-          categoryId: data.categoryId,
-          tags,
+          tags: tags,
         }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Failed to update post");
+        throw new Error(result.error || t("FAILED_TO_UPDATE_POST"));
       }
 
       toast.dismiss(loadingToast);
-      toast.success("Post updated successfully!");
+      toast.success(t("POST_UPDATED_SUCCESS"));
       setPost(result.post);
       setIsEditing(false);
     } catch (error) {
       toast.dismiss(loadingToast);
       toast.error(
-        error instanceof Error ? error.message : "Failed to update post"
+        error instanceof Error ? error.message : t("FAILED_TO_UPDATE_POST")
       );
     }
   };
@@ -227,7 +209,6 @@ export default function PostPage({
       reset({
         title: post.title,
         content: post.content,
-        categoryId: post.categoryId,
         tags: post.tags.join(", "),
       });
     }
@@ -239,7 +220,7 @@ export default function PostPage({
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         <Card>
           <CardContent className="p-12 text-center">
-            <p className="text-muted-foreground">Loading...</p>
+            <p className="text-muted-foreground">{t("LOADING")}</p>
           </CardContent>
         </Card>
       </div>
@@ -258,7 +239,7 @@ export default function PostPage({
         <CardHeader>
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
-              <Link href={`/users/${post.user.id}`}>
+              <Link href={`/user/${post.user.userId}`}>
                 <Avatar className="h-12 w-12">
                   <AvatarImage src={post.user.avatar || undefined} />
                   <AvatarFallback>
@@ -268,7 +249,7 @@ export default function PostPage({
               </Link>
               <div>
                 <Link
-                  href={`/users/${post.user.id}`}
+                  href={`/user/${post.user.userId}`}
                   className="font-medium hover:underline"
                 >
                   {post.user.name}
@@ -280,7 +261,6 @@ export default function PostPage({
             </div>
 
             <div className="flex items-center gap-2">
-              {!isEditing && <Badge>{post.category.name}</Badge>}
               {isOwner && (
                 <>
                   {!isEditing ? (
@@ -295,7 +275,7 @@ export default function PostPage({
                             <Edit className="size-4" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Edit</TooltipContent>
+                        <TooltipContent>{t("EDIT")}</TooltipContent>
                       </Tooltip>
                       <PostDeleteButton postId={post.id} />
                     </>
@@ -311,7 +291,7 @@ export default function PostPage({
                             <Save className="size-4" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Save</TooltipContent>
+                        <TooltipContent>{t("SAVE")}</TooltipContent>
                       </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -323,7 +303,7 @@ export default function PostPage({
                             <X className="size-4" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Cancel</TooltipContent>
+                        <TooltipContent>{t("CANCEL")}</TooltipContent>
                       </Tooltip>
                     </>
                   )}
@@ -335,7 +315,7 @@ export default function PostPage({
           {isEditing ? (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
+                <Label htmlFor="title">{t("TITLE")}</Label>
                 <Input id="title" {...register("title")} />
                 {errors.title && (
                   <p className="text-sm text-destructive">
@@ -345,28 +325,7 @@ export default function PostPage({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="categoryId">Category</Label>
-                <select
-                  id="categoryId"
-                  {...register("categoryId")}
-                  className="w-full px-3 py-2 border rounded-md bg-background"
-                >
-                  <option value="">Select category</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.categoryId && (
-                  <p className="text-sm text-destructive">
-                    {errors.categoryId.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="tags">Tags (comma separated)</Label>
+                <Label htmlFor="tags">{t("TAGS_COMMA_SEPARATED")}</Label>
                 <Input
                   id="tags"
                   {...register("tags")}
@@ -394,7 +353,7 @@ export default function PostPage({
         <CardContent className="space-y-6">
           {isEditing ? (
             <div className="space-y-2">
-              <Label htmlFor="content">Content</Label>
+              <Label htmlFor="content">{t("CONTENT")}</Label>
               <Textarea
                 id="content"
                 {...register("content")}
@@ -420,7 +379,9 @@ export default function PostPage({
               <div className="flex items-center gap-6 text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Eye className="h-5 w-5" />
-                  <span>{post.views} views</span>
+                  <span>
+                    {post.views} {t("VIEWS")}
+                  </span>
                 </div>
                 <PostLikeButton
                   postId={post.id}
@@ -430,14 +391,16 @@ export default function PostPage({
                 />
                 <div className="flex items-center gap-2">
                   <MessageCircle className="h-5 w-5" />
-                  <span>{post._count.comments} comments</span>
+                  <span>
+                    {post._count.comments} {t("COMMENTS").toLowerCase()}
+                  </span>
                 </div>
               </div>
 
               <Separator />
 
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold">Comments</h2>
+                <h2 className="text-2xl font-bold">{t("COMMENTS")}</h2>
 
                 {session ? (
                   <CommentForm postId={post.id} />
@@ -448,9 +411,9 @@ export default function PostPage({
                         href="/login"
                         className="text-primary hover:underline"
                       >
-                        Login
+                        {t("LOGIN")}
                       </Link>{" "}
-                      to comment
+                      {t("LOGIN_TO_COMMENT")}
                     </p>
                   </div>
                 )}
@@ -458,7 +421,7 @@ export default function PostPage({
                 <div className="space-y-4">
                   {post.comments.length === 0 ? (
                     <p className="text-center text-muted-foreground py-8">
-                      No comments yet. Be the first to comment!
+                      {t("NO_COMMENTS_BE_FIRST")}
                     </p>
                   ) : (
                     post.comments.map((comment) => (

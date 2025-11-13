@@ -14,54 +14,60 @@ export async function POST(
 
     const { id } = await params;
 
-    // Check if user already liked this post
-    const existingLike = await prisma.postLike.findUnique({
-      where: {
-        userId_postId: {
-          userId: session.userId,
-          postId: id,
+    // Use transaction to ensure atomicity and prevent race conditions
+    const result = await prisma.$transaction(async (tx) => {
+      // Check if user already liked this post
+      const existingLike = await tx.postLike.findUnique({
+        where: {
+          userId_postId: {
+            userId: session.userId,
+            postId: id,
+          },
         },
-      },
+        select: { id: true },
+      });
+
+      let isLiked: boolean;
+      let post;
+
+      if (existingLike) {
+        // Unlike: remove the like and decrement the count
+        await tx.postLike.delete({
+          where: { id: existingLike.id },
+        });
+
+        post = await tx.post.update({
+          where: { id },
+          data: { likes: { decrement: 1 } },
+          select: { likes: true },
+        });
+
+        isLiked = false;
+      } else {
+        // Like: create the like and increment the count
+        await tx.postLike.create({
+          data: {
+            userId: session.userId,
+            postId: id,
+          },
+        });
+
+        post = await tx.post.update({
+          where: { id },
+          data: { likes: { increment: 1 } },
+          select: { likes: true },
+        });
+
+        isLiked = true;
+      }
+
+      return { likes: post.likes, isLiked };
     });
 
-    let isLiked: boolean;
-    let post;
-
-    if (existingLike) {
-      // Unlike: remove the like and decrement the count
-      await prisma.postLike.delete({
-        where: {
-          id: existingLike.id,
-        },
-      });
-
-      post = await prisma.post.update({
-        where: { id },
-        data: { likes: { decrement: 1 } },
-      });
-
-      isLiked = false;
-    } else {
-      // Like: create the like and increment the count
-      await prisma.postLike.create({
-        data: {
-          userId: session.userId,
-          postId: id,
-        },
-      });
-
-      post = await prisma.post.update({
-        where: { id },
-        data: { likes: { increment: 1 } },
-      });
-
-      isLiked = true;
-    }
-
     return NextResponse.json({
-      message: isLiked ? "Post liked successfully" : "Post unliked successfully",
-      likes: post.likes,
-      isLiked,
+      message: result.isLiked ? "Post liked successfully" : "Post unliked successfully",
+      likes: result.likes,
+      isLiked: result.isLiked,
     });
   } catch (error) {
     console.error("Toggle like error:", error);

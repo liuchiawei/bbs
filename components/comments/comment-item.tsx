@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { motion } from "motion/react";
 import { CommentForm } from "./comment-form";
 import type { CommentWithUser } from "@/lib/types";
+import { t } from "@/lib/constants";
 
 interface CommentItemProps {
   comment: CommentWithUser;
@@ -64,15 +65,15 @@ export function CommentItem({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Failed to like comment");
+        throw new Error(result.error || t("FAILED_TO_LIKE_COMMENT"));
       }
 
       setLikes(result.likes);
       setIsLiked(result.isLiked);
-      toast.success(result.isLiked ? "Comment liked!" : "Comment unliked!");
+      toast.success(result.isLiked ? t("COMMENT_LIKED") : t("COMMENT_UNLIKED"));
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to like comment"
+        error instanceof Error ? error.message : t("FAILED_TO_LIKE_COMMENT")
       );
     } finally {
       setIsLiking(false);
@@ -80,7 +81,7 @@ export function CommentItem({
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this comment?")) return;
+    if (!confirm(t("DELETE_COMMENT_CONFIRM"))) return;
 
     try {
       const response = await fetch(`/api/comments/${comment.id}`, {
@@ -90,15 +91,15 @@ export function CommentItem({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Failed to delete comment");
+        throw new Error(result.error || t("FAILED_TO_DELETE_COMMENT"));
       }
 
-      toast.success("Comment deleted!");
+      toast.success(t("COMMENT_DELETED"));
       onDelete?.();
       router.refresh();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete comment"
+        error instanceof Error ? error.message : t("FAILED_TO_DELETE_COMMENT")
       );
     }
   };
@@ -113,7 +114,7 @@ export function CommentItem({
           }
         })
         .catch(() => {
-          toast.error("Failed to load replies");
+          toast.error(t("FAILED_TO_LOAD_REPLIES"));
         });
     }
   };
@@ -134,7 +135,7 @@ export function CommentItem({
       className={`${level > 0 ? "ml-8 border-l-2 pl-4" : ""}`}
     >
       <div className="flex gap-3 p-4 rounded-lg hover:bg-muted/50 transition-colors">
-        <Link href={`/users/${comment.user.id}`}>
+        <Link href={`/user/${comment.user.userId}`}>
           <Avatar className="h-10 w-10">
             <AvatarImage src={comment.user.avatar || undefined} />
             <AvatarFallback>
@@ -145,7 +146,7 @@ export function CommentItem({
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2">
             <Link
-              href={`/users/${comment.user.id}`}
+              href={`/user/${comment.user.userId}`}
               className="hover:underline"
             >
               {comment.user.name}
@@ -177,7 +178,7 @@ export function CommentItem({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                {isLiked ? "Unlike" : "Like"}
+                {isLiked ? t("UNLIKE") : t("LIKE")}
               </TooltipContent>
             </Tooltip>
 
@@ -197,7 +198,7 @@ export function CommentItem({
                   )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Reply</TooltipContent>
+              <TooltipContent>{t("REPLY")}</TooltipContent>
             </Tooltip>
 
             {isOwner && (
@@ -212,7 +213,7 @@ export function CommentItem({
                     <Trash2 className="size-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Delete</TooltipContent>
+                <TooltipContent>{t("DELETE")}</TooltipContent>
               </Tooltip>
             )}
           </div>
@@ -232,7 +233,7 @@ export function CommentItem({
                     onReplyAdded();
                   }
                 }}
-                placeholder="Write a reply..."
+                placeholder={t("WRITE_REPLY")}
               />
             </div>
           )}

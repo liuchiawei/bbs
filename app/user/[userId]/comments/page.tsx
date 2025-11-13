@@ -6,14 +6,15 @@ import { ArrowLeft } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { DeleteCommentButton } from "@/components/comments/delete-comment-button";
 import { getUserComments } from "@/lib/services/users";
+import { t } from "@/lib/constants";
 
 export default async function UserCommentsPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ userId: string }>;
 }) {
-  const { id } = await params;
-  const user = await getUserComments(id);
+  const { userId } = await params;
+  const user = await getUserComments(userId);
   const currentUser = await getCurrentUser();
 
   if (!user) {
@@ -24,24 +25,24 @@ export default async function UserCommentsPage({
     <div className="container mx-auto px-4 py-12 max-w-5xl">
       <div className="mb-6">
         <Button variant="ghost" asChild>
-          <Link href={`/users/${id}`}>
+          <Link href={`/user/${userId}`}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Profile
+            {t("BACK_TO_PROFILE")}
           </Link>
         </Button>
       </div>
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">{user.name}'s Comments</h1>
+        <h1 className="text-3xl font-bold">{user.name}{t("COMMENTS_BY")}</h1>
         <p className="text-muted-foreground mt-2">
           {user.comments.length}{" "}
-          {user.comments.length === 1 ? "comment" : "comments"}
+          {user.comments.length === 1 ? t("COMMENT_SINGULAR") : t("COMMENT_PLURAL")}
         </p>
       </div>
 
       {user.comments.length === 0 ? (
         <p className="text-center text-muted-foreground py-12">
-          No comments yet
+          {t("NO_COMMENTS_YET")}
         </p>
       ) : (
         <div className="space-y-4">
@@ -74,8 +75,8 @@ export default async function UserCommentsPage({
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
-                    <span>{comment.likes} likes</span>
-                    <span>{comment.replies} replies</span>
+                    <span>{comment.likes} {t("LIKES_LABEL")}</span>
+                    <span>{comment.replies} {t("REPLIES_LABEL")}</span>
                   </div>
                   {currentUser &&
                     (currentUser.id === comment.userId ||

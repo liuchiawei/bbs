@@ -1,27 +1,13 @@
 import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+import { getUserProfile } from "@/lib/services/users";
 import { EditProfileForm } from "@/components/profile/edit-profile-form";
-import type { User } from "@/lib/types";
-
-async function getUser(userId: string): Promise<User | null> {
-  return await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      gender: true,
-      birthDate: true,
-      avatar: true,
-    },
-  });
-}
+import { t } from "@/lib/constants";
 
 export default async function EditUserPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ userId: string }>;
 }) {
   const session = await getSession();
 
@@ -29,21 +15,21 @@ export default async function EditUserPage({
     redirect("/login");
   }
 
-  const { id } = await params;
-  const user = await getUser(id);
+  const { userId } = await params;
+  const user = await getUserProfile(session.userId);
 
   if (!user) {
     notFound();
   }
 
-  // Check if user is editing their own profile
-  if (session.userId !== id) {
+  // Check if user is editing their own profile (compare URL userId with user's userId field)
+  if (user.userId !== userId) {
     redirect("/");
   }
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold mb-8 text-center">Edit Profile</h1>
+      <h1 className="text-3xl font-bold mb-8 text-center">{t("EDIT_PROFILE")}</h1>
       <EditProfileForm
         user={{
           ...user,

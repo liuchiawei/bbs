@@ -14,6 +14,7 @@ import { motion } from "motion/react";
 import { toast } from "sonner";
 import { useState } from "react";
 import type { PostWithUser } from "@/lib/types";
+import { t } from "@/lib/constants";
 
 interface PostCardProps {
   post: PostWithUser;
@@ -68,7 +69,7 @@ export function PostCard({ post }: PostCardProps) {
           </h1>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Link href={`/users/${post.user.id}`}>
+              <Link href={`/user/${post.user.userId}`}>
                 <Avatar className="size-10">
                   <AvatarImage src={post.user.avatar || undefined} />
                   <AvatarFallback>
@@ -115,7 +116,7 @@ export function PostCard({ post }: PostCardProps) {
                 className="text-sm text-right"
               >
                 <Eye className="size-4" />
-                <span className="ml-1">See more</span>
+                <span className="ml-1">{t("SEE_MORE")}</span>
               </Link>
             </Button>
           </div>

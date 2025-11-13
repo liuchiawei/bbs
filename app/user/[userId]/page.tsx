@@ -1,5 +1,6 @@
-import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { getUserProfilePage } from "@/lib/services/users";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,64 +11,28 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import { PostCard } from "@/components/posts/post-card";
-import type { PostWithUser } from "@/lib/types";
-import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { PostCard } from "@/components/posts/post-card";
 import { Settings } from "lucide-react";
-async function getUser(id: string) {
-  return await prisma.user.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      gender: true,
-      birthDate: true,
-      avatar: true,
-      isAdmin: true,
-      createdAt: true,
-      posts: {
-        orderBy: { createdAt: "desc" },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true,
-            },
-          },
-          _count: {
-            select: {
-              comments: true,
-            },
-          },
-        },
-      },
-      _count: {
-        select: {
-          posts: true,
-          comments: true,
-          likedPosts: true,
-          likedComments: true,
-        },
-      },
-    },
-  });
-}
+import type { PostWithUser, UserProfilePage } from "@/lib/types";
+import { t } from "@/lib/constants";
 
 export default async function UserPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ userId: string }>;
 }) {
-  const { id } = await params;
-  const session = await getSession();
-  const user = await getUser(id);
+  const { userId } = await params;
+  const [session, userData] = await Promise.all([
+    getSession(),
+    getUserProfilePage(userId),
+  ]);
 
-  if (!user) {
+  if (!userData) {
     notFound();
   }
+
+  const user = userData as UserProfilePage;
 
   const isOwnProfile = session?.userId === user.id;
 
@@ -85,37 +50,45 @@ export default async function UserPage({
 
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-bold">{user.name}</h1>
+                <h1 className="text-3xl font-bold">
+                  {user.nickname ? user.nickname : user.name}
+                </h1>
                 {user.isAdmin && <Badge variant="destructive">Admin</Badge>}
               </div>
-              <p className="text-muted-foreground">{user.email}</p>
-              <p className="text-sm text-muted-foreground">
-                Joined {new Date(user.createdAt).toLocaleDateString()}
-              </p>
+              <p className="text-muted-foreground">@{user.userId}</p>
+              <div className="flex items-center gap-4">
+                <p className="text-sm text-muted-foreground">
+                  {t("JOINED")}{" "}
+                  {new Date(user.createdAt ?? "").toLocaleDateString()}
+                </p>
+                <Badge variant="secondary" className="text-sm">
+                  {user.points ?? 0} {t("POINTS")}
+                </Badge>
+              </div>
             </div>
           </div>
         </CardHeader>
 
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <Link href={`/users/${user.id}/posts`}>
+            <Link href={`/user/${user.userId}/posts`}>
               <div className="text-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
                 <p className="text-2xl font-bold">{user._count.posts}</p>
-                <p className="text-sm text-muted-foreground">Posts</p>
+                <p className="text-sm text-muted-foreground">{t("POSTS")}</p>
               </div>
             </Link>
-            <Link href={`/users/${user.id}/comments`}>
+            <Link href={`/user/${user.userId}/comments`}>
               <div className="text-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
                 <p className="text-2xl font-bold">{user._count.comments}</p>
-                <p className="text-sm text-muted-foreground">Comments</p>
+                <p className="text-sm text-muted-foreground">{t("COMMENTS")}</p>
               </div>
             </Link>
-            <Link href={`/users/${user.id}/likes`}>
+            <Link href={`/user/${user.userId}/likes`}>
               <div className="text-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
                 <p className="text-2xl font-bold">
                   {user._count.likedPosts + user._count.likedComments}
                 </p>
-                <p className="text-sm text-muted-foreground">Likes</p>
+                <p className="text-sm text-muted-foreground">{t("LIKES")}</p>
               </div>
             </Link>
           </div>
@@ -124,42 +97,60 @@ export default async function UserPage({
 
       <Tabs defaultValue="posts" className="w-full">
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-          <TabsTrigger value="about">About</TabsTrigger>
-          <TabsTrigger value="posts">Posts</TabsTrigger>
+          <TabsTrigger value="about">{t("ABOUT")}</TabsTrigger>
+          <TabsTrigger value="posts">{t("POSTS")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="about" className="mt-8">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-xl md:text-3xl font-bold">About</CardTitle>
+                <CardTitle className="text-xl md:text-3xl font-bold">
+                  {t("ABOUT")}
+                </CardTitle>
                 {isOwnProfile && (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="outline" size="icon" asChild>
-                        <Link href={`/users/${user.id}/edit`}>
+                        <Link href={`/user/${user.userId}/edit`}>
                           <Settings className="size-4" />
                         </Link>
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Edit Profile</TooltipContent>
+                    <TooltipContent>{t("EDIT_PROFILE")}</TooltipContent>
                   </Tooltip>
                 )}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
+              {user.name && (
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("NAME")}</p>
+                  <p className="font-medium">{user.name}</p>
+                </div>
+              )}
               {user.birthDate && (
                 <div>
-                  <p className="text-sm text-muted-foreground">Birthday</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("BIRTHDAY")}
+                  </p>
                   <p className="font-medium">
                     {new Date(user.birthDate).toLocaleDateString()}
                   </p>
                 </div>
               )}
+              {user.gender && (
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("GENDER")}</p>
+                  <p className="font-medium">{user.gender}</p>
+                </div>
+              )}
               <div>
-                <p className="text-sm text-muted-foreground">Member since</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("MEMBER_SINCE")}
+                </p>
                 <p className="font-medium">
-                  {new Date(user.createdAt).toLocaleDateString()}
+                  {new Date(user.createdAt ?? "").toLocaleDateString()}
                 </p>
               </div>
             </CardContent>
@@ -169,7 +160,7 @@ export default async function UserPage({
         <TabsContent value="posts" className="space-y-4 mt-8">
           {user.posts.length === 0 ? (
             <p className="text-center text-muted-foreground py-12">
-              No posts yet
+              {t("NO_POSTS_YET")}
             </p>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

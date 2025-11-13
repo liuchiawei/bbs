@@ -13,20 +13,12 @@ import { AvatarUpload } from "./avatar-upload";
 import { toast } from "sonner";
 import { motion } from "motion/react";
 import type { User } from "@/lib/types";
+import { t } from "@/lib/constants";
+import { updateUserSchema } from "@/lib/validations";
 
-const editProfileSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  gender: z.string().optional(),
-  birthDate: z.string().optional(),
-});
+type EditProfileFormData = z.infer<typeof updateUserSchema>;
 
-type EditProfileFormData = z.infer<typeof editProfileSchema>;
-
-interface EditProfileFormProps {
-  user: User;
-}
-
-export function EditProfileForm({ user }: EditProfileFormProps) {
+export function EditProfileForm({ user }: { user: User }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(user.avatar);
@@ -36,41 +28,43 @@ export function EditProfileForm({ user }: EditProfileFormProps) {
     handleSubmit,
     formState: { errors },
   } = useForm<EditProfileFormData>({
-    resolver: zodResolver(editProfileSchema),
+    resolver: zodResolver(updateUserSchema),
     defaultValues: {
       name: user.name,
+      nickname: user.nickname || "",
       gender: user.gender || "",
       birthDate: user.birthDate
         ? new Date(user.birthDate).toISOString().split("T")[0]
         : "",
+      avatar: user.avatar || "",
     },
   });
 
   const onSubmit = async (data: EditProfileFormData) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/users/${user.id}`, {
+      const response = await fetch(`/api/user/${user.userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...data,
-          avatar: avatarUrl,
         }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Update failed");
+        throw new Error(result.error || t("ERROR_GENERIC"));
       }
 
-      toast.success("Profile updated successfully!");
+      toast.success(t("SUCCESS_UPDATED"));
       router.refresh();
+      router.push(`/user/${user.userId}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Update failed");
+      toast.error(error instanceof Error ? error.message : t("ERROR_GENERIC"));
     } finally {
       setIsLoading(false);
-      redirect(`/users/${user.id}`);
+      redirect(`/user/${user.userId}`);
     }
   };
 
@@ -82,9 +76,9 @@ export function EditProfileForm({ user }: EditProfileFormProps) {
     >
       <Card className="w-full max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>Edit Profile</CardTitle>
+          <CardTitle>{`${t("EDIT")} ${t("PROFILE")}`}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           <AvatarUpload
             currentAvatar={avatarUrl}
             userName={user.name}
@@ -93,40 +87,59 @@ export function EditProfileForm({ user }: EditProfileFormProps) {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">{t("NAME_LABEL")}</Label>
               <Input id="name" {...register("name")} />
               {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.name.message}
+                </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email (cannot be changed)</Label>
+              <Label htmlFor="nickname">{t("NICKNAME_LABEL")}</Label>
+              <Input id="nickname" {...register("nickname")} />
+              {errors.nickname && (
+                <p className="text-sm text-destructive">
+                  {errors.nickname.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">
+                {t("EMAIL")} ({t("CANNOT_BE_CHANGED")})
+              </Label>
               <Input id="email" value={user.email} disabled />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="gender">Gender</Label>
+              <Label htmlFor="gender">{t("GENDER")}</Label>
               <select
                 id="gender"
                 {...register("gender")}
                 className="w-full px-3 py-2 border rounded-md bg-background"
               >
-                <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
+                <option value="">{t("SELECT_GENDER")}</option>
+                <option value="male">{t("MALE")}</option>
+                <option value="female">{t("FEMALE")}</option>
+                <option value="other">{t("OTHER")}</option>
               </select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="birthDate">Birth Date</Label>
+              <Label htmlFor="birthDate">{t("BIRTH_DATE_OPTIONAL")}</Label>
               <Input id="birthDate" type="date" {...register("birthDate")} />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Updating..." : "Update Profile"}
-            </Button>
+            <div className="flex gap-2">
+              <Button type="submit" disabled={isLoading} className="w-1/2">
+                {isLoading ? t("LOADING") : t("SAVE")}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => router.back()} className="w-1/2">
+                {t("CANCEL")}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>

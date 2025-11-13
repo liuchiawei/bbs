@@ -9,51 +9,52 @@ import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { t } from "@/lib/constants";
 
 export default async function UserLikesPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ userId: string }>;
 }) {
-  const { id } = await params;
+  const { userId } = await params;
   const session = await getSession();
 
-  if (!session || session.userId !== id) {
+  if (!session || session.userId !== userId) {
     redirect("/");
   }
 
   const [likedPosts, likedComments] = await Promise.all([
-    getUserLikedPosts(id),
-    getUserLikedComments(id),
+    getUserLikedPosts(userId),
+    getUserLikedComments(userId),
   ]);
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-5xl">
       <div className="mb-6">
         <Button variant="ghost" asChild>
-          <Link href={`/users/${id}`}>
+          <Link href={`/user/${userId}`}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Profile
+            {t("BACK_TO_PROFILE")}
           </Link>
         </Button>
       </div>
 
-      <h1 className="text-3xl font-bold mb-8">Liked Content</h1>
+      <h1 className="text-3xl font-bold mb-8">{t("LIKED_CONTENT")}</h1>
 
       <Tabs defaultValue="posts" className="w-full">
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
           <TabsTrigger value="posts">
-            Liked Posts ({likedPosts.length})
+            {t("LIKED_POSTS")} ({likedPosts.length})
           </TabsTrigger>
           <TabsTrigger value="comments">
-            Liked Comments ({likedComments.length})
+            {t("LIKED_COMMENTS")} ({likedComments.length})
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="posts" className="space-y-4 mt-8">
           {likedPosts.length === 0 ? (
             <p className="text-center text-muted-foreground py-12">
-              No liked posts yet
+              {t("NO_LIKED_POSTS")}
             </p>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -67,7 +68,7 @@ export default async function UserLikesPage({
         <TabsContent value="comments" className="space-y-4 mt-8">
           {likedComments.length === 0 ? (
             <p className="text-center text-muted-foreground py-12">
-              No liked comments yet
+              {t("NO_LIKED_COMMENTS")}
             </p>
           ) : (
             <div className="space-y-4">
@@ -83,13 +84,13 @@ export default async function UserLikesPage({
                       </Avatar>
                       <div className="flex-1">
                         <Link
-                          href={`/users/${comment.user.id}`}
+                          href={`/user/${comment.user.userId}`}
                           className="font-semibold hover:underline"
                         >
                           {comment.user.name}
                         </Link>
                         <p className="text-xs text-muted-foreground">
-                          on{" "}
+                          {t("ON")}{" "}
                           <Link
                             href={`/posts/${comment.post.id}`}
                             className="hover:underline"
@@ -108,8 +109,8 @@ export default async function UserLikesPage({
                       {comment.content}
                     </p>
                     <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
-                      <span>{comment.likes} likes</span>
-                      <span>{comment.replies} replies</span>
+                      <span>{comment.likes} {t("LIKES_LABEL")}</span>
+                      <span>{comment.replies} {t("REPLIES_LABEL")}</span>
                     </div>
                   </CardContent>
                 </Card>

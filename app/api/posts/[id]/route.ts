@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { updatePostSchema, userSelectBasic, commentIncludeBasic } from "@/lib/validations";
 import { z } from "zod";
-
-const updatePostSchema = z.object({
-  title: z.string().min(1, "Title is required").optional(),
-  content: z.string().min(1, "Content is required").optional(),
-  categoryId: z.string().min(1, "Category is required").optional(),
-  tags: z.array(z.string()).optional(),
-});
 
 export async function GET(
   request: NextRequest,
@@ -17,47 +11,18 @@ export async function GET(
   try {
     const { id } = await params;
 
-    // Increment view count
-    await prisma.post.update({
+    // Combine view increment and fetch in single query
+    const post = await prisma.post.update({
       where: { id },
       data: { views: { increment: 1 } },
-    });
-
-    const post = await prisma.post.findUnique({
-      where: { id },
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-          },
-        },
-        category: {
-          select: {
-            id: true,
-            slug: true,
-            name: true,
-          },
-        },
+        user: { select: userSelectBasic },
         comments: {
           where: { parentId: null },
           orderBy: { createdAt: "desc" },
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-              },
-            },
-          },
+          include: commentIncludeBasic,
         },
-        _count: {
-          select: {
-            comments: true,
-          },
-        },
+        _count: { select: { comments: true } },
       },
     });
 
@@ -87,9 +52,10 @@ export async function PATCH(
 
     const { id } = await params;
 
-    // Check if user owns the post
+    // Check if user owns the post - only select userId
     const existingPost = await prisma.post.findUnique({
       where: { id },
+      select: { userId: true },
     });
 
     if (!existingPost) {
@@ -107,38 +73,13 @@ export async function PATCH(
       where: { id },
       data: validatedData,
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-          },
-        },
-        category: {
-          select: {
-            id: true,
-            slug: true,
-            name: true,
-          },
-        },
+        user: { select: userSelectBasic },
         comments: {
           where: { parentId: null },
           orderBy: { createdAt: "desc" },
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-              },
-            },
-          },
+          include: commentIncludeBasic,
         },
-        _count: {
-          select: {
-            comments: true,
-          },
-        },
+        _count: { select: { comments: true } },
       },
     });
 
@@ -174,9 +115,10 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Check if user owns the post
+    // Check if user owns the post - only select userId
     const existingPost = await prisma.post.findUnique({
       where: { id },
+      select: { userId: true },
     });
 
     if (!existingPost) {

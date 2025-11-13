@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -16,8 +17,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BBS - Bulletin Board System",
-  description: "A modern bulletin board system built with Next.js",
+  title: "BBS | Boxing Buddies Society",
+  description: "A boxing community for boxing buddies to share their thoughts and experiences.",
+  // TODO: add open graph metadata
+  // openGraph: {
+  //   title: "BBS | Boxing Buddies Society",
+  //   description: "A boxing community for boxing buddies to share their thoughts and experiences.",
+  //   url: "https://bbs.boxingbuddies.com",
+  // },
 };
 
 export default function RootLayout({
@@ -31,11 +38,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Navbar />
-        <main className="min-h-screen">
-          {children}
-        </main>
+        <main className="min-h-screen">{children}</main>
         <Footer />
         <Toaster />
+        <Analytics />
       </body>
     </html>
   );

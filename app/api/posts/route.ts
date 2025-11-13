@@ -1,31 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { createPostSchema, postIncludeBasic } from "@/lib/validations";
 import { z } from "zod";
-
-const createPostSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  content: z.string().min(1, "Content is required"),
-  categoryId: z.string().min(1, "Category is required"),
-  tags: z.array(z.string()).optional().default([]),
-});
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
-    const categorySlug = searchParams.get("category");
     const userId = searchParams.get("userId");
 
     const skip = (page - 1) * limit;
 
     const where: any = {};
-    if (categorySlug) {
-      where.category = {
-        slug: categorySlug,
-      };
-    }
     if (userId) where.userId = userId;
 
     const [posts, total] = await Promise.all([
@@ -34,27 +22,7 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true,
-            },
-          },
-          category: {
-            select: {
-              id: true,
-              slug: true,
-              name: true,
-            },
-          },
-          _count: {
-            select: {
-              comments: true,
-            },
-          },
-        },
+        include: postIncludeBasic,
       }),
       prisma.post.count({ where }),
     ]);
@@ -91,26 +59,10 @@ export async function POST(request: NextRequest) {
       data: {
         title: validatedData.title,
         content: validatedData.content,
-        categoryId: validatedData.categoryId,
         tags: validatedData.tags,
         userId: session.userId,
       },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-          },
-        },
-        category: {
-          select: {
-            id: true,
-            slug: true,
-            name: true,
-          },
-        },
-      },
+      include: postIncludeBasic,
     });
 
     return NextResponse.json({

@@ -2,20 +2,37 @@ import { prisma } from "@/lib/db";
 import type { User, UserWithCounts } from "@/lib/types";
 
 /**
+ * Check if a userId is available
+ */
+export async function checkUserIdAvailability(
+  userId: string
+): Promise<boolean> {
+  const existingUser = await prisma.user.findUnique({
+    where: { userId: userId },
+    select: { id: true },
+  });
+  return !existingUser;
+}
+
+/**
  * Get a user by ID
  */
 export async function getUserById(id: string): Promise<User | null> {
+  "use cache";
   return await prisma.user.findUnique({
     where: { id },
     select: {
       id: true,
+      userId: true,
       name: true,
+      nickname: true,
       email: true,
       gender: true,
       birthDate: true,
       avatar: true,
       isAdmin: true,
       isBanned: true,
+      points: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -25,17 +42,23 @@ export async function getUserById(id: string): Promise<User | null> {
 /**
  * Get a user with post and comment counts
  */
-export async function getUserWithCounts(id: string): Promise<UserWithCounts | null> {
+export async function getUserWithCounts(
+  id: string
+): Promise<UserWithCounts | null> {
+  "use cache";
   return await prisma.user.findUnique({
     where: { id },
     select: {
       id: true,
+      userId: true,
       name: true,
+      nickname: true,
       email: true,
       gender: true,
       birthDate: true,
       avatar: true,
       isAdmin: true,
+      points: true,
       createdAt: true,
       updatedAt: true,
       _count: {
@@ -56,11 +79,14 @@ export async function getUserProfile(userId: string) {
     where: { id: userId },
     select: {
       id: true,
+      userId: true,
       name: true,
+      nickname: true,
       email: true,
       gender: true,
       birthDate: true,
       avatar: true,
+      points: true,
     },
   });
 }
@@ -75,6 +101,7 @@ export async function updateUserProfile(
     gender?: string | null;
     birthDate?: Date | null;
     avatar?: string | null;
+    points?: number;
   }
 ) {
   return await prisma.user.update({
@@ -82,11 +109,14 @@ export async function updateUserProfile(
     data,
     select: {
       id: true,
+      userId: true,
       name: true,
+      nickname: true,
       email: true,
       gender: true,
       birthDate: true,
       avatar: true,
+      points: true,
       isAdmin: true,
       createdAt: true,
       updatedAt: true,
@@ -95,9 +125,71 @@ export async function updateUserProfile(
 }
 
 /**
+ * Get a user's full profile page data (optimized single query)
+ * Includes user info, counts, and recent posts
+ */
+export async function getUserProfilePage(userId: string, recentPostsLimit = 6) {
+  "use cache";
+  return await prisma.user.findUnique({
+    where: { userId },
+    select: {
+      id: true,
+      userId: true,
+      name: true,
+      nickname: true,
+      email: true,
+      gender: true,
+      birthDate: true,
+      avatar: true,
+      isAdmin: true,
+      points: true,
+      createdAt: true,
+      posts: {
+        orderBy: { createdAt: "desc" },
+        take: recentPostsLimit,
+        select: {
+          id: true,
+          title: true,
+          content: true,
+          tags: true,
+          views: true,
+          likes: true,
+          createdAt: true,
+          updatedAt: true,
+          userId: true,
+          user: {
+            select: {
+              id: true,
+              userId: true,
+              name: true,
+              nickname: true,
+              avatar: true,
+            },
+          },
+          _count: {
+            select: {
+              comments: true,
+            },
+          },
+        },
+      },
+      _count: {
+        select: {
+          posts: true,
+          comments: true,
+          likedPosts: true,
+          likedComments: true,
+        },
+      },
+    },
+  });
+}
+
+/**
  * Get user's liked posts
  */
 export async function getUserLikedPosts(userId: string) {
+  "use cache";
   const likes = await prisma.postLike.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
@@ -107,6 +199,7 @@ export async function getUserLikedPosts(userId: string) {
           user: {
             select: {
               id: true,
+              userId: true,
               name: true,
               avatar: true,
             },
@@ -128,6 +221,7 @@ export async function getUserLikedPosts(userId: string) {
  * Get user's liked comments
  */
 export async function getUserLikedComments(userId: string) {
+  "use cache";
   const likes = await prisma.commentLike.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
@@ -137,6 +231,7 @@ export async function getUserLikedComments(userId: string) {
           user: {
             select: {
               id: true,
+              userId: true,
               name: true,
               avatar: true,
             },
@@ -159,6 +254,7 @@ export async function getUserLikedComments(userId: string) {
  * Get user with their comments
  */
 export async function getUserComments(userId: string) {
+  "use cache";
   return await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -170,6 +266,7 @@ export async function getUserComments(userId: string) {
           user: {
             select: {
               id: true,
+              userId: true,
               name: true,
               avatar: true,
             },
@@ -190,7 +287,9 @@ export async function getUserComments(userId: string) {
 /**
  * Admin: Get all users with pagination and counts
  */
-export async function getAllUsers(options: { page?: number; limit?: number } = {}) {
+export async function getAllUsers(
+  options: { page?: number; limit?: number } = {}
+) {
   const { page = 1, limit = 20 } = options;
   const skip = (page - 1) * limit;
 
@@ -201,11 +300,14 @@ export async function getAllUsers(options: { page?: number; limit?: number } = {
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
+        userId: true,
         name: true,
+        nickname: true,
         email: true,
         avatar: true,
         isAdmin: true,
         isBanned: true,
+        points: true,
         createdAt: true,
         _count: {
           select: {
@@ -245,6 +347,7 @@ export async function banUser(userId: string) {
     data: { isBanned: true },
     select: {
       id: true,
+      userId: true,
       name: true,
       email: true,
       isBanned: true,
@@ -261,6 +364,7 @@ export async function unbanUser(userId: string) {
     data: { isBanned: false },
     select: {
       id: true,
+      userId: true,
       name: true,
       email: true,
       isBanned: true,

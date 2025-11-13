@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { hashPassword, createToken, setSession } from "@/lib/auth";
+import { registerSchema } from "@/lib/validations";
 import { z } from "zod";
-
-const registerSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  gender: z.string().optional(),
-  birthDate: z.string().optional(),
-});
+import { t } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,15 +11,28 @@ export async function POST(request: NextRequest) {
     const validatedData = registerSchema.parse(body);
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: validatedData.email },
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: validatedData.email },
+          { userId: validatedData.userId },
+        ],
+      },
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: "User with this email already exists" },
-        { status: 400 }
-      );
+      if (existingUser.email === validatedData.email) {
+        return NextResponse.json(
+          { error: t("ALERT_EMAIL_TAKEN") },
+          { status: 400 }
+        );
+      }
+      if (existingUser.userId === validatedData.userId) {
+        return NextResponse.json(
+          { error: t("USER_ID_TAKEN") },
+          { status: 400 }
+        );
+      }
     }
 
     // Hash password
@@ -34,7 +41,9 @@ export async function POST(request: NextRequest) {
     // Create user
     const user = await prisma.user.create({
       data: {
+        userId: validatedData.userId,
         name: validatedData.name,
+        nickname: validatedData.nickname || null,
         email: validatedData.email,
         password: hashedPassword,
         gender: validatedData.gender,
@@ -57,7 +66,7 @@ export async function POST(request: NextRequest) {
     const { password: _, ...userWithoutPassword } = user;
 
     return NextResponse.json({
-      message: "User registered successfully",
+      message: t("SUCCESS_REGISTERED"),
       user: userWithoutPassword,
     });
   } catch (error) {
@@ -70,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     console.error("Registration error:", error);
     return NextResponse.json(
-      { error: "Failed to register user" },
+      { error: t("ERROR_FAILED_TO_REGISTER") },
       { status: 500 }
     );
   }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
 import { motion } from "motion/react";
+import { t } from "@/lib/constants";
 
 interface AvatarUploadProps {
   currentAvatar?: string | null;
@@ -28,13 +29,13 @@ export function AvatarUpload({
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
+      toast.error(t("AVATAR_UPLOAD_TYPE_ERROR"));
       return;
     }
 
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("File size must be less than 5MB");
+      toast.error(t("AVATAR_UPLOAD_SIZE_ERROR"));
       return;
     }
 
@@ -59,13 +60,13 @@ export function AvatarUpload({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Upload failed");
+        throw new Error(result.error || t("AVATAR_UPLOAD_ERROR"));
       }
 
       onUploadSuccess(result.url);
-      toast.success("Avatar uploaded successfully!");
+      toast.success(t("AVATAR_UPLOAD_SUCCESS"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Upload failed");
+      toast.error(error instanceof Error ? error.message : t("AVATAR_UPLOAD_ERROR"));
       setPreviewUrl(null);
     } finally {
       setIsUploading(false);
@@ -91,6 +92,8 @@ export function AvatarUpload({
       </motion.div>
 
       <input
+        title="Avatar upload"
+        placeholder="Upload avatar"
         ref={fileInputRef}
         type="file"
         accept="image/*"
@@ -103,7 +106,7 @@ export function AvatarUpload({
         variant="outline"
         disabled={isUploading}
       >
-        {isUploading ? "Uploading..." : "Change Avatar"}
+        {isUploading ? t("AVATAR_UPLOADING") : t("AVATAR_CHANGE")}
       </Button>
     </div>
   );

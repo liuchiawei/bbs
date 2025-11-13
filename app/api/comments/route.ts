@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { createCommentSchema, commentIncludeBasic } from "@/lib/validations";
 import { z } from "zod";
-
-const createCommentSchema = z.object({
-  content: z.string().min(1, "Content is required"),
-  postId: z.string(),
-  parentId: z.string().optional(),
-});
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,31 +14,28 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = createCommentSchema.parse(body);
 
-    const comment = await prisma.comment.create({
-      data: {
-        content: validatedData.content,
-        postId: validatedData.postId,
-        userId: session.userId,
-        parentId: validatedData.parentId,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-          },
+    // Use transaction to ensure atomicity
+    const comment = await prisma.$transaction(async (tx) => {
+      const newComment = await tx.comment.create({
+        data: {
+          content: validatedData.content,
+          postId: validatedData.postId,
+          userId: session.userId,
+          parentId: validatedData.parentId,
         },
-      },
-    });
-
-    // If it's a reply, increment parent comment's replies count
-    if (validatedData.parentId) {
-      await prisma.comment.update({
-        where: { id: validatedData.parentId },
-        data: { replies: { increment: 1 } },
+        include: commentIncludeBasic,
       });
-    }
+
+      // If it's a reply, increment parent comment's replies count
+      if (validatedData.parentId) {
+        await tx.comment.update({
+          where: { id: validatedData.parentId },
+          data: { replies: { increment: 1 } },
+        });
+      }
+
+      return newComment;
+    });
 
     return NextResponse.json({
       message: "Comment created successfully",

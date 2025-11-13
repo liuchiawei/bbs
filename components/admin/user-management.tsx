@@ -17,6 +17,7 @@ import { ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import type { AdminUserListItem } from "@/lib/types";
+import { t } from "@/lib/constants";
 
 export function UserManagement() {
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
@@ -42,11 +43,11 @@ export function UserManagement() {
         setUsers(data.data || []);
         setPagination(data.pagination);
       } else {
-        toast.error("Failed to load users");
+        toast.error(t("ERROR_GENERIC"));
       }
     } catch (error) {
       console.error("Failed to fetch users:", error);
-      toast.error("Failed to load users");
+      toast.error(t("ERROR_GENERIC"));
     } finally {
       setIsLoading(false);
     }
@@ -55,20 +56,20 @@ export function UserManagement() {
   const handleToggleBan = async (user: AdminUserListItem) => {
     try {
       const endpoint = user.isBanned ? "unban" : "ban";
-      const response = await fetch(`/api/admin/users/${user.id}/${endpoint}`, {
+      const response = await fetch(`/api/admin/user/${user.userId}/${endpoint}`, {
         method: "PATCH",
       });
 
       if (response.ok) {
-        toast.success(`User ${user.isBanned ? "unbanned" : "banned"} successfully`);
+        toast.success(user.isBanned ? t("SUCCESS_UPDATED") : t("SUCCESS_UPDATED"));
         fetchUsers();
       } else {
         const data = await response.json();
-        toast.error(data.error || "Failed to update user");
+        toast.error(data.error || t("ERROR_GENERIC"));
       }
     } catch (error) {
       console.error("Failed to toggle ban:", error);
-      toast.error("Failed to update user");
+      toast.error(t("ERROR_GENERIC"));
     }
   };
 
@@ -83,7 +84,7 @@ export function UserManagement() {
   if (isLoading) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">Loading users...</p>
+        <p className="text-muted-foreground">{t("LOADING")}</p>
       </div>
     );
   }
@@ -163,7 +164,7 @@ export function UserManagement() {
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/users/${user.id}`} target="_blank">
+                      <Link href={`/user/${user.userId}`} target="_blank">
                         <ExternalLink className="h-4 w-4" />
                       </Link>
                     </Button>

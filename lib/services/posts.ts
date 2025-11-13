@@ -2,7 +2,6 @@ import { prisma } from "@/lib/db";
 import type { PostWithUser } from "@/lib/types";
 
 export interface GetPostsOptions {
-  categorySlug?: string;
   userId?: string;
   limit?: number;
   page?: number;
@@ -14,14 +13,10 @@ export interface GetPostsOptions {
 export async function getPosts(
   options: GetPostsOptions = {}
 ): Promise<PostWithUser[]> {
-  const { categorySlug, userId, limit = 20, page = 1 } = options;
+  "use cache";
+  const { userId, limit = 20, page = 1 } = options;
 
   const where: any = {};
-  if (categorySlug) {
-    where.category = {
-      slug: categorySlug,
-    };
-  }
   if (userId) where.userId = userId;
 
   const skip = (page - 1) * limit;
@@ -39,13 +34,6 @@ export async function getPosts(
           avatar: true,
         },
       },
-      category: {
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-        },
-      },
       _count: {
         select: {
           comments: true,
@@ -61,6 +49,7 @@ export async function getPosts(
  * Get a single post by ID with full details
  */
 export async function getPostById(id: string) {
+  "use cache";
   return await prisma.post.findUnique({
     where: { id },
     include: {
@@ -69,13 +58,6 @@ export async function getPostById(id: string) {
           id: true,
           name: true,
           avatar: true,
-        },
-      },
-      category: {
-        select: {
-          id: true,
-          slug: true,
-          name: true,
         },
       },
       comments: {
@@ -106,14 +88,10 @@ export async function getPostById(id: string) {
 export async function getPostsCount(
   options: Omit<GetPostsOptions, "limit" | "page"> = {}
 ): Promise<number> {
-  const { categorySlug, userId } = options;
+  "use cache";
+  const { userId } = options;
 
   const where: any = {};
-  if (categorySlug) {
-    where.category = {
-      slug: categorySlug,
-    };
-  }
   if (userId) where.userId = userId;
 
   return await prisma.post.count({ where });
@@ -122,7 +100,10 @@ export async function getPostsCount(
 /**
  * Create a new post
  */
-export async function createPost(userId: string, data: { title: string; content: string; categoryId: string; tags: string[] }) {
+export async function createPost(
+  userId: string,
+  data: { title: string; content: string; tags: string[] }
+) {
   return await prisma.post.create({
     data: {
       ...data,
@@ -136,13 +117,6 @@ export async function createPost(userId: string, data: { title: string; content:
           avatar: true,
         },
       },
-      category: {
-        select: {
-          id: true,
-          slug: true,
-          name: true,
-        },
-      },
     },
   });
 }
@@ -150,7 +124,10 @@ export async function createPost(userId: string, data: { title: string; content:
 /**
  * Update a post
  */
-export async function updatePost(id: string, data: { title?: string; content?: string; categoryId?: string; tags?: string[] }) {
+export async function updatePost(
+  id: string,
+  data: { title?: string; content?: string; tags?: string[] }
+) {
   return await prisma.post.update({
     where: { id },
     data,
@@ -160,13 +137,6 @@ export async function updatePost(id: string, data: { title?: string; content?: s
           id: true,
           name: true,
           avatar: true,
-        },
-      },
-      category: {
-        select: {
-          id: true,
-          slug: true,
-          name: true,
         },
       },
     },
@@ -206,7 +176,10 @@ export async function incrementPostLikes(id: string) {
 /**
  * Check if a user has liked a post
  */
-export async function hasUserLikedPost(userId: string, postId: string): Promise<boolean> {
+export async function hasUserLikedPost(
+  userId: string,
+  postId: string
+): Promise<boolean> {
   const like = await prisma.postLike.findUnique({
     where: {
       userId_postId: {
@@ -222,7 +195,9 @@ export async function hasUserLikedPost(userId: string, postId: string): Promise<
 /**
  * Admin: Get all posts with pagination
  */
-export async function getAllPostsAdmin(options: { page?: number; limit?: number } = {}) {
+export async function getAllPostsAdmin(
+  options: { page?: number; limit?: number } = {}
+) {
   const { page = 1, limit = 20 } = options;
   const skip = (page - 1) * limit;
 
@@ -237,13 +212,6 @@ export async function getAllPostsAdmin(options: { page?: number; limit?: number 
             id: true,
             name: true,
             avatar: true,
-          },
-        },
-        category: {
-          select: {
-            id: true,
-            slug: true,
-            name: true,
           },
         },
         _count: {
