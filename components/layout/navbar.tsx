@@ -15,15 +15,12 @@ import {
 import { LogOut, User, Settings, PlusCircle, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "motion/react";
-import { TRANSLATIONS, type Language } from "@/lib/constants";
+import { t } from "@/lib/constants";
 
 export function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  // TODO: Get language from user preferences or browser settings
-  const lang: Language = 'en';
-  const t = TRANSLATIONS[lang];
 
   useEffect(() => {
     fetchUser();
@@ -47,11 +44,11 @@ export function Navbar() {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
       setUser(null);
-      toast.success(t.SUCCESS_SAVED);
+      toast.success(t("SUCCESS_SAVED"));
       router.push("/");
       router.refresh();
     } catch (error) {
-      toast.error(t.ERROR_GENERIC);
+      toast.error(t("ERROR_GENERIC"));
     }
   };
 
@@ -63,7 +60,7 @@ export function Navbar() {
     >
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <Link href="/" className="text-2xl font-bold hover:text-primary transition-colors">
-          BBS
+          {t("APP_NAME")}
         </Link>
 
         <div className="flex items-center gap-4">
@@ -74,7 +71,7 @@ export function Navbar() {
               <Button asChild>
                 <Link href="/posts/new">
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  {t.NEW_POST}
+                  {t("NEW_POST")}
                 </Link>
               </Button>
 
@@ -100,13 +97,13 @@ export function Navbar() {
                   <DropdownMenuItem asChild>
                     <Link href="/settings">
                       <Settings className="mr-2 h-4 w-4" />
-                      {t.SETTINGS}
+                      {t("SETTINGS")}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href={`/users/${user.userId}`}>
                       <User className="mr-2 h-4 w-4" />
-                      {t.PROFILE}
+                      {t("PROFILE")}
                     </Link>
                   </DropdownMenuItem>
                   {user.isAdmin && (
@@ -115,7 +112,7 @@ export function Navbar() {
                       <DropdownMenuItem asChild>
                         <Link href="/admin">
                           <Shield className="mr-2 h-4 w-4" />
-                          Admin Dashboard
+                          {t("ADMIN_DASHBOARD")}
                         </Link>
                       </DropdownMenuItem>
                     </>
@@ -123,7 +120,7 @@ export function Navbar() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    {t.LOGOUT}
+                    {t("LOGOUT")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -131,10 +128,10 @@ export function Navbar() {
           ) : (
             <>
               <Button variant="ghost" asChild>
-                <Link href="/login">{t.LOGIN}</Link>
+                <Link href="/login">{t("LOGIN")}</Link>
               </Button>
               <Button asChild>
-                <Link href="/register">{t.REGISTER}</Link>
+                <Link href="/register">{t("REGISTER")}</Link>
               </Button>
             </>
           )}

@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { motion } from "motion/react";
-import { TRANSLATIONS, type Language } from "@/lib/constants";
+import { t } from "@/lib/constants";
 
 interface CommentFormProps {
   postId: string;
@@ -24,15 +24,12 @@ export function CommentForm({
   const router = useRouter();
   const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // TODO: Get language from user preferences or browser settings
-  const lang: Language = 'en';
-  const t = TRANSLATIONS[lang];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!content.trim()) {
-      toast.error(t.ERROR_INVALID_INPUT);
+      toast.error(t("ERROR_INVALID_INPUT"));
       return;
     }
 
@@ -51,10 +48,10 @@ export function CommentForm({
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || t.ERROR_GENERIC);
+        throw new Error(result.error || t("ERROR_GENERIC"));
       }
 
-      toast.success(t.SUCCESS_CREATED);
+      toast.success(t("SUCCESS_CREATED"));
       setContent("");
 
       if (onSuccess) {
@@ -63,7 +60,7 @@ export function CommentForm({
         router.refresh();
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t.ERROR_GENERIC);
+      toast.error(error instanceof Error ? error.message : t("ERROR_GENERIC"));
     } finally {
       setIsSubmitting(false);
     }
@@ -92,11 +89,11 @@ export function CommentForm({
             onClick={() => setContent("")}
             disabled={isSubmitting}
           >
-            {t.CANCEL}
+            {t("CANCEL")}
           </Button>
         )}
         <Button type="submit" disabled={isSubmitting || !content.trim()}>
-          {isSubmitting ? t.LOADING : `${t.SUBMIT} ${t.COMMENT}`}
+          {isSubmitting ? t("LOADING") : `${t("SUBMIT")} ${t("COMMENT")}`}
         </Button>
       </div>
     </motion.form>

@@ -82,8 +82,12 @@ export const TRANSLATIONS = {
     NEXT: "Next",
     PAGE: "Page",
     OF: "of",
+
+    // Alert Dialog
     ARE_YOU_SURE: "Are you sure?",
-    DELETE_POST_CONFIRMATION: "This action cannot be undone. This will permanently delete the post and all its comments.",
+    DELETE_POST_CONFIRMATION:
+      "This action cannot be undone. This will permanently delete the post and all its comments.",
+    ALERT_CANNOT_BE_UNDONE: "This action cannot be undone.",
 
     // Error messages
     ERROR_GENERIC: "Something went wrong. Please try again.",
@@ -173,6 +177,15 @@ export const TRANSLATIONS = {
     COMMENT: "Comment",
     COMMENTS: "Comments",
     ADD_COMMENT: "Add Comment",
+    WRITE_REPLY: "Write a reply...",
+    COMMENT_LIKED: "Comment liked!",
+    COMMENT_UNLIKED: "Comment unliked!",
+    COMMENT_DELETED: "Comment deleted!",
+    FAILED_TO_LIKE_COMMENT: "Failed to like comment",
+    FAILED_TO_DELETE_COMMENT: "Failed to delete comment",
+    FAILED_TO_LOAD_REPLIES: "Failed to load replies",
+    DELETE_COMMENT_CONFIRM: "Are you sure you want to delete this comment?",
+    UNLIKE: "Unlike",
 
     // Profile & Admin
     PROFILE: "Profile",
@@ -259,8 +272,12 @@ export const TRANSLATIONS = {
     NEXT: "次へ",
     PAGE: "ページ",
     OF: "/",
+
+    // Alert Dialog
     ARE_YOU_SURE: "本当によろしいですか？",
-    DELETE_POST_CONFIRMATION: "この操作は取り消せません。投稿とすべてのコメントが完全に削除されます。",
+    DELETE_POST_CONFIRMATION:
+      "この操作は取り消せません。投稿とすべてのコメントが完全に削除されます。",
+    ALERT_CANNOT_BE_UNDONE: "この操作は取り消せません。",
 
     // Error messages
     ERROR_GENERIC: "エラーが発生しました。もう一度お試しください。",
@@ -351,6 +368,15 @@ export const TRANSLATIONS = {
     COMMENT: "コメント",
     COMMENTS: "コメント",
     ADD_COMMENT: "コメントを追加",
+    WRITE_REPLY: "返信を書く...",
+    COMMENT_LIKED: "コメントがいいねされました！",
+    COMMENT_UNLIKED: "コメントが解除されました！",
+    COMMENT_DELETED: "コメントが削除されました！",
+    FAILED_TO_LIKE_COMMENT: "コメントのいいねに失敗しました",
+    FAILED_TO_DELETE_COMMENT: "コメントの削除に失敗しました",
+    FAILED_TO_LOAD_REPLIES: "返信の読み込みに失敗しました",
+    DELETE_COMMENT_CONFIRM: "本当にこのコメントを削除しますか？",
+    UNLIKE: "いいねを解除",
 
     // Profile & Admin
     PROFILE: "プロフィール",
@@ -437,8 +463,11 @@ export const TRANSLATIONS = {
     NEXT: "下一页",
     PAGE: "第",
     OF: "页，共",
+
+    // Alert Dialog
     ARE_YOU_SURE: "您确定吗？",
     DELETE_POST_CONFIRMATION: "此操作无法撤消。这将永久删除帖子及其所有评论。",
+    ALERT_CANNOT_BE_UNDONE: "此操作无法撤消。",
 
     // Error messages
     ERROR_GENERIC: "出错了，请重试。",
@@ -528,6 +557,15 @@ export const TRANSLATIONS = {
     COMMENT: "评论",
     COMMENTS: "评论",
     ADD_COMMENT: "添加评论",
+    WRITE_REPLY: "回复...",
+    COMMENT_LIKED: "评论被点赞！",
+    COMMENT_UNLIKED: "评论被取消点赞！",
+    COMMENT_DELETED: "评论被删除！",
+    FAILED_TO_LIKE_COMMENT: "评论点赞失败",
+    FAILED_TO_DELETE_COMMENT: "评论删除失败",
+    FAILED_TO_LOAD_REPLIES: "回复加载失败",
+    DELETE_COMMENT_CONFIRM: "你确定要删除这条评论吗？",
+    UNLIKE: "取消点赞",
 
     // Profile & Admin
     PROFILE: "个人资料",
@@ -574,7 +612,10 @@ export const TRANSLATIONS = {
 } as const;
 
 // Helper function to get translated text, default to Japanese if no language is provided
-export const t = (key: keyof typeof TRANSLATIONS.en, lang?: Language | null): string => {
+export const t = (
+  key: keyof typeof TRANSLATIONS.en,
+  lang?: Language | null
+): string => {
   return TRANSLATIONS[lang ?? "ja"][key] ?? key;
 };
 
