@@ -44,8 +44,9 @@ export function LoginForm() {
       }
 
       toast.success(t("SUCCESS_SAVED"));
-      router.push("/");
-      router.refresh();
+      // Use window.location.href to force a full page refresh
+      // This ensures the Navbar component re-initializes and fetches the updated user state
+      window.location.href = "/";
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("ERROR_GENERIC"));
     } finally {

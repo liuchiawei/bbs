@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { hashPassword, createToken, setSession } from "@/lib/auth";
 import { registerSchema } from "@/lib/validations";
 import { z } from "zod";
+import { t } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +16,6 @@ export async function POST(request: NextRequest) {
         OR: [
           { email: validatedData.email },
           { userId: validatedData.userId },
-          ...(validatedData.nickname ? [{ nickname: validatedData.nickname }] : []),
         ],
       },
     });
@@ -23,19 +23,13 @@ export async function POST(request: NextRequest) {
     if (existingUser) {
       if (existingUser.email === validatedData.email) {
         return NextResponse.json(
-          { error: "User with this email already exists" },
+          { error: t("ALERT_EMAIL_TAKEN") },
           { status: 400 }
         );
       }
       if (existingUser.userId === validatedData.userId) {
         return NextResponse.json(
-          { error: "User ID is already taken" },
-          { status: 400 }
-        );
-      }
-      if (existingUser.nickname === validatedData.nickname) {
-        return NextResponse.json(
-          { error: "Nickname is already taken" },
+          { error: t("USER_ID_TAKEN") },
           { status: 400 }
         );
       }

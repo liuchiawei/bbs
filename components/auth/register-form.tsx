@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -38,7 +37,6 @@ const registerSchema = baseRegisterSchema
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingUserId, setIsCheckingUserId] = useState(false);
   const [userIdError, setUserIdError] = useState<string | null>(null);
@@ -58,9 +56,10 @@ export function RegisterForm() {
   const userId = watch("userId");
   const gender = watch("gender");
 
-  // Debounced userId availability check with abort controller
+  // Real-time userId availability check with abort controller
   useEffect(() => {
     const checkUserId = async () => {
+      // If userId is empty, set userIdError to null and return
       if (!userId || userId.length === 0) {
         setUserIdError(null);
         return;
@@ -138,13 +137,11 @@ export function RegisterForm() {
       }
 
       toast.success(t("SUCCESS_CREATED"));
-      setTimeout(() => {
-        router.push("/");
-      }, 100);
+      // Use window.location.href to force a full page refresh
+      // This ensures the Navbar component re-initializes and fetches the updated user state
+      window.location.href = "/";
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : t("ERROR_GENERIC")
-      );
+      toast.error(error instanceof Error ? error.message : t("ERROR_GENERIC"));
     } finally {
       setIsLoading(false);
     }

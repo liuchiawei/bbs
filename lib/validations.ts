@@ -57,10 +57,6 @@ export const registerSchema = z.object({
     ),
   nickname: z
     .string()
-    .min(
-      APP_CONSTANTS.USER_NICKNAME_MIN_LENGTH,
-      `Nickname must be at least ${APP_CONSTANTS.USER_NICKNAME_MIN_LENGTH} characters`
-    )
     .max(
       APP_CONSTANTS.USER_NICKNAME_MAX_LENGTH,
       `Nickname must be ${APP_CONSTANTS.USER_NICKNAME_MAX_LENGTH} characters or less`
@@ -71,7 +67,7 @@ export const registerSchema = z.object({
     .string()
     .min(
       APP_CONSTANTS.USER_PASSWORD_MIN_LENGTH,
-      `Password must be at least ${APP_CONSTANTS.USER_PASSWORD_MIN_LENGTH} characters`
+      t("ALERT_PASSWORD_MIN_LENGTH")
     )
     .max(
       APP_CONSTANTS.USER_PASSWORD_MAX_LENGTH,
@@ -89,10 +85,10 @@ export const loginSchema = z.object({
 // User Schemas
 export const updateUserSchema = z.object({
   name: z.string().min(APP_CONSTANTS.USER_NAME_MIN_LENGTH, `Name must be at least ${APP_CONSTANTS.USER_NAME_MIN_LENGTH} characters`).max(APP_CONSTANTS.USER_NAME_MAX_LENGTH, `Name must be ${APP_CONSTANTS.USER_NAME_MAX_LENGTH} characters or less`).optional(),
+  nickname: z.string().max(APP_CONSTANTS.USER_NICKNAME_MAX_LENGTH, `Nickname must be ${APP_CONSTANTS.USER_NICKNAME_MAX_LENGTH} characters or less`).optional(),
   gender: z.string().optional().nullable(),
   birthDate: z.string().optional().nullable(),
   avatar: z.string().optional().nullable(),
-  points: z.number().int().min(0).optional(),
 });
 
 // Post Schemas
