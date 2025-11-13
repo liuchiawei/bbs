@@ -26,6 +26,7 @@ export function EditProfileForm({ user }: { user: User }) {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<EditProfileFormData>({
     resolver: zodResolver(updateUserSchema),
@@ -39,6 +40,12 @@ export function EditProfileForm({ user }: { user: User }) {
       avatar: user.avatar || "",
     },
   });
+
+  // Avatar アップロード成功時のコールバック：表單状態とUI状態を同期
+  const handleAvatarUploadSuccess = (url: string) => {
+    setAvatarUrl(url); // UI状態を更新
+    setValue("avatar", url); // 表單状態を同期
+  };
 
   const onSubmit = async (data: EditProfileFormData) => {
     setIsLoading(true);
@@ -82,7 +89,7 @@ export function EditProfileForm({ user }: { user: User }) {
           <AvatarUpload
             currentAvatar={avatarUrl}
             userName={user.name}
-            onUploadSuccess={setAvatarUrl}
+            onUploadSuccess={handleAvatarUploadSuccess}
           />
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

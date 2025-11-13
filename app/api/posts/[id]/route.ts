@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { updatePostSchema, userSelectBasic, commentIncludeBasic } from "@/lib/validations";
@@ -83,6 +84,12 @@ export async function PATCH(
       },
     });
 
+    // データベース操作完了後、キャッシュを無効化して最新データを取得できるようにする
+    // パフォーマンス優先：必要なパスのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
+    revalidatePath("/");
+    revalidatePath(`/user/${existingPost.userId}/posts`);
+    revalidatePath(`/posts/${id}`);
+
     return NextResponse.json({
       message: "Post updated successfully",
       post,
@@ -132,6 +139,12 @@ export async function DELETE(
     await prisma.post.delete({
       where: { id },
     });
+
+    // データベース操作完了後、キャッシュを無効化して最新データを取得できるようにする
+    // パフォーマンス優先：必要なパスのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
+    revalidatePath("/");
+    revalidatePath(`/user/${existingPost.userId}/posts`);
+    revalidatePath(`/posts/${id}`);
 
     return NextResponse.json({
       message: "Post deleted successfully",

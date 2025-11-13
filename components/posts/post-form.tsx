@@ -81,8 +81,12 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
       toast.success(
         mode === "edit" ? t("SUCCESS_UPDATED") : t("SUCCESS_CREATED")
       );
-      router.push(`/posts/${result.post.id}`);
+
+      // API routeでrevalidatePath()が呼ばれているため、キャッシュは既に無効化されている
+      // router.refresh()で最新データを取得し、その後新しい投稿ページに遷移する
+      // これにより、ユーザーがブラウザの戻るボタンで戻った場合でも最新データが表示される
       router.refresh();
+      router.push(`/posts/${result.post.id}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("ERROR_GENERIC"));
     } finally {

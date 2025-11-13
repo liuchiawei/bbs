@@ -73,8 +73,10 @@ export async function getUserWithCounts(
 
 /**
  * Get a user's profile data (for settings/edit pages)
+ * Cache を使用してパフォーマンスを最適化
  */
 export async function getUserProfile(userId: string) {
+  "use cache";
   return await prisma.user.findUnique({
     where: { id: userId },
     select: {

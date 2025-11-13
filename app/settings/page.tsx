@@ -11,7 +11,7 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
-  const user = await getUserProfile(session.userId);
+  const user = await getUserProfile(session.id);
 
   if (!user) {
     redirect("/login");

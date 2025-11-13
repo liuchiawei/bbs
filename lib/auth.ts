@@ -18,7 +18,11 @@ export async function comparePassword(
   return bcrypt.compare(password, hashedPassword);
 }
 
-export async function createToken(payload: { userId: string; email: string }) {
+export async function createToken(payload: {
+  id: string;
+  userId: string;
+  email: string;
+}) {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -29,7 +33,7 @@ export async function createToken(payload: { userId: string; email: string }) {
 export async function verifyToken(token: string) {
   try {
     const verified = await jwtVerify(token, secret);
-    return verified.payload as { userId: string; email: string };
+    return verified.payload as { id: string; userId: string; email: string };
   } catch (error) {
     return null;
   }
@@ -65,7 +69,7 @@ export async function getCurrentUser() {
   if (!session) return null;
 
   const user = await prisma.user.findUnique({
-    where: { userId: session.userId },
+    where: { id: session.id },
     select: {
       id: true,
       userId: true,

@@ -34,7 +34,7 @@ export default async function UserPage({
 
   const user = userData as UserProfilePage;
 
-  const isOwnProfile = session?.userId === user.id;
+  const isOwnProfile = session?.id === user.id;
 
   return (
     <>

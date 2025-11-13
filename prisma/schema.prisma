@@ -52,7 +52,7 @@ model Post {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // relationships
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [userId])
   comments Comment[]
   likedBy PostLike[]
 }
@@ -71,7 +71,7 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // relationships
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
   likedBy CommentLike[]
 }
@@ -82,7 +82,7 @@ model PostLike {
   postId    String
   createdAt DateTime @default(now())
   // relationships
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
@@ -96,7 +96,7 @@ model CommentLike {
   commentId String
   createdAt DateTime @default(now())
   // relationships
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [userId], onDelete: Cascade)
   comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@unique([userId, commentId])

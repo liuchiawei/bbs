@@ -44,9 +44,12 @@ export function LoginForm() {
       }
 
       toast.success(t("SUCCESS_SAVED"));
-      // Use window.location.href to force a full page refresh
-      // This ensures the Navbar component re-initializes and fetches the updated user state
-      window.location.href = "/";
+      
+      // API routeでrevalidatePath()が呼ばれているため、キャッシュは既に無効化されている
+      // router.refresh()で最新データを取得し、その後ホームページに遷移する
+      // これにより、Navbarコンポーネントが最新のユーザー状態を正しく取得できる
+      router.refresh();
+      router.push("/");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("ERROR_GENERIC"));
     } finally {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { hashPassword, createToken, setSession } from "@/lib/auth";
 import { registerSchema } from "@/lib/validations";
@@ -55,12 +56,18 @@ export async function POST(request: NextRequest) {
 
     // Create token
     const token = await createToken({
-      userId: user.id,
+      id: user.id,
+      userId: user.userId,
       email: user.email,
     });
 
     // Set session
     await setSession(token);
+
+    // データベース操作完了後、キャッシュを無効化して最新データを取得できるようにする
+    // パフォーマンス優先：必要なパスのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
+    // Session検証：Navbarコンポーネントが最新のユーザー状態を正しく取得できるようにする
+    revalidatePath("/");
 
     // Return user without password
     const { password: _, ...userWithoutPassword } = user;

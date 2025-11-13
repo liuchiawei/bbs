@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { createPostSchema, postIncludeBasic } from "@/lib/validations";
@@ -38,10 +39,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Get posts error:", error);
-    return NextResponse.json(
-      { error: "Failed to get posts" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to get posts" }, { status: 500 });
   }
 }
 
@@ -64,6 +62,11 @@ export async function POST(request: NextRequest) {
       },
       include: postIncludeBasic,
     });
+
+    // データベース操作完了後、キャッシュを無効化して最新データを取得できるようにする
+    // パフォーマンス優先：必要なパスのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
+    revalidatePath("/");
+    revalidatePath(`/user/${session.userId}/posts`);
 
     return NextResponse.json({
       message: "Post created successfully",

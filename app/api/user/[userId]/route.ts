@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
 
 const updateUserSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").optional(),
@@ -12,12 +13,12 @@ const updateUserSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { userId } = await params;
     const user = await prisma.user.findUnique({
-      where: { id },
+      where: { userId },
       select: {
         id: true,
         userId: true,
@@ -47,16 +48,13 @@ export async function GET(
     return NextResponse.json({ user });
   } catch (error) {
     console.error("Get user error:", error);
-    return NextResponse.json(
-      { error: "Failed to get user" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to get user" }, { status: 500 });
   }
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     const session = await getSession();
@@ -64,10 +62,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { userId } = await params;
 
     // Check if user is updating their own profile
-    if (session.userId !== id) {
+    if (session.userId !== userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -89,7 +87,7 @@ export async function PATCH(
     }
 
     const user = await prisma.user.update({
-      where: { id },
+      where: { userId },
       data: updateData,
       select: {
         id: true,
@@ -106,6 +104,11 @@ export async function PATCH(
         updatedAt: true,
       },
     });
+
+    // キャッシュを無効化して最新データを反映
+    revalidatePath(`/user/${user.userId}`);
+    revalidatePath(`/user/${user.userId}/edit`);
+    revalidatePath(`/settings`);
 
     return NextResponse.json({
       message: "User updated successfully",
