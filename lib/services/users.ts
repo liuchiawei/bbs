@@ -16,6 +16,7 @@ export async function checkUserIdAvailability(userId: string): Promise<boolean> 
  * Get a user by ID
  */
 export async function getUserById(id: string): Promise<User | null> {
+  "use cache";
   return await prisma.user.findUnique({
     where: { id },
     select: {
@@ -40,6 +41,7 @@ export async function getUserById(id: string): Promise<User | null> {
  * Get a user with post and comment counts
  */
 export async function getUserWithCounts(id: string): Promise<UserWithCounts | null> {
+  "use cache";
   return await prisma.user.findUnique({
     where: { id },
     select: {
@@ -121,6 +123,7 @@ export async function updateUserProfile(
  * Includes user info, counts, and recent posts
  */
 export async function getUserProfilePage(userId: string, recentPostsLimit = 6) {
+  "use cache";
   return await prisma.user.findUnique({
     where: { userId },
     select: {
@@ -188,6 +191,7 @@ export async function getUserProfilePage(userId: string, recentPostsLimit = 6) {
  * Get user's liked posts
  */
 export async function getUserLikedPosts(userId: string) {
+  "use cache";
   const likes = await prisma.postLike.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
@@ -218,6 +222,7 @@ export async function getUserLikedPosts(userId: string) {
  * Get user's liked comments
  */
 export async function getUserLikedComments(userId: string) {
+  "use cache";
   const likes = await prisma.commentLike.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
@@ -249,6 +254,7 @@ export async function getUserLikedComments(userId: string) {
  * Get user with their comments
  */
 export async function getUserComments(userId: string) {
+  "use cache";
   return await prisma.user.findUnique({
     where: { id: userId },
     select: {

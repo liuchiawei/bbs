@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -149,8 +149,8 @@ export function RegisterForm() {
     }
   };
 
-  // Memoize user ID status to prevent unnecessary re-renders
-  const userIdStatus = useMemo(() => {
+  // React Compiler automatically optimizes this computation
+  const userIdStatus = (() => {
     if (errors.userId) {
       return { type: "error", message: errors.userId.message };
     }
@@ -161,7 +161,7 @@ export function RegisterForm() {
       return { type: "success", message: "User ID is available" };
     }
     return null;
-  }, [errors.userId, userIdError, userId, isCheckingUserId]);
+  })();
 
   return (
     <motion.div

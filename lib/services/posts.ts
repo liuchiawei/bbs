@@ -14,6 +14,7 @@ export interface GetPostsOptions {
 export async function getPosts(
   options: GetPostsOptions = {}
 ): Promise<PostWithUser[]> {
+  "use cache";
   const { categorySlug, userId, limit = 20, page = 1 } = options;
 
   const where: any = {};
@@ -61,6 +62,7 @@ export async function getPosts(
  * Get a single post by ID with full details
  */
 export async function getPostById(id: string) {
+  "use cache";
   return await prisma.post.findUnique({
     where: { id },
     include: {
@@ -106,6 +108,7 @@ export async function getPostById(id: string) {
 export async function getPostsCount(
   options: Omit<GetPostsOptions, "limit" | "page"> = {}
 ): Promise<number> {
+  "use cache";
   const { categorySlug, userId } = options;
 
   const where: any = {};
