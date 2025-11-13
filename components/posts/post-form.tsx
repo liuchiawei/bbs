@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { motion } from "motion/react";
+import { TRANSLATIONS, type Language } from "@/lib/constants";
 
 const postSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -46,6 +47,9 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  // TODO: Get language from user preferences or browser settings
+  const lang: Language = 'en';
+  const t = TRANSLATIONS[lang];
 
   const {
     register,
@@ -89,7 +93,7 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
         }
       } catch (error) {
         console.error("Failed to fetch categories:", error);
-        toast.error("Failed to load categories");
+        toast.error(t.ERROR_GENERIC);
       }
     }
     fetchCategories();
@@ -122,14 +126,14 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || `Failed to ${mode} post`);
+        throw new Error(result.error || t.ERROR_GENERIC);
       }
 
-      toast.success(`Post ${mode === "edit" ? "updated" : "created"} successfully!`);
+      toast.success(mode === "edit" ? t.SUCCESS_UPDATED : t.SUCCESS_CREATED);
       router.push(`/posts/${result.post.id}`);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : `Failed to ${mode} post`);
+      toast.error(error instanceof Error ? error.message : t.ERROR_GENERIC);
     } finally {
       setIsLoading(false);
     }
@@ -144,13 +148,13 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
       <Card className="w-full max-w-3xl mx-auto">
         <CardHeader>
           <CardTitle>
-            {mode === "edit" ? "Edit Post" : "Create New Post"}
+            {mode === "edit" ? `${t.EDIT} ${t.POST}` : t.NEW_POST}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor="title">{t.TITLE}</Label>
               <Input id="title" {...register("title")} />
               {errors.title && (
                 <p className="text-sm text-destructive">
@@ -181,7 +185,7 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="content">Content</Label>
+              <Label htmlFor="content">{t.CONTENT}</Label>
               <Textarea
                 id="content"
                 {...register("content")}
@@ -196,7 +200,7 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tags">Tags (comma separated)</Label>
+              <Label htmlFor="tags">{t.TAGS} (comma separated)</Label>
               <Input
                 id="tags"
                 {...register("tags")}
@@ -207,19 +211,17 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
             <div className="flex gap-2">
               <Button type="submit" disabled={isLoading}>
                 {isLoading
-                  ? mode === "edit"
-                    ? "Updating..."
-                    : "Creating..."
+                  ? t.LOADING
                   : mode === "edit"
-                  ? "Update Post"
-                  : "Create Post"}
+                  ? `${t.EDIT} ${t.POST}`
+                  : `${t.SUBMIT} ${t.POST}`}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.back()}
               >
-                Cancel
+                {t.CANCEL}
               </Button>
             </div>
           </form>

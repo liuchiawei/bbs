@@ -15,12 +15,17 @@ import { Button } from "@/components/ui/button";
 import { PostCard } from "@/components/posts/post-card";
 import { Settings } from "lucide-react";
 import type { PostWithUser } from "@/lib/types";
+import { TRANSLATIONS, type Language } from "@/lib/constants";
 
 export default async function UserPage({
   params,
 }: {
   params: Promise<{ userId: string }>;
 }) {
+  // TODO: Get language from user preferences or browser settings
+  const lang: Language = 'en';
+  const t = TRANSLATIONS[lang];
+
   const { userId } = await params;
   const [session, user] = await Promise.all([
     getSession(),
@@ -55,10 +60,10 @@ export default async function UserPage({
               <p className="text-muted-foreground">@{user.userId}</p>
               <div className="flex items-center gap-4">
                 <p className="text-sm text-muted-foreground">
-                  Joined {new Date(user.createdAt).toLocaleDateString()}
+                  {t.JOINED} {new Date(user.createdAt).toLocaleDateString()}
                 </p>
                 <Badge variant="secondary" className="text-sm">
-                  {user.points ?? 0} Points
+                  {user.points ?? 0} {t.POINTS}
                 </Badge>
               </div>
             </div>
@@ -70,13 +75,13 @@ export default async function UserPage({
             <Link href={`/users/${user.userId}/posts`}>
               <div className="text-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
                 <p className="text-2xl font-bold">{user._count.posts}</p>
-                <p className="text-sm text-muted-foreground">Posts</p>
+                <p className="text-sm text-muted-foreground">{t.POSTS}</p>
               </div>
             </Link>
             <Link href={`/users/${user.userId}/comments`}>
               <div className="text-center p-4 bg-muted rounded-lg hover:bg-muted/80 transition-colors cursor-pointer">
                 <p className="text-2xl font-bold">{user._count.comments}</p>
-                <p className="text-sm text-muted-foreground">Comments</p>
+                <p className="text-sm text-muted-foreground">{t.COMMENTS}</p>
               </div>
             </Link>
             <Link href={`/users/${user.userId}/likes`}>
@@ -84,7 +89,7 @@ export default async function UserPage({
                 <p className="text-2xl font-bold">
                   {user._count.likedPosts + user._count.likedComments}
                 </p>
-                <p className="text-sm text-muted-foreground">Likes</p>
+                <p className="text-sm text-muted-foreground">{t.LIKES}</p>
               </div>
             </Link>
           </div>
@@ -93,8 +98,8 @@ export default async function UserPage({
 
       <Tabs defaultValue="posts" className="w-full">
         <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
-          <TabsTrigger value="about">About</TabsTrigger>
-          <TabsTrigger value="posts">Posts</TabsTrigger>
+          <TabsTrigger value="about">{t.ABOUT}</TabsTrigger>
+          <TabsTrigger value="posts">{t.POSTS}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="about" className="mt-8">
@@ -102,7 +107,7 @@ export default async function UserPage({
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl md:text-3xl font-bold">
-                  About
+                  {t.ABOUT}
                 </CardTitle>
                 {isOwnProfile && (
                   <Tooltip>
@@ -113,7 +118,7 @@ export default async function UserPage({
                         </Link>
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Edit Profile</TooltipContent>
+                    <TooltipContent>{t.EDIT_PROFILE}</TooltipContent>
                   </Tooltip>
                 )}
               </div>
@@ -121,13 +126,13 @@ export default async function UserPage({
             <CardContent className="space-y-4">
               {user.name && (
                 <div>
-                  <p className="text-sm text-muted-foreground">Name</p>
+                  <p className="text-sm text-muted-foreground">{t.NAME}</p>
                   <p className="font-medium">{user.name}</p>
                 </div>
               )}
               {user.birthDate && (
                 <div>
-                  <p className="text-sm text-muted-foreground">Birthday</p>
+                  <p className="text-sm text-muted-foreground">{t.BIRTHDAY}</p>
                   <p className="font-medium">
                     {new Date(user.birthDate).toLocaleDateString()}
                   </p>
@@ -135,12 +140,12 @@ export default async function UserPage({
               )}
               {user.gender && (
                 <div>
-                  <p className="text-sm text-muted-foreground">Gender</p>
+                  <p className="text-sm text-muted-foreground">{t.GENDER}</p>
                   <p className="font-medium">{user.gender}</p>
                 </div>
               )}
               <div>
-                <p className="text-sm text-muted-foreground">Member since</p>
+                <p className="text-sm text-muted-foreground">{t.MEMBER_SINCE}</p>
                 <p className="font-medium">
                   {new Date(user.createdAt).toLocaleDateString()}
                 </p>
@@ -152,7 +157,7 @@ export default async function UserPage({
         <TabsContent value="posts" className="space-y-4 mt-8">
           {user.posts.length === 0 ? (
             <p className="text-center text-muted-foreground py-12">
-              No posts yet
+              {t.NO_POSTS_YET}
             </p>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

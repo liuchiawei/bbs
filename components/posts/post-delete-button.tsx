@@ -21,6 +21,7 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { TRANSLATIONS, type Language } from "@/lib/constants";
 
 interface PostDeleteButtonProps {
   postId: string;
@@ -30,6 +31,9 @@ export function PostDeleteButton({ postId }: PostDeleteButtonProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  // TODO: Get language from user preferences or browser settings
+  const lang: Language = 'en';
+  const t = TRANSLATIONS[lang];
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -41,17 +45,17 @@ export function PostDeleteButton({ postId }: PostDeleteButtonProps) {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Failed to delete post");
+        throw new Error(result.error || t.ERROR_GENERIC);
       }
 
-      toast.success("Post deleted successfully");
+      toast.success(t.SUCCESS_DELETED);
       router.refresh();
       setTimeout(() => {
         router.back();
       }, 100);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to delete post"
+        error instanceof Error ? error.message : t.ERROR_GENERIC
       );
       setIsDeleting(false);
       setOpen(false);
@@ -68,24 +72,24 @@ export function PostDeleteButton({ postId }: PostDeleteButtonProps) {
             </Button>
           </AlertDialogTrigger>
         </TooltipTrigger>
-        <TooltipContent>Delete</TooltipContent>
+        <TooltipContent>{t.DELETE}</TooltipContent>
       </Tooltip>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete Post</AlertDialogTitle>
+          <AlertDialogTitle>{`${t.DELETE} ${t.POST}`}</AlertDialogTitle>
           <AlertDialogDescription>
             Are you sure you want to delete this post? This action cannot be
             undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>{t.CANCEL}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             disabled={isDeleting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isDeleting ? "Deleting..." : "Delete"}
+            {isDeleting ? t.LOADING : t.DELETE}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

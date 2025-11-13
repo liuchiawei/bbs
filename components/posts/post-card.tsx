@@ -14,12 +14,17 @@ import { motion } from "motion/react";
 import { toast } from "sonner";
 import { useState } from "react";
 import type { PostWithUser } from "@/lib/types";
+import { TRANSLATIONS, type Language } from "@/lib/constants";
 
 interface PostCardProps {
   post: PostWithUser;
 }
 
 export function PostCard({ post }: PostCardProps) {
+  // TODO: Get language from user preferences or browser settings
+  const lang: Language = 'en';
+  const t = TRANSLATIONS[lang];
+
   const [likes, setLikes] = useState(post.likes);
   const [isLiking, setIsLiking] = useState(false);
 
@@ -115,7 +120,7 @@ export function PostCard({ post }: PostCardProps) {
                 className="text-sm text-right"
               >
                 <Eye className="size-4" />
-                <span className="ml-1">See more</span>
+                <span className="ml-1">{t.SEE_MORE}</span>
               </Link>
             </Button>
           </div>

@@ -4,8 +4,13 @@ import { PostCard } from "@/components/posts/post-card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
+import { TRANSLATIONS, type Language } from "@/lib/constants";
 
 export default async function Home() {
+  // TODO: Get language from user preferences or browser settings
+  const lang: Language = 'en';
+  const t = TRANSLATIONS[lang];
+
   const categories = await getCategories();
   const allPosts = await getPosts();
 
@@ -21,9 +26,9 @@ export default async function Home() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 text-center space-y-4">
-        <h1 className="text-5xl font-bold">Welcome to BBS</h1>
+        <h1 className="text-5xl font-bold">{t.HOME_WELCOME}</h1>
         <p className="text-xl text-muted-foreground">
-          Share your thoughts, connect with others
+          {t.HOME_SUBTITLE}
         </p>
       </div>
 
@@ -43,9 +48,9 @@ export default async function Home() {
         <TabsContent value="all" className="space-y-4 mt-8">
           {allPosts.length === 0 ? (
             <div className="text-center py-12 space-y-4">
-              <p className="text-muted-foreground">No posts yet</p>
+              <p className="text-muted-foreground">{t.HOME_NO_POSTS}</p>
               <Button asChild>
-                <Link href="/posts/new">Create the first post</Link>
+                <Link href="/posts/new">{t.HOME_CREATE_FIRST_POST}</Link>
               </Button>
             </div>
           ) : (

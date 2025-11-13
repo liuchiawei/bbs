@@ -23,6 +23,7 @@ import {
   USER_ID_REGEX,
   USER_ID_MAX_LENGTH,
 } from "@/lib/validations";
+import { TRANSLATIONS, type Language } from "@/lib/constants";
 
 // Extend base schema with client-only field
 const registerSchema = baseRegisterSchema
@@ -42,6 +43,9 @@ export function RegisterForm() {
   const [isCheckingUserId, setIsCheckingUserId] = useState(false);
   const [userIdError, setUserIdError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  // TODO: Get language from user preferences or browser settings
+  const lang: Language = 'en';
+  const t = TRANSLATIONS[lang];
 
   const {
     register,
@@ -133,16 +137,16 @@ export function RegisterForm() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Registration failed");
+        throw new Error(result.error || t.ERROR_GENERIC);
       }
 
-      toast.success("Registration successful!");
+      toast.success(t.SUCCESS_CREATED);
       setTimeout(() => {
         router.push("/");
       }, 100);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Registration failed"
+        error instanceof Error ? error.message : t.ERROR_GENERIC
       );
     } finally {
       setIsLoading(false);
@@ -177,7 +181,7 @@ export function RegisterForm() {
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="userId">User ID</Label>
+              <Label htmlFor="userId">{t.USERNAME}</Label>
               <div className="relative">
                 <Input
                   id="userId"
@@ -222,7 +226,7 @@ export function RegisterForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t.EMAIL}</Label>
               <Input id="email" type="email" {...register("email")} />
               {errors.email && (
                 <p className="text-sm text-destructive">
@@ -232,7 +236,7 @@ export function RegisterForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t.PASSWORD}</Label>
               <Input id="password" type="password" {...register("password")} />
               {errors.password && (
                 <p className="text-sm text-destructive">
@@ -275,7 +279,7 @@ export function RegisterForm() {
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Registering..." : "Register"}
+              {isLoading ? t.LOADING : t.REGISTER}
             </Button>
           </form>
         </CardContent>

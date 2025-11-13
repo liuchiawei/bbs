@@ -15,11 +15,15 @@ import {
 import { LogOut, User, Settings, PlusCircle, Shield } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "motion/react";
+import { TRANSLATIONS, type Language } from "@/lib/constants";
 
 export function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // TODO: Get language from user preferences or browser settings
+  const lang: Language = 'en';
+  const t = TRANSLATIONS[lang];
 
   useEffect(() => {
     fetchUser();
@@ -43,11 +47,11 @@ export function Navbar() {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
       setUser(null);
-      toast.success("Logged out successfully");
+      toast.success(t.SUCCESS_SAVED);
       router.push("/");
       router.refresh();
     } catch (error) {
-      toast.error("Failed to logout");
+      toast.error(t.ERROR_GENERIC);
     }
   };
 
@@ -70,7 +74,7 @@ export function Navbar() {
               <Button asChild>
                 <Link href="/posts/new">
                   <PlusCircle className="mr-2 h-4 w-4" />
-                  New Post
+                  {t.NEW_POST}
                 </Link>
               </Button>
 
@@ -96,13 +100,13 @@ export function Navbar() {
                   <DropdownMenuItem asChild>
                     <Link href="/settings">
                       <Settings className="mr-2 h-4 w-4" />
-                      Settings
+                      {t.SETTINGS}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href={`/users/${user.userId}`}>
                       <User className="mr-2 h-4 w-4" />
-                      View Profile
+                      {t.PROFILE}
                     </Link>
                   </DropdownMenuItem>
                   {user.isAdmin && (
@@ -119,7 +123,7 @@ export function Navbar() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    Logout
+                    {t.LOGOUT}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -127,10 +131,10 @@ export function Navbar() {
           ) : (
             <>
               <Button variant="ghost" asChild>
-                <Link href="/login">Login</Link>
+                <Link href="/login">{t.LOGIN}</Link>
               </Button>
               <Button asChild>
-                <Link href="/register">Register</Link>
+                <Link href="/register">{t.REGISTER}</Link>
               </Button>
             </>
           )}
