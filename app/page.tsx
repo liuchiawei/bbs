@@ -9,9 +9,9 @@ export default async function Home() {
   const allPosts = await getPosts();
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <section>
       <HomeHeader />
-      <div className="w-full max-w-3xl mx-auto flex flex-col gap-2">
+      <div className="w-full flex flex-col gap-2">
         <PostForm />
         {allPosts.length === 0 ? (
           <div className="w-full h-full min-h-72 py-12 flex flex-col items-center justify-center gap-4 bg-muted rounded-xl border text-center">
@@ -22,6 +22,6 @@ export default async function Home() {
           allPosts.map((post) => <PostCard key={post.id} post={post} />)
         )}
       </div>
-    </div>
+    </section>
   );
 }

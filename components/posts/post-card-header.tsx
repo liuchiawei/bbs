@@ -25,7 +25,7 @@ export default function PostCardHeader({ post }: { post: PostWithUser }) {
           <TooltipTrigger asChild>
             <Link
               href={`/user/${post.user.userId}`}
-              className="w-fit border-foreground hover:border-b text-lg font-semibold transition-all"
+              className="w-fit border-foreground hover:border-b-2 text-lg font-semibold transition-all"
             >
               {post.user.nickname || post.user.name}
             </Link>

@@ -260,6 +260,10 @@ export const TRANSLATIONS = {
     AVATAR_UPLOADING: "Uploading...",
     // Anonymous User
     ANONYMOUS: "Anonymous",
+    // TIME Display
+    MINUTES_AGO: "minutes ago",
+    HOURS_AGO: "hours ago",
+    DAYS_AGO: "days ago",
   },
 
   ja: {
@@ -478,6 +482,10 @@ export const TRANSLATIONS = {
     AVATAR_UPLOADING: "アップロード中...",
     // Anonymous User
     ANONYMOUS: "匿名",
+    // TIME Display
+    MINUTES_AGO: "分前",
+    HOURS_AGO: "時間前",
+    DAYS_AGO: "天前",
   },
 
   "zh-CN": {
@@ -693,6 +701,10 @@ export const TRANSLATIONS = {
     AVATAR_UPLOADING: "上传中...",
     // Anonymous User
     ANONYMOUS: "匿名",
+    // TIME Display
+    MINUTES_AGO: "分钟前",
+    HOURS_AGO: "小时前",
+    DAYS_AGO: "天前",
   },
 
   "zh-TW": {
@@ -895,6 +907,10 @@ export const TRANSLATIONS = {
     AVATAR_UPLOADING: "上傳中...",
     // Anonymous User
     ANONYMOUS: "匿名",
+    // TIME Display
+    MINUTES_AGO: "分前",
+    HOURS_AGO: "小時前",
+    DAYS_AGO: "天前",
   },
 } as const;
 

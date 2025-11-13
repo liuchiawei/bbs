@@ -100,29 +100,22 @@ export function PostCard({ post }: PostCardProps) {
       : post.content;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -4 }}
-      transition={{ duration: 0.3 }}
-    >
-      <Card className="gap-2 hover:shadow-lg transition-shadow">
-        <PostCardHeader post={post} />
+    <Card className="gap-2 hover:shadow-lg">
+      <PostCardHeader post={post} />
 
-        <CardContent className="flex flex-col gap-2">
-          <p className="text-foreground">{contentPreview}</p>
-          <Button variant="link" className="self-end" asChild>
-            <Link href={`/posts/${post.id}`}>{t("SEE_MORE")}</Link>
-          </Button>
-        </CardContent>
-        <PostCardFooter
-          post={post}
-          handleLike={handleLike}
-          isLiking={isLiking}
-          likes={likes}
-          isLiked={isLiked}
-        />
-      </Card>
-    </motion.div>
+      <CardContent className="flex flex-col gap-2">
+        <p className="text-foreground">{contentPreview}</p>
+        <Button variant="link" className="text-xs self-center" asChild>
+          <Link href={`/posts/${post.id}`}>{t("SEE_MORE")}</Link>
+        </Button>
+      </CardContent>
+      <PostCardFooter
+        post={post}
+        handleLike={handleLike}
+        isLiking={isLiking}
+        likes={likes}
+        isLiked={isLiked}
+      />
+    </Card>
   );
 }

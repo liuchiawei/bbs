@@ -53,7 +53,7 @@ export default async function UserPostsPage({
   }
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-5xl">
+    <>
       <div className="mb-6">
         <Button variant="ghost" asChild>
           <Link href={`/users/${userId}`}>
@@ -83,6 +83,6 @@ export default async function UserPostsPage({
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 }

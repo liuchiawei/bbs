@@ -9,9 +9,5 @@ export default async function NewPostPage() {
     redirect("/login");
   }
 
-  return (
-    <div className="container w-full max-w-3xl mx-auto px-4 py-12">
-      <PostForm />
-    </div>
-  );
+  return <PostForm />;
 }
