@@ -109,6 +109,17 @@ export function Navbar() {
       }}
       className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-2 md:px-4 bg-background shadow-sm"
     >
+      <Button variant="ghost" asChild>
+        <Link href="/search">
+          <Search className="h-4 w-4" />
+        </Link>
+      </Button>
+      <Link
+        href="/"
+        className="text-2xl font-bold hover:text-primary transition-colors"
+      >
+        {t("APP_NAME")}
+      </Link>
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="ghost" asChild>
@@ -117,7 +128,7 @@ export function Navbar() {
             </Link>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left">
+        <SheetContent>
           <SheetHeader>
             {/* TODO: Add logo here */}
             <SheetTitle>{t("APP_NAME")}</SheetTitle>
@@ -140,7 +151,7 @@ export function Navbar() {
               </Button>
               {/* TODO: Add other navigation items here. like mini mypage, new post button, log out button, etc. */}
               <div>
-                <NewPostButton />
+                <NewPostButton size="lg" />
                 <Button variant="ghost" asChild>
                   <Link href="/settings">
                     <Settings className="size-4" />
@@ -161,17 +172,6 @@ export function Navbar() {
           )}
         </SheetContent>
       </Sheet>
-      <Link
-        href="/"
-        className="text-2xl font-bold hover:text-primary transition-colors"
-      >
-        {t("APP_NAME")}
-      </Link>
-      <Button variant="ghost" asChild>
-        <Link href="/search">
-          <Search className="h-4 w-4" />
-        </Link>
-      </Button>
     </motion.nav>
   );
 }

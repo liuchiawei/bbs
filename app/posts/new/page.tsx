@@ -10,7 +10,7 @@ export default async function NewPostPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="container w-full max-w-3xl mx-auto px-4 py-12">
       <PostForm />
     </div>
   );

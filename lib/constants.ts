@@ -1,10 +1,10 @@
 // TODO: Replace with proper i18n translation system (e.g., next-intl, i18next)
+import { User } from "@/lib/types";
 
 /**
  * Application-wide constants and multilingual text content
  * Supports: English (en), Japanese (ja), Chinese (cn)
  */
-
 export type Language = "en" | "ja" | "zh-CN" | "zh-TW";
 
 export const APP_CONSTANTS = {
@@ -26,6 +26,9 @@ export const APP_CONSTANTS = {
   USER_PASSWORD_MAX_LENGTH: 32,
   USER_PASSWORD_MIN_LENGTH: 6,
 
+  // Content preview length
+  CONTENT_PREVIEW_LENGTH: 150,
+
   // Pagination
   POSTS_PER_PAGE: 20,
   COMMENTS_PER_PAGE: 10,
@@ -33,14 +36,6 @@ export const APP_CONSTANTS = {
   // File upload
   MAX_AVATAR_SIZE: 5 * 1024 * 1024, // 5MB
   ALLOWED_IMAGE_TYPES: ["image/jpeg", "image/png", "image/webp", "image/gif"],
-
-  // Categories (internal keys)
-  POST_CATEGORIES: [
-    "general",
-    "question",
-    "discussion",
-    "announcement",
-  ] as const,
 
   // User roles (internal keys)
   USER_ROLES: {
@@ -263,6 +258,8 @@ export const TRANSLATIONS = {
     AVATAR_UPLOAD_TYPE_ERROR: "Please select an image file",
     AVATAR_CHANGE: "Change Avatar",
     AVATAR_UPLOADING: "Uploading...",
+    // Anonymous User
+    ANONYMOUS: "Anonymous",
   },
 
   ja: {
@@ -479,6 +476,8 @@ export const TRANSLATIONS = {
     AVATAR_UPLOAD_TYPE_ERROR: "画像ファイルを選択してください",
     AVATAR_CHANGE: "アバターを変更",
     AVATAR_UPLOADING: "アップロード中...",
+    // Anonymous User
+    ANONYMOUS: "匿名",
   },
 
   "zh-CN": {
@@ -692,6 +691,8 @@ export const TRANSLATIONS = {
     AVATAR_UPLOAD_TYPE_ERROR: "请选择一个图片文件",
     AVATAR_CHANGE: "更改头像",
     AVATAR_UPLOADING: "上传中...",
+    // Anonymous User
+    ANONYMOUS: "匿名",
   },
 
   "zh-TW": {
@@ -892,6 +893,8 @@ export const TRANSLATIONS = {
     AVATAR_UPLOAD_TYPE_ERROR: "請選擇一個圖片文件",
     AVATAR_CHANGE: "更改頭像",
     AVATAR_UPLOADING: "上傳中...",
+    // Anonymous User
+    ANONYMOUS: "匿名",
   },
 } as const;
 
@@ -903,4 +906,18 @@ export const t = (
   return TRANSLATIONS[lang ?? "ja"][key] ?? key;
 };
 
-export type PostCategory = (typeof APP_CONSTANTS.POST_CATEGORIES)[number];
+export const AnonymousUser: User = {
+  id: "",
+  userId: "",
+  name: t("ANONYMOUS"),
+  nickname: t("ANONYMOUS"),
+  email: "",
+  gender: null,
+  birthDate: null,
+  avatar: null,
+  isAdmin: false,
+  isBanned: false,
+  points: 0,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};

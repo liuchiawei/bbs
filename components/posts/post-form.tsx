@@ -11,9 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { motion } from "motion/react";
-import { t } from "@/lib/constants";
 import { postSchema } from "@/lib/validations";
+import { t } from "@/lib/constants";
 
 type PostFormData = z.infer<typeof postSchema>;
 
@@ -46,17 +45,20 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
       : undefined,
   });
 
-
   const onSubmit = async (data: PostFormData) => {
     setIsLoading(true);
     try {
       const tags = data.tags
-        ? data.tags.split(",").map((tag) => tag.trim()).filter(Boolean)
+        ? data.tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter(Boolean)
         : [];
 
-      const url = mode === "edit" && initialData
-        ? `/api/posts/${initialData.id}`
-        : "/api/posts";
+      const url =
+        mode === "edit" && initialData
+          ? `/api/posts/${initialData.id}`
+          : "/api/posts";
 
       const method = mode === "edit" ? "PATCH" : "POST";
 
@@ -76,7 +78,9 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
         throw new Error(result.error || t("ERROR_GENERIC"));
       }
 
-      toast.success(mode === "edit" ? t("SUCCESS_UPDATED") : t("SUCCESS_CREATED"));
+      toast.success(
+        mode === "edit" ? t("SUCCESS_UPDATED") : t("SUCCESS_CREATED")
+      );
       router.push(`/posts/${result.post.id}`);
       router.refresh();
     } catch (error) {
@@ -87,72 +91,64 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <Card className="w-full max-w-3xl mx-auto">
-        <CardHeader>
-          <CardTitle>
-            {mode === "edit" ? `${t("EDIT")} ${t("POST")}` : t("NEW_POST")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">{t("TITLE")}</Label>
-              <Input id="title" {...register("title")} />
-              {errors.title && (
-                <p className="text-sm text-destructive">
-                  {errors.title.message}
-                </p>
-              )}
-            </div>
+    <Card className="w-full max-w-3xl mx-auto">
+      <CardHeader>
+        <CardTitle>
+          {mode === "edit" ? `${t("EDIT")} ${t("POST")}` : t("NEW_POST")}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">{t("TITLE")}</Label>
+            <Input id="title" {...register("title")} />
+            {errors.title && (
+              <p className="text-sm text-destructive">{errors.title.message}</p>
+            )}
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="content">{t("CONTENT")}</Label>
-              <Textarea
-                id="content"
-                {...register("content")}
-                rows={10}
-                className="resize-y"
-              />
-              {errors.content && (
-                <p className="text-sm text-destructive">
-                  {errors.content.message}
-                </p>
-              )}
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="content">{t("CONTENT")}</Label>
+            <Textarea
+              id="content"
+              {...register("content")}
+              rows={10}
+              className="resize-y"
+            />
+            {errors.content && (
+              <p className="text-sm text-destructive">
+                {errors.content.message}
+              </p>
+            )}
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="tags">{t("TAGS_COMMA_SEPARATED")}</Label>
-              <Input
-                id="tags"
-                {...register("tags")}
-                placeholder={t("TAGS_PLACEHOLDER")}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="tags">{t("TAGS_COMMA_SEPARATED")}</Label>
+            <Input
+              id="tags"
+              {...register("tags")}
+              placeholder={t("TAGS_PLACEHOLDER")}
+            />
+          </div>
 
-            <div className="flex gap-2">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading
-                  ? t("LOADING")
-                  : mode === "edit"
-                  ? `${t("EDIT")} ${t("POST")}`
-                  : `${t("SUBMIT")} ${t("POST")}`}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.back()}
-              >
-                {t("CANCEL")}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </motion.div>
+          <div className="flex gap-2">
+            <Button type="submit" disabled={isLoading}>
+              {isLoading
+                ? t("LOADING")
+                : mode === "edit"
+                ? `${t("EDIT")}`
+                : `${t("POST")}`}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+            >
+              {t("CANCEL")}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

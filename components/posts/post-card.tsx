@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import PostCardHeader from "@/components/posts/post-card-header";
+import PostCardFooter from "@/components/posts/post-card-footer";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -12,9 +13,9 @@ import {
 import { Heart, MessageCircle, Eye } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { PostWithUser } from "@/lib/types";
-import { t } from "@/lib/constants";
+import { APP_CONSTANTS, t } from "@/lib/constants";
 
 interface PostCardProps {
   post: PostWithUser;
@@ -23,8 +24,52 @@ interface PostCardProps {
 export function PostCard({ post }: PostCardProps) {
   const [likes, setLikes] = useState(post.likes);
   const [isLiking, setIsLiking] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // コンポーネントがマウントされた時に、ユーザーのログイン状態とisLiked状態をチェック
+  // Check user authentication and isLiked status when component mounts
+  useEffect(() => {
+    const checkAuthAndLikeStatus = async () => {
+      try {
+        // ユーザーのログイン状態をチェック
+        // Check if user is authenticated
+        const authResponse = await fetch("/api/auth/me");
+        if (authResponse.ok) {
+          const authData = await authResponse.json();
+          if (authData.user) {
+            setIsAuthenticated(true);
+            // ログイン中の場合は、isLiked状態を取得
+            // If logged in, fetch isLiked status
+            const likeResponse = await fetch(`/api/posts/${post.id}/like`);
+            if (likeResponse.ok) {
+              const likeData = await likeResponse.json();
+              setIsLiked(likeData.isLiked);
+              setLikes(likeData.likes);
+            } else if (likeResponse.status === 401) {
+              // 401エラーの場合は、ログインしていないとみなす
+              // 401 error means user is not authenticated
+              setIsAuthenticated(false);
+            }
+          }
+        }
+      } catch (error) {
+        // エラーが発生した場合は、ログインしていないとみなす
+        // If error occurs, assume user is not logged in
+        // ログインしていない場合のエラーは無視する
+        // Ignore errors when user is not logged in
+      }
+    };
+
+    checkAuthAndLikeStatus();
+  }, [post.id]);
 
   const handleLike = async () => {
+    if (!isAuthenticated) {
+      toast.error("Please login to like posts");
+      return;
+    }
+
     setIsLiking(true);
     try {
       const response = await fetch(`/api/posts/${post.id}/like`, {
@@ -38,7 +83,8 @@ export function PostCard({ post }: PostCardProps) {
       }
 
       setLikes(result.likes);
-      toast.success("Post liked!");
+      setIsLiked(result.isLiked);
+      toast.success(result.isLiked ? "Post liked!" : "Post unliked!");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to like post"
@@ -49,8 +95,8 @@ export function PostCard({ post }: PostCardProps) {
   };
 
   const contentPreview =
-    post.content.length > 150
-      ? post.content.substring(0, 150) + "..."
+    post.content.length > APP_CONSTANTS.CONTENT_PREVIEW_LENGTH
+      ? post.content.substring(0, APP_CONSTANTS.CONTENT_PREVIEW_LENGTH) + "..."
       : post.content;
 
   return (
@@ -60,67 +106,22 @@ export function PostCard({ post }: PostCardProps) {
       whileHover={{ y: -4 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="h-full hover:shadow-lg transition-shadow">
-        <CardHeader className="flex items-center justify-between">
-          <h1 className="text-2xl md:text-4xl font-bold">
-            {post.title.length > 12 // truncate title to 12 characters
-              ? post.title.substring(0, 12) + "..."
-              : post.title}
-          </h1>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link href={`/user/${post.user.userId}`}>
-                <Avatar className="size-10">
-                  <AvatarImage src={post.user.avatar || undefined} />
-                  <AvatarFallback>
-                    {post.user.name.charAt(0).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent>{post.user.name}</TooltipContent>
-          </Tooltip>
-        </CardHeader>
+      <Card className="gap-2 hover:shadow-lg transition-shadow">
+        <PostCardHeader post={post} />
 
-        <CardContent className="space-y-4">
-          <p className="text-muted-foreground">
-            {contentPreview.length > 25 // truncate content to 25 characters
-              ? contentPreview.substring(0, 25) + "..."
-              : contentPreview}
-          </p>
-
-          <div className="flex items-center justify-between pt-4 border-t gap-2">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLike}
-                disabled={isLiking}
-                className="gap-1"
-              >
-                <Heart
-                  className={`size-4 ${
-                    likes > post.likes ? "fill-red-500 text-red-500" : ""
-                  }`}
-                />
-                <span>{likes}</span>
-              </Button>
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <MessageCircle className="size-4" />
-                <span>{post._count.comments}</span>
-              </div>
-            </div>
-            <Button variant="outline" size="sm" asChild>
-              <Link
-                href={`/posts/${post.id}`}
-                className="text-sm text-right"
-              >
-                <Eye className="size-4" />
-                <span className="ml-1">{t("SEE_MORE")}</span>
-              </Link>
-            </Button>
-          </div>
+        <CardContent className="flex flex-col gap-2">
+          <p className="text-foreground">{contentPreview}</p>
+          <Button variant="link" className="self-end" asChild>
+            <Link href={`/posts/${post.id}`}>{t("SEE_MORE")}</Link>
+          </Button>
         </CardContent>
+        <PostCardFooter
+          post={post}
+          handleLike={handleLike}
+          isLiking={isLiking}
+          likes={likes}
+          isLiked={isLiked}
+        />
       </Card>
     </motion.div>
   );
