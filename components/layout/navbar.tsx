@@ -13,7 +13,13 @@ import {
   SheetTrigger,
   SheetHeader,
   SheetTitle,
+  SheetFooter,
 } from "@/components/ui/sheet";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { LogOut, User, Settings, Shield, Search, Menu } from "lucide-react";
 import { toast } from "sonner";
 import { t } from "@/lib/constants";
@@ -152,27 +158,43 @@ export function Navbar() {
             <div className="size-40 rounded-full bg-muted animate-pulse" />
           ) : // TODO: Set user avatar style
           user ? (
-            <div className="bg-red-500 flex flex-col items-center h-full w-full">
-              <Button variant="ghost" className="size-40 rounded-full" asChild>
-                <Link href="/">
-                  <Avatar className="size-40">
-                    <AvatarImage src={user.avatar || undefined} />
-                    <AvatarFallback>
-                      {user.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Link>
-              </Button>
-              {/* TODO: Add other navigation items here. like mini mypage, new post button, log out button, etc. */}
-              <div>
-                <NewPostButton size="lg" />
-                <Button variant="ghost" asChild>
-                  <Link href="/settings">
-                    <Settings className="size-4" />
+            <>
+              <div className="bg-red-500 flex flex-col items-center h-full w-full">
+                <Button
+                  variant="ghost"
+                  className="size-40 rounded-full"
+                  asChild
+                >
+                  <Link href="/">
+                    <Avatar className="size-40">
+                      <AvatarImage src={user.avatar || undefined} />
+                      <AvatarFallback>
+                        {user.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
                   </Link>
                 </Button>
+                {/* TODO: Add other navigation items here. like mini mypage, new post button, log out button, etc. */}
+                <div>
+                  <NewPostButton size="lg" />
+                  <Button variant="ghost" asChild>
+                    <Link href="/settings">
+                      <Settings className="size-4" />
+                    </Link>
+                  </Button>
+                </div>
               </div>
-            </div>
+              <SheetFooter>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" onClick={handleLogout}>
+                      <LogOut className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t("LOGOUT")}</TooltipContent>
+                </Tooltip>
+              </SheetFooter>
+            </>
           ) : (
             // TODO: Set not logged in style
             <div className="flex items-center gap-2">
