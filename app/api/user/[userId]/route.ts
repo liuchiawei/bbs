@@ -107,7 +107,7 @@ export async function PATCH(
 
     // Next.js 16のrevalidateTagを使用して特定ユーザーのキャッシュをクリア
     // パフォーマンス優先：特定のユーザーのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
-    revalidateTag(`user-${user.userId}`);
+    revalidateTag(`user-${user.userId}`, 'max');
     // 関連ページのキャッシュもクリア
     revalidatePath(`/user/${user.userId}`);
     revalidatePath(`/user/${user.userId}/edit`);
