@@ -124,67 +124,65 @@ export function PostForm({
     }
   };
 
-  if (currentUser) {
-    return (
-      <Card className="w-full max-w-3xl mx-auto">
-        <PostCardHeader user={currentUser} />
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">{t("TITLE")}</Label>
-              <Input id="title" {...register("title")} />
-              {errors.title && (
-                <p className="text-sm text-destructive">
-                  {errors.title.message}
-                </p>
-              )}
-            </div>
+  return (
+    <Card className="w-full">
+      {currentUser && (
+        <CardHeader>
+          <PostCardHeader user={currentUser} />
+        </CardHeader>
+      )}
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">{t("TITLE")}</Label>
+            <Input id="title" {...register("title")} />
+            {errors.title && (
+              <p className="text-sm text-destructive">{errors.title.message}</p>
+            )}
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="content">{t("CONTENT")}</Label>
-              <Textarea
-                id="content"
-                {...register("content")}
-                rows={10}
-                className="resize-y"
-              />
-              {errors.content && (
-                <p className="text-sm text-destructive">
-                  {errors.content.message}
-                </p>
-              )}
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="content">{t("CONTENT")}</Label>
+            <Textarea
+              id="content"
+              {...register("content")}
+              rows={10}
+              className="resize-y"
+            />
+            {errors.content && (
+              <p className="text-sm text-destructive">
+                {errors.content.message}
+              </p>
+            )}
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="tags">{t("TAGS_COMMA_SEPARATED")}</Label>
-              <Input
-                id="tags"
-                {...register("tags")}
-                placeholder={t("TAGS_PLACEHOLDER")}
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="tags">{t("TAGS_COMMA_SEPARATED")}</Label>
+            <Input
+              id="tags"
+              {...register("tags")}
+              placeholder={t("TAGS_PLACEHOLDER")}
+            />
+          </div>
 
-            <div className="flex gap-2">
-              <Button type="submit" disabled={isLoading}>
-                {isLoading
-                  ? t("LOADING")
-                  : mode === "edit"
-                  ? `${t("EDIT")}`
-                  : `${t("POST")}`}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.back()}
-              >
-                {t("CANCEL")}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return null;
+          <div className="flex gap-2">
+            <Button type="submit" disabled={isLoading}>
+              {isLoading
+                ? t("LOADING")
+                : mode === "edit"
+                ? `${t("EDIT")}`
+                : `${t("POST")}`}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+            >
+              {t("CANCEL")}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
 }
