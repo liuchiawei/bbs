@@ -10,11 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { postSchema } from "@/lib/validations";
 import { t } from "@/lib/constants";
-import { User } from "@/lib/types";
 
 type PostFormData = z.infer<typeof postSchema>;
 
@@ -25,13 +24,11 @@ interface PostFormProps {
     content: string;
     tags: string[];
   };
-  currentUser?: User;
   mode?: "create" | "edit";
 }
 
 export function PostForm({
   initialData,
-  currentUser,
   mode = "create",
 }: PostFormProps) {
   const router = useRouter();
@@ -126,12 +123,8 @@ export function PostForm({
 
   return (
     <Card className="w-full">
-      {currentUser && (
-        <CardHeader>
-          <PostCardHeader user={currentUser} />
-        </CardHeader>
-      )}
       <CardContent>
+        <PostCardHeader />
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">{t("TITLE")}</Label>

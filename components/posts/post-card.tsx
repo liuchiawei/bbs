@@ -3,7 +3,8 @@
 import Link from "next/link";
 import PostCardHeader from "@/components/posts/post-card-header";
 import PostCardFooter from "@/components/posts/post-card-footer";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import PostCardAuthor from "@/components/posts/post-card-author";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
@@ -94,14 +95,17 @@ export function PostCard({ post }: PostCardProps) {
       : post.content;
 
   return (
-    <Card className="gap-2 hover:shadow-lg">
-      <PostCardHeader user={post.user as User} />
-
-      <CardContent className="flex flex-col gap-2">
-        <p className="text-foreground">{contentPreview}</p>
-        <Button variant="link" className="text-xs self-center" asChild>
-          <Link href={`/posts/${post.id}`}>{t("SEE_MORE")}</Link>
-        </Button>
+    <Card className="hover:shadow-lg">
+      <CardContent className="flex space-x-4 space-y-1">
+        <PostCardHeader />
+        <Link href={`/posts/${post.id}`} className="flex-1 flex flex-col gap-1">
+          <h2 className="text-lg md:text-xl font-semibold">{post.title}</h2>
+          <p className="text-muted-foreground">{contentPreview}</p>
+          {/* TODO: See More Button */}
+          {/* <Button variant="link" className="text-xs" asChild>
+              <Link href={`/posts/${post.id}`}>{t("SEE_MORE")}</Link>
+            </Button> */}
+        </Link>
       </CardContent>
       <PostCardFooter
         post={post}
