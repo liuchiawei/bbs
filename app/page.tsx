@@ -3,8 +3,37 @@ import { getCurrentUser } from "@/lib/auth";
 import NewPostButton from "@/components/posts/new-post-button";
 import { PostCard } from "@/components/posts/post-card";
 import { PostForm } from "@/components/posts/post-form";
-import { t } from "@/lib/constants";
 import HomeHeader from "@/components/home/header";
+import { Timeline } from "@/components/ui/timeline";
+import { t } from "@/lib/constants";
+
+interface TimelineEntry {
+  title: string;
+  content: React.ReactNode;
+}
+
+const timelineData: TimelineEntry[] = [
+  {
+    title: "Post 1",
+    content: <div className="w-full h-96 bg-red-500 rounded-lg shadow-md">Post 1</div>,
+  },
+  {
+    title: "Post 2",
+    content: <div className="w-full h-96 bg-red-500 rounded-lg shadow-md">Post 2</div>,
+  },
+  {
+    title: "Post 3",
+    content: <div className="w-full h-96 bg-red-500 rounded-lg shadow-md">Post 3</div>,
+  },
+  {
+    title: "Post 4",
+    content: <div className="w-full h-96 bg-red-500 rounded-lg shadow-md">Post 4</div>,
+  },
+  {
+    title: "Post 5",
+    content: <div className="w-full h-96 bg-red-500 rounded-lg shadow-md">Post 5</div>,
+  }
+];
 
 export default async function Home() {
   const allPosts = await getPosts();
@@ -13,6 +42,7 @@ export default async function Home() {
   return (
     <section>
       <HomeHeader />
+      <Timeline data={timelineData} />
       <div className="w-full flex flex-col gap-2">
         {currentUser && <PostForm currentUser={currentUser} />}
         {allPosts.length === 0 ? (
