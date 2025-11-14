@@ -4,6 +4,11 @@
 - feat/post
   難度: ★★★★☆
   - 前端: 將 post new 從新頁面改成置頂，手機板切換成小按鈕
+    - shadcn/ui
+      - accordin: show reply posts
+      - hover-card: 取代現有的ToolTip profile-card-mini 小卡
+      - field, input-group: 可以用在post-form, register-form, edit-profile-form等地方
+      - dialog: 電腦版的new post form介面
   - 後端: 更改回復格式，將回覆視為post的一種
     - Prisma Schema
     - API
