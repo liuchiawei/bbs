@@ -63,7 +63,7 @@ export default async function Home() {
           allPosts.map((post) => <PostCard key={post.id} post={post} />)
         )}
       </div>
-      <NewPostButtonXL className="fixed bottom-0 right-1/2 md:right-0 translate-x-1/2 md:translate-x-1/5 translate-y-1/3 md:translate-y-1/4 z-50" />
+      <NewPostButtonXL className="fixed -bottom-8 md:-bottom-16 right-1/2 md:right-8 translate-x-1/2 z-50" />
     </section>
   );
 }
