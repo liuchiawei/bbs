@@ -5,17 +5,11 @@ import PostCardHeader from "@/components/posts/post-card-header";
 import PostCardFooter from "@/components/posts/post-card-footer";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import { Heart, MessageCircle, Eye } from "lucide-react";
-import { motion } from "motion/react";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import type { PostWithUser } from "@/lib/types";
 import { APP_CONSTANTS, t } from "@/lib/constants";
+import { User } from "@/lib/types";
 
 interface PostCardProps {
   post: PostWithUser;
@@ -101,7 +95,7 @@ export function PostCard({ post }: PostCardProps) {
 
   return (
     <Card className="gap-2 hover:shadow-lg">
-      <PostCardHeader post={post} />
+      <PostCardHeader user={post.user as User} />
 
       <CardContent className="flex flex-col gap-2">
         <p className="text-foreground">{contentPreview}</p>

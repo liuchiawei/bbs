@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import PostCardHeader from "./post-card-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { postSchema } from "@/lib/validations";
 import { t } from "@/lib/constants";
+import { User } from "@/lib/types";
 
 type PostFormData = z.infer<typeof postSchema>;
 
@@ -23,10 +25,15 @@ interface PostFormProps {
     content: string;
     tags: string[];
   };
+  currentUser?: User;
   mode?: "create" | "edit";
 }
 
-export function PostForm({ initialData, mode = "create" }: PostFormProps) {
+export function PostForm({
+  initialData,
+  currentUser,
+  mode = "create",
+}: PostFormProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(false);
@@ -117,65 +124,67 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
     }
   };
 
-  return (
-    <Card className="w-full max-w-3xl mx-auto">
-      <CardHeader>
-        <CardTitle>
-          {mode === "edit" ? `${t("EDIT")}` : t("NEW_POST")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">{t("TITLE")}</Label>
-            <Input id="title" {...register("title")} />
-            {errors.title && (
-              <p className="text-sm text-destructive">{errors.title.message}</p>
-            )}
-          </div>
+  if (currentUser) {
+    return (
+      <Card className="w-full max-w-3xl mx-auto">
+        <PostCardHeader user={currentUser} />
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">{t("TITLE")}</Label>
+              <Input id="title" {...register("title")} />
+              {errors.title && (
+                <p className="text-sm text-destructive">
+                  {errors.title.message}
+                </p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="content">{t("CONTENT")}</Label>
-            <Textarea
-              id="content"
-              {...register("content")}
-              rows={10}
-              className="resize-y"
-            />
-            {errors.content && (
-              <p className="text-sm text-destructive">
-                {errors.content.message}
-              </p>
-            )}
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="content">{t("CONTENT")}</Label>
+              <Textarea
+                id="content"
+                {...register("content")}
+                rows={10}
+                className="resize-y"
+              />
+              {errors.content && (
+                <p className="text-sm text-destructive">
+                  {errors.content.message}
+                </p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="tags">{t("TAGS_COMMA_SEPARATED")}</Label>
-            <Input
-              id="tags"
-              {...register("tags")}
-              placeholder={t("TAGS_PLACEHOLDER")}
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="tags">{t("TAGS_COMMA_SEPARATED")}</Label>
+              <Input
+                id="tags"
+                {...register("tags")}
+                placeholder={t("TAGS_PLACEHOLDER")}
+              />
+            </div>
 
-          <div className="flex gap-2">
-            <Button type="submit" disabled={isLoading}>
-              {isLoading
-                ? t("LOADING")
-                : mode === "edit"
-                ? `${t("EDIT")}`
-                : `${t("POST")}`}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-            >
-              {t("CANCEL")}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
-  );
+            <div className="flex gap-2">
+              <Button type="submit" disabled={isLoading}>
+                {isLoading
+                  ? t("LOADING")
+                  : mode === "edit"
+                  ? `${t("EDIT")}`
+                  : `${t("POST")}`}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+              >
+                {t("CANCEL")}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return null;
 }
