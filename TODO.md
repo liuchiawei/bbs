@@ -1,20 +1,28 @@
 # TODO memos
 
 - ui/nav
-- feat/revalidate-tag 研究Next.js16新功能
-- feat/post: 將 post new 從新頁面改成置頂
+- feat/post
+  難度: ★★★★☆
+  - 前端: 將 post new 從新頁面改成置頂，手機板切換成小按鈕
+  - 後端: 更改回復格式，將回覆視為post的一種
+    - Prisma Schema
+    - API
 - feat/profile-card
+  難度: ★☆☆☆☆
   - profile-card-horizontal-sm: 橫版小尺寸, hover 使用者名稱時顯示
   - profile-card-horizontal-lg: 橫版大尺寸, 放在mypage頁頭
   - profile-card-vertical-sm: 直版小尺寸，功能未定
   - profile-card-vertical-lg: 直版大尺寸，放在桌機板 Nav sheet 中
 - feat/infinite-scroll: 首頁的post要能無限捲動
+  難度: ★★☆☆☆
 - feat/agolism: 演算法，根據使用者的喜好和習慣預測推文
+  難度: ★★★★★
   - 有可能要更改資料庫結構 ( Prisma schema )
   - 盡量減少資料庫操作
   - 配合無限捲動
 - feat/search
 - feat/user-profile: 增加使用者基本資料，如賽事成績、拳齡
+  難度: ★★★☆☆
   - 更動資料庫結構(Prisma Schema)
     - 新建 Profile 表格 (model Profile)，將基本資料與 User 分離，User 只保留登入需要的基本資料
     - User: id, useId, email, password
@@ -48,5 +56,4 @@
   - 後端: 更新資料庫結構
 - feat/notifications: 通知
 - feat/i18n: 多語言對應，英/日/簡中/繁中
-- feat/compact: 優化效能
 - feat/auth-google: 用google帳號登陸
