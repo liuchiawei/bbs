@@ -234,7 +234,7 @@ export default function PostPage({
   const isOwner = session?.id === post.user.id;
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-4xl">
+    <>
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between mb-4">
@@ -430,6 +430,10 @@ export default function PostPage({
                         comment={{
                           ...comment,
                           updatedAt: comment.createdAt,
+                          user: {
+                            ...comment.user,
+                            email: "",
+                          },
                         }}
                         postId={post.id}
                         currentUserId={session?.id}
@@ -442,6 +446,6 @@ export default function PostPage({
           )}
         </CardContent>
       </Card>
-    </div>
+    </>
   );
 }

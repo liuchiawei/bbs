@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { hashPassword, createToken, setSession } from "@/lib/auth";
 import { registerSchema } from "@/lib/validations";
@@ -55,12 +56,19 @@ export async function POST(request: NextRequest) {
 
     // Create token
     const token = await createToken({
-      userId: user.id,
+      id: user.id,
+      userId: user.userId,
       email: user.email,
     });
 
     // Set session
     await setSession(token);
+
+    // Next.js 16のrevalidateTagを使用して特定ユーザーのキャッシュをクリア
+    // パフォーマンス優先：特定のユーザーのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
+    revalidateTag(`user-${user.userId}`, 'max');
+    // ホームページのキャッシュもクリア
+    revalidatePath("/");
 
     // Return user without password
     const { password: _, ...userWithoutPassword } = user;

@@ -11,14 +11,14 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
-  const user = await getUserProfile(session.userId);
+  const user = await getUserProfile(session.id);
 
   if (!user) {
     redirect("/login");
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <>
       <h1 className="text-3xl font-bold mb-8 text-center">Settings</h1>
       <EditProfileForm
         user={{
@@ -26,6 +26,6 @@ export default async function SettingsPage() {
           birthDate: user.birthDate ? new Date(user.birthDate).toISOString() : null,
         } as User}
       />
-    </div>
+    </>
   );
 }

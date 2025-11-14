@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -37,6 +38,7 @@ const registerSchema = baseRegisterSchema
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingUserId, setIsCheckingUserId] = useState(false);
   const [userIdError, setUserIdError] = useState<string | null>(null);
@@ -137,9 +139,15 @@ export function RegisterForm() {
       }
 
       toast.success(t("SUCCESS_CREATED"));
-      // Use window.location.href to force a full page refresh
-      // This ensures the Navbar component re-initializes and fetches the updated user state
-      window.location.href = "/";
+      
+      // user-updatedイベントを発火してNavbarコンポーネントに即座に更新を通知
+      // revalidateTag()と組み合わせて、UIを即座に更新できるようにする
+      window.dispatchEvent(new CustomEvent("user-updated"));
+      
+      // API routeでrevalidatePath()が呼ばれているため、キャッシュは既に無効化されている
+      // router.refresh()で最新データを取得し、その後ホームページに遷移する
+      router.refresh();
+      router.push("/");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("ERROR_GENERIC"));
     } finally {

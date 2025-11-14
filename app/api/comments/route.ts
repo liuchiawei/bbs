@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { createCommentSchema, commentIncludeBasic } from "@/lib/validations";
@@ -36,6 +37,10 @@ export async function POST(request: NextRequest) {
 
       return newComment;
     });
+
+    // データベース操作完了後、キャッシュを無効化して最新データを取得できるようにする
+    // パフォーマンス優先：必要なパスのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
+    revalidatePath(`/posts/${validatedData.postId}`);
 
     return NextResponse.json({
       message: "Comment created successfully",

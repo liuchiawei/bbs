@@ -34,10 +34,10 @@ export default async function UserPage({
 
   const user = userData as UserProfilePage;
 
-  const isOwnProfile = session?.userId === user.id;
+  const isOwnProfile = session?.id === user.id;
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-5xl">
+    <>
       <Card className="mb-8">
         <CardHeader>
           <div className="flex items-center gap-6">
@@ -171,6 +171,6 @@ export default async function UserPage({
           )}
         </TabsContent>
       </Tabs>
-    </div>
+    </>
   );
 }

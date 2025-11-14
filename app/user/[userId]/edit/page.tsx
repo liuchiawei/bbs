@@ -16,7 +16,7 @@ export default async function EditUserPage({
   }
 
   const { userId } = await params;
-  const user = await getUserProfile(session.userId);
+  const user = await getUserProfile(session.id);
 
   if (!user) {
     notFound();
@@ -28,14 +28,18 @@ export default async function EditUserPage({
   }
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold mb-8 text-center">{t("EDIT_PROFILE")}</h1>
+    <>
+      <h1 className="text-3xl font-bold mb-8 text-center">
+        {t("EDIT_PROFILE")}
+      </h1>
       <EditProfileForm
         user={{
           ...user,
-          birthDate: user.birthDate ? new Date(user.birthDate).toISOString() : null,
+          birthDate: user.birthDate
+            ? new Date(user.birthDate).toISOString()
+            : null,
         }}
       />
-    </div>
+    </>
   );
 }

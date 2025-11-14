@@ -30,7 +30,9 @@ export async function getPosts(
       user: {
         select: {
           id: true,
+          userId: true,
           name: true,
+          nickname: true,
           avatar: true,
         },
       },

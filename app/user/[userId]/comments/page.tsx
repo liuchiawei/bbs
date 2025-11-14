@@ -22,7 +22,7 @@ export default async function UserCommentsPage({
   }
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-5xl">
+    <>
       <div className="mb-6">
         <Button variant="ghost" asChild>
           <Link href={`/user/${userId}`}>
@@ -89,6 +89,6 @@ export default async function UserCommentsPage({
           ))}
         </div>
       )}
-    </div>
+    </>
   );
 }

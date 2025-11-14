@@ -23,7 +23,7 @@ export interface UserWithCounts extends User {
 }
 
 export interface UserProfilePage extends User {
-  posts: PostWithUser[];
+  posts: Post[];
   _count: {
     posts: number;
     comments: number;
@@ -46,13 +46,7 @@ export interface Post {
 }
 
 export interface PostWithUser extends Post {
-  user: {
-    id: string;
-    userId: string;
-    name: string;
-    nickname?: string | null;
-    avatar?: string | null;
-  };
+  user: User;
   _count: {
     comments: number;
   };
@@ -76,13 +70,7 @@ export interface Comment {
 }
 
 export interface CommentWithUser extends Comment {
-  user: {
-    id: string;
-    userId: string;
-    name: string;
-    nickname?: string | null;
-    avatar?: string | null;
-  };
+  user: User;
 }
 
 // API Response Types
