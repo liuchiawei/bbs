@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
 
     // Next.js 16のrevalidateTagを使用して特定ユーザーのキャッシュをクリア
     // パフォーマンス優先：特定のユーザーのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
+    // cache tag set in api/auth/me route
     revalidateTag(`user-${user.userId}`, 'max');
     // ホームページのキャッシュもクリア
     revalidatePath("/");

@@ -1,8 +1,8 @@
 # TODO memos
 
 - ui/nav
-- ui/comment: 改成置頂
-- feat/post: 將 post new 從新頁面改成
+- feat/revalidate-tag 研究Next.js16新功能
+- feat/post: 將 post new 從新頁面改成置頂
 - feat/profile-card
   - profile-card-horizontal-sm: 橫版小尺寸, hover 使用者名稱時顯示
   - profile-card-horizontal-lg: 橫版大尺寸, 放在mypage頁頭
@@ -49,3 +49,4 @@
 - feat/notifications: 通知
 - feat/i18n: 多語言對應，英/日/簡中/繁中
 - feat/compact: 優化效能
+- feat/auth-google: 用google帳號登陸
