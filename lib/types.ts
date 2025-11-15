@@ -1,4 +1,5 @@
 // User Types
+// 完整使用者資料（所有欄位）
 export interface User {
   id: string;
   userId: string;
@@ -15,21 +16,47 @@ export interface User {
   updatedAt?: Date | string;
 }
 
+// 公開顯示用使用者資料（不包含敏感資訊）
+export interface UserPublic {
+  id: string;
+  userId: string;
+  name: string;
+  nickname?: string | null;
+  avatar?: string | null;
+}
+
+// 公開顯示用使用者資料（擴展版，包含 email）
+export interface UserPublicExtended extends UserPublic {
+  email: string;
+}
+
+// 使用者統計資料
+export interface UserStats {
+  posts: number;
+  comments: number;
+  likedPosts: number;
+  likedComments: number;
+}
+
+// 完整使用者資料 + 統計
+export interface UserWithStats extends User {
+  _count: UserStats;
+}
+
+// 使用者資料 + 基本統計（用於向後兼容）
 export interface UserWithCounts extends User {
   _count?: {
     posts: number;
     comments: number;
+    likedPosts?: number;
+    likedComments?: number;
   };
 }
 
+// 使用者個人資料頁（包含最近貼文和完整統計）
 export interface UserProfilePage extends User {
   posts: Post[];
-  _count: {
-    posts: number;
-    comments: number;
-    likedPosts: number;
-    likedComments: number;
-  };
+  _count: UserStats;
 }
 
 // Post Types
@@ -46,7 +73,7 @@ export interface Post {
 }
 
 export interface PostWithUser extends Post {
-  user: User;
+  user: UserPublicExtended;
   _count: {
     comments: number;
   };
@@ -70,7 +97,7 @@ export interface Comment {
 }
 
 export interface CommentWithUser extends Comment {
-  user: User;
+  user: UserPublicExtended;
 }
 
 // API Response Types
@@ -172,13 +199,7 @@ export interface AdminPostListItem {
   views: number;
   likes: number;
   createdAt: Date | string;
-  user: {
-    id: string;
-    userId: string;
-    name: string;
-    nickname?: string | null;
-    avatar?: string | null;
-  };
+  user: UserPublic;
   _count: {
     comments: number;
   };
