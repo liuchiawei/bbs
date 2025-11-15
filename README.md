@@ -1,5 +1,7 @@
 # BBS - Boxing Buddies Society
 
+**Languages / 語言 / 言語**: [English](README.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md)
+
 A production-ready, modern bulletin board system built with Next.js 16, featuring complete authentication, admin dashboard, multilingual support (4 languages), advanced ISR optimization, and beautiful UI/UX.
 
 ## ✨ Features
@@ -7,6 +9,7 @@ A production-ready, modern bulletin board system built with Next.js 16, featurin
 ### Core Features
 
 - ✅ **User Authentication & Profiles**
+
   - Register with custom username (userId) and avatar upload
   - Login/logout with JWT (HTTP-only cookies, 7-day expiration)
   - Public user profiles with stats (posts, comments, likes)
@@ -15,6 +18,7 @@ A production-ready, modern bulletin board system built with Next.js 16, featurin
   - Points system (1000 initial points per user)
 
 - ✅ **Post Management**
+
   - Create, read, update, delete posts
   - Post with title, content, and tags
   - Like/unlike posts
@@ -23,6 +27,7 @@ A production-ready, modern bulletin board system built with Next.js 16, featurin
   - **Hot posts algorithm** with ISR optimization
 
 - ✅ **Comment System**
+
   - Comment on posts
   - Nested replies (unlimited depth)
   - Like/unlike comments
@@ -30,12 +35,14 @@ A production-ready, modern bulletin board system built with Next.js 16, featurin
   - Comment statistics (likes count, replies count)
 
 - ✅ **Admin Dashboard**
+
   - Admin-only access with role check
   - Post management (view all, delete any post)
   - User management (view all, ban/unban users)
   - Pagination support
 
 - ✅ **Advanced Performance**
+
   - ISR (Incremental Static Regeneration) with 60s revalidation
   - Hot posts algorithm: `(likes × 2) + (comments × 1.5) + (views × 0.1) + time decay`
   - Manual cache invalidation API
@@ -43,6 +50,7 @@ A production-ready, modern bulletin board system built with Next.js 16, featurin
   - Component caching
 
 - ✅ **Internationalization (i18n)**
+
   - 4 languages: English, Japanese (default), Simplified Chinese, Traditional Chinese
   - 100+ translation keys
   - All UI text, errors, validation messages translated
@@ -151,7 +159,7 @@ Open [http://localhost:3000](http://localhost:3000) to see the application.
 
 ## 📁 Project Structure
 
-```
+```text
 bbs/
 ├── app/                          # Next.js App Router
 │   ├── api/                      # API routes (20 endpoints)
@@ -208,57 +216,57 @@ bbs/
 
 ### Authentication (5 endpoints)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/register` | Register new user |
-| POST | `/api/auth/login` | User login (returns JWT cookie) |
-| POST | `/api/auth/logout` | User logout (clears cookie) |
-| GET | `/api/auth/me` | Get current user |
-| POST | `/api/auth/check-userid` | Check userId availability |
+| Method | Endpoint                 | Description                     |
+| ------ | ------------------------ | ------------------------------- |
+| POST   | `/api/auth/register`     | Register new user               |
+| POST   | `/api/auth/login`        | User login (returns JWT cookie) |
+| POST   | `/api/auth/logout`       | User logout (clears cookie)     |
+| GET    | `/api/auth/me`           | Get current user                |
+| POST   | `/api/auth/check-userid` | Check userId availability       |
 
 ### Posts (6 endpoints)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/posts` | List posts (pagination, filtering) |
-| POST | `/api/posts` | Create post |
-| GET | `/api/posts/[id]` | Get single post with comments |
-| PATCH | `/api/posts/[id]` | Update post (author/admin only) |
-| DELETE | `/api/posts/[id]` | Delete post (author/admin only) |
-| POST | `/api/posts/[id]/like` | Toggle like |
+| Method | Endpoint               | Description                        |
+| ------ | ---------------------- | ---------------------------------- |
+| GET    | `/api/posts`           | List posts (pagination, filtering) |
+| POST   | `/api/posts`           | Create post                        |
+| GET    | `/api/posts/[id]`      | Get single post with comments      |
+| PATCH  | `/api/posts/[id]`      | Update post (author/admin only)    |
+| DELETE | `/api/posts/[id]`      | Delete post (author/admin only)    |
+| POST   | `/api/posts/[id]/like` | Toggle like                        |
 
 ### Comments (4 endpoints)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/comments` | Create comment |
-| DELETE | `/api/comments/[id]` | Delete comment (author/admin only) |
-| POST | `/api/comments/[id]/like` | Toggle like |
-| GET | `/api/comments/[id]/replies` | Get comment replies |
+| Method | Endpoint                     | Description                        |
+| ------ | ---------------------------- | ---------------------------------- |
+| POST   | `/api/comments`              | Create comment                     |
+| DELETE | `/api/comments/[id]`         | Delete comment (author/admin only) |
+| POST   | `/api/comments/[id]/like`    | Toggle like                        |
+| GET    | `/api/comments/[id]/replies` | Get comment replies                |
 
 ### Users (2 endpoints)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/user/[userId]` | Get user profile with stats |
-| PATCH | `/api/user/[userId]` | Update user profile |
+| Method | Endpoint             | Description                 |
+| ------ | -------------------- | --------------------------- |
+| GET    | `/api/user/[userId]` | Get user profile with stats |
+| PATCH  | `/api/user/[userId]` | Update user profile         |
 
 ### Admin (5 endpoints - Admin Only)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/admin/posts` | Get all posts |
-| DELETE | `/api/admin/posts/[id]` | Delete any post |
-| GET | `/api/admin/users` | Get all users |
-| POST | `/api/admin/users/[id]/ban` | Ban user |
-| POST | `/api/admin/users/[id]/unban` | Unban user |
+| Method | Endpoint                      | Description     |
+| ------ | ----------------------------- | --------------- |
+| GET    | `/api/admin/posts`            | Get all posts   |
+| DELETE | `/api/admin/posts/[id]`       | Delete any post |
+| GET    | `/api/admin/users`            | Get all users   |
+| POST   | `/api/admin/users/[id]/ban`   | Ban user        |
+| POST   | `/api/admin/users/[id]/unban` | Unban user      |
 
 ### Utilities (2 endpoints)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/upload` | Upload avatar (4MB max, JPEG/PNG/GIF/WebP) |
-| POST | `/api/revalidate` | Manual ISR cache invalidation (secret protected) |
+| Method | Endpoint          | Description                                      |
+| ------ | ----------------- | ------------------------------------------------ |
+| POST   | `/api/upload`     | Upload avatar (4MB max, JPEG/PNG/GIF/WebP)       |
+| POST   | `/api/revalidate` | Manual ISR cache invalidation (secret protected) |
 
 ## 📝 Available Scripts
 
@@ -399,6 +407,7 @@ To change the language, the app currently uses browser language detection. You c
 ### Vercel (Recommended)
 
 1. **Prepare Repository**:
+
    ```bash
    git init
    git add .
@@ -408,6 +417,7 @@ To change the language, the app currently uses browser language detection. You c
    ```
 
 2. **Deploy to Vercel**:
+
    - Sign up at [vercel.com](https://vercel.com)
    - Click "New Project"
    - Import your GitHub/GitLab repository
@@ -416,15 +426,18 @@ To change the language, the app currently uses browser language detection. You c
    - Click "Deploy"
 
 3. **Set Up Database** (if using Neon):
+
    - Create Neon project
    - Copy connection strings to Vercel environment variables
    - Vercel will auto-run `pnpm build` which includes `prisma generate`
 
 4. **Set Up Blob Storage**:
+
    - Go to Vercel Dashboard → Storage → Create Blob Store
    - Copy `BLOB_READ_WRITE_TOKEN` to environment variables
 
 5. **Run Migrations**:
+
    ```bash
    # After first deployment, run migrations
    vercel env pull .env.production
@@ -438,6 +451,7 @@ To change the language, the app currently uses browser language detection. You c
 ### Manual Deployment
 
 For other platforms (AWS, DigitalOcean, etc.), ensure:
+
 - Node.js 20+ installed
 - PostgreSQL database accessible
 - Environment variables set
@@ -515,10 +529,11 @@ Private project - All rights reserved.
 ## 📞 Support
 
 For questions or issues, please:
+
 1. Check existing documentation (CLAUDE.md, CHANGELOG.md)
 2. Search existing issues
 3. Create a new issue with detailed description
 
 ---
 
-**Built with ❤️ using Next.js 16 and React 19**
+Built with ❤️ using Next.js 16 and React 19
