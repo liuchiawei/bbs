@@ -1,5 +1,5 @@
 import Link from "next/link";
-import ProfileCardMini from "@/components/profile/profile-card-mini";
+import PostProfileHoverCard from "@/components/posts/post-profile-hovercard";
 import {
   HoverCard,
   HoverCardTrigger,
@@ -26,7 +26,7 @@ export default function PostCardAuthor({ user }: { user: User }) {
         </Link>
       </HoverCardTrigger>
       <HoverCardContent>
-        <ProfileCardMini user={user} />
+        <PostProfileHoverCard user={user} />
       </HoverCardContent>
     </HoverCard>
   );

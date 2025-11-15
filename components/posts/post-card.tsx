@@ -3,14 +3,11 @@
 import Link from "next/link";
 import PostCardHeader from "@/components/posts/post-card-header";
 import PostCardFooter from "@/components/posts/post-card-footer";
-import PostCardAuthor from "@/components/posts/post-card-author";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import type { PostWithUser } from "@/lib/types";
-import { APP_CONSTANTS, t } from "@/lib/constants";
-import { User } from "@/lib/types";
+import { APP_CONSTANTS } from "@/lib/constants";
 
 interface PostCardProps {
   post: PostWithUser;
