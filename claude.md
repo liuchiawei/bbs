@@ -28,7 +28,7 @@ Use for: New features, major enhancements, architectural changes
 Difficulty threshold: 3+ stars
 Planning intensity: HIGH
 
-**Phase 1: Deep Planning (BEFORE Any Code)**
+Phase 1: Deep Planning (BEFORE Any Code)
 
 Context Gathering:
 
@@ -71,7 +71,7 @@ Create Implementation Plan (for 3+ star features):
 
 - Present plan to user for approval before coding (use ExitPlanMode tool)
 
-**Phase 2: Test-Driven Implementation**
+Phase 2: Test-Driven Implementation
 
 For each sub-task in plan:
 
@@ -95,7 +95,7 @@ For each sub-task in plan:
 
 4. Move to Next Sub-task (one at a time, not all at once)
 
-**Phase 3: Documentation & Integration (AFTER Completion)**
+Phase 3: Documentation & Integration (AFTER Completion)
 
 Final Verification:
 
@@ -113,7 +113,7 @@ Update Documentation (required for 3+ star features):
 
 Commit with conventional format:
 
-```
+```text
 feat(scope): description
 
 Generated with Claude Code
