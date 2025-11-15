@@ -11,7 +11,6 @@ export default async function Home() {
   const allPosts = await getPosts();
   return (
     <section>
-      <Timeline />
       <HomeHeader />
       <div className="w-full flex flex-col gap-2">
         <PostForm mode="create" />
@@ -24,7 +23,16 @@ export default async function Home() {
           allPosts.map((post) => <PostCard key={post.id} post={post} />)
         )}
       </div>
-      <NewPostButtonXL className="fixed -bottom-8 right-1/2 md:right-12 translate-x-1/2 z-30" />
+      <div className="h-120 border" />
+      <div className="h-120 border" />
+      <div className="h-120 border" />
+      <div className="h-120 border" />
+      <div className="h-120 border" />
+      <div className="h-120 border" />
+      <div className="h-120 border" />
+      <div className="h-120 border" />
+      <Timeline />
+      <NewPostButtonXL className="fixed -bottom-8 right-1/2 md:right-12 translate-x-1/2 z-0" />
     </section>
   );
 }

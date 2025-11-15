@@ -2,11 +2,6 @@
 import { useScroll, useTransform, motion } from "motion/react";
 import React, { useEffect, useRef, useState } from "react";
 
-interface TimelineEntry {
-  title: string;
-  content: React.ReactNode;
-}
-
 export const Timeline = () => {
   const ref = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
@@ -20,14 +15,14 @@ export const Timeline = () => {
 
   const { scrollYProgress } = useScroll({
     target: ref,
-    offset: ["start 10%", "end 50%"],
+    offset: ["start 10%", "end 75%"],
   });
 
   const heightTransform = useTransform(scrollYProgress, [0, 1], [0, height]);
   const opacityTransform = useTransform(scrollYProgress, [0, 0.1], [0, 1]);
 
   return (
-    <div ref={ref} className="absolute w-fit h-full min-h-screen pb-20 bg-red-100 z-0">
+    <div ref={ref} className="absolute top-0 w-full h-full min-h-screen pb-20 z-0">
       <div
         style={{
           height: height + "px",
