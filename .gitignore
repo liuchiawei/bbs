@@ -46,10 +46,3 @@ next-env.d.ts
 storybook-static
 
 .env*.local
-
-# claude
-CLAUDE.md
-
-# TODO list
-TODO.md
-.env*.local
