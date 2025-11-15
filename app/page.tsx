@@ -7,6 +7,10 @@ import HomeHeader from "@/components/home/header";
 import { Timeline } from "@/components/ui/timeline";
 import { t } from "@/lib/constants";
 
+// ISR設定：60秒ごとに再検証
+// ISR configuration: revalidate every 60 seconds
+export const revalidate = 60;
+
 export default async function Home() {
   const allPosts = await getPosts();
   return (

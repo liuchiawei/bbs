@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import type { PostWithUser } from "@/lib/types";
+import { unstable_cache } from "next/cache";
 
 export interface GetPostsOptions {
   userId?: string;
@@ -45,6 +46,90 @@ export async function getPosts(
   });
 
   return posts as PostWithUser[];
+}
+
+/**
+ * Get hot posts based on engagement metrics
+ * 熱門貼文を取得（エンゲージメント指標に基づく）
+ * Uses ISR with cache tags for optimal performance
+ */
+export async function getHotPosts(
+  options: { limit?: number; timeRangeHours?: number } = {}
+): Promise<PostWithUser[]> {
+  const { limit = 20, timeRangeHours = 48 } = options;
+
+  // unstable_cacheを使用してISRを実装
+  // Use unstable_cache to implement ISR
+  return unstable_cache(
+    async () => {
+      // 時間範囲を計算（例：48時間前から現在まで）
+      // Calculate time range (e.g., last 48 hours)
+      const timeThreshold = new Date();
+      timeThreshold.setHours(timeThreshold.getHours() - timeRangeHours);
+
+      // すべての投稿を取得して熱度スコアを計算
+      // Fetch all posts and calculate hot score
+      const posts = await prisma.post.findMany({
+        where: {
+          createdAt: {
+            gte: timeThreshold,
+          },
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              userId: true,
+              name: true,
+              nickname: true,
+              avatar: true,
+            },
+          },
+          _count: {
+            select: {
+              comments: true,
+            },
+          },
+        },
+      });
+
+      // 熱度スコアを計算してソート
+      // Calculate hot score and sort
+      const postsWithScore = posts.map((post) => {
+        // 時間減衰係数を計算（新しい投稿ほど高いスコア）
+        // Calculate time decay factor (newer posts get higher score)
+        const hoursSinceCreation =
+          (Date.now() - new Date(post.createdAt).getTime()) / (1000 * 60 * 60);
+        const timeDecay = Math.max(0, 1 - hoursSinceCreation / timeRangeHours);
+
+        // 熱度スコア = (likes × 2) + (comments × 1.5) + (views × 0.1) + 時間減衰
+        // Hot score = (likes × 2) + (comments × 1.5) + (views × 0.1) + time decay
+        const hotScore =
+          post.likes * 2 +
+          post._count.comments * 1.5 +
+          post.views * 0.1 +
+          timeDecay * 10;
+
+        return {
+          ...post,
+          hotScore,
+        };
+      });
+
+      // 熱度スコアで降順ソート
+      // Sort by hot score descending
+      postsWithScore.sort((a, b) => b.hotScore - a.hotScore);
+
+      // 上位limit件を返す
+      // Return top limit posts
+      return postsWithScore.slice(0, limit) as PostWithUser[];
+    },
+    ["hot-posts"], // Cache key
+    {
+      tags: ["hot-posts"], // Cache tag for revalidation
+      revalidate: 60, // ISR間隔：60秒ごとに再検証
+    }
+  )();
 }
 
 /**

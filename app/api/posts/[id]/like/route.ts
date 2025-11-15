@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import type { Prisma } from "@prisma/client";
@@ -124,6 +125,10 @@ export async function POST(
         return { likes: post.likes, isLiked: true };
       }
     });
+
+    // いいね数が変更されたので、熱門貼文のキャッシュを無効化
+    // Like count changed, invalidate hot posts cache
+    revalidateTag("hot-posts");
 
     return NextResponse.json({
       message: result.isLiked
