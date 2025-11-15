@@ -1,6 +1,6 @@
 # BBS - Boxing Buddies Society
 
-**Languages / 語言 / 言語**: [English](README.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md)
+[English](README.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md)
 
 一個生產就緒的現代化佈告欄系統，使用 Next.js 16 構建，具備完整的身份驗證、管理員儀表板、多語言支援（4 種語言）、進階 ISR 優化以及精美的 UI/UX。
 
@@ -533,7 +533,3 @@ pnpm test:coverage
 1. 查看現有文件（CLAUDE.md、CHANGELOG.md）
 2. 搜尋現有 issues
 3. 建立包含詳細描述的新 issue
-
----
-
-使用 Next.js 16 和 React 19 構建 ❤️

@@ -1,6 +1,6 @@
 # BBS - Boxing Buddies Society
 
-**Languages / 語言 / 言語**: [English](README.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md)
+[English](README.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md)
 
 A production-ready, modern bulletin board system built with Next.js 16, featuring complete authentication, admin dashboard, multilingual support (4 languages), advanced ISR optimization, and beautiful UI/UX.
 
@@ -533,7 +533,3 @@ For questions or issues, please:
 1. Check existing documentation (CLAUDE.md, CHANGELOG.md)
 2. Search existing issues
 3. Create a new issue with detailed description
-
----
-
-Built with ❤️ using Next.js 16 and React 19

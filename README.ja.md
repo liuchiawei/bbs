@@ -1,6 +1,6 @@
 # BBS - Boxing Buddies Society
 
-**Languages / 語言 / 言語**: [English](README.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md)
+[English](README.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md)
 
 Next.js 16 で構築された本番環境対応のモダンな掲示板システム。完全な認証、管理者ダッシュボード、多言語対応（4 言語）、高度な ISR 最適化、美しい UI/UX を備えています。
 
@@ -533,7 +533,3 @@ pnpm test:coverage
 1. 既存のドキュメント（CLAUDE.md、CHANGELOG.md）を確認
 2. 既存の issue を検索
 3. 詳細な説明を含む新しい issue を作成
-
----
-
-Next.js 16 と React 19 で構築 ❤️
