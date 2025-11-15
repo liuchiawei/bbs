@@ -91,7 +91,7 @@ export async function PATCH(
     revalidatePath(`/posts/${id}`);
     // 貼文更新時，熱門貼文のキャッシュも無効化
     // When post is updated, also invalidate hot posts cache
-    revalidateTag("hot-posts");
+    revalidateTag("hot-posts", 'max');
 
     return NextResponse.json({
       message: "Post updated successfully",
@@ -150,7 +150,7 @@ export async function DELETE(
     revalidatePath(`/posts/${id}`);
     // 貼文削除時，熱門貼文のキャッシュも無効化
     // When post is deleted, also invalidate hot posts cache
-    revalidateTag("hot-posts");
+    revalidateTag("hot-posts", 'max');
 
     return NextResponse.json({
       message: "Post deleted successfully",

@@ -10,42 +10,54 @@ export interface GetPostsOptions {
 
 /**
  * Get posts with optional filtering
+ * unstable_cacheを使用してISRを実装
+ * Use unstable_cache to implement ISR
  */
 export async function getPosts(
   options: GetPostsOptions = {}
 ): Promise<PostWithUser[]> {
-  "use cache";
   const { userId, limit = 20, page = 1 } = options;
 
-  const where: any = {};
-  if (userId) where.userId = userId;
+  // unstable_cacheを使用してISRを実装
+  // Use unstable_cache to implement ISR
+  return unstable_cache(
+    async () => {
+      const where: any = {};
+      if (userId) where.userId = userId;
 
-  const skip = (page - 1) * limit;
+      const skip = (page - 1) * limit;
 
-  const posts = await prisma.post.findMany({
-    where,
-    skip,
-    take: limit,
-    orderBy: { createdAt: "desc" },
-    include: {
-      user: {
-        select: {
-          id: true,
-          userId: true,
-          name: true,
-          nickname: true,
-          avatar: true,
+      const posts = await prisma.post.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: {
+            select: {
+              id: true,
+              userId: true,
+              name: true,
+              nickname: true,
+              avatar: true,
+            },
+          },
+          _count: {
+            select: {
+              comments: true,
+            },
+          },
         },
-      },
-      _count: {
-        select: {
-          comments: true,
-        },
-      },
+      });
+
+      return posts as PostWithUser[];
     },
-  });
-
-  return posts as PostWithUser[];
+    [`posts-${userId || "all"}-${page}-${limit}`], // Cache key（パラメータを含む）
+    {
+      tags: ["posts"], // Cache tag for revalidation
+      revalidate: 60, // ISR間隔：60秒ごとに再検証
+    }
+  )();
 }
 
 /**

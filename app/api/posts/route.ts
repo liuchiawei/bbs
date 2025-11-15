@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     revalidatePath(`/user/${session.userId}/posts`);
     // 熱門貼文のキャッシュも無効化
     // Also invalidate hot posts cache
-    revalidateTag("hot-posts");
+    revalidateTag("hot-posts", 'max');
 
     return NextResponse.json({
       message: "Post created successfully",

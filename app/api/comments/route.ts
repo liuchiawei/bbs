@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     revalidatePath(`/posts/${validatedData.postId}`);
     // コメント数が変更されたので、熱門貼文のキャッシュを無効化
     // Comment count changed, invalidate hot posts cache
-    revalidateTag("hot-posts");
+    revalidateTag("hot-posts", 'max');
 
     return NextResponse.json({
       message: "Comment created successfully",

@@ -128,7 +128,7 @@ export async function POST(
 
     // いいね数が変更されたので、熱門貼文のキャッシュを無効化
     // Like count changed, invalidate hot posts cache
-    revalidateTag("hot-posts");
+    revalidateTag("hot-posts", 'max');
 
     return NextResponse.json({
       message: result.isLiked
