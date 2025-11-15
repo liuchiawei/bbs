@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { updatePostSchema, userSelectBasic, commentIncludeBasic } from "@/lib/validations";
+import { updatePostSchema, commentIncludeBasic } from "@/lib/validations";
+import { userSelectPublicExtended } from "@/lib/validations";
 import { z } from "zod";
 
 export async function GET(
@@ -17,7 +18,7 @@ export async function GET(
       where: { id },
       data: { views: { increment: 1 } },
       include: {
-        user: { select: userSelectBasic },
+        user: { select: userSelectPublicExtended },
         comments: {
           where: { parentId: null },
           orderBy: { createdAt: "desc" },
@@ -74,7 +75,7 @@ export async function PATCH(
       where: { id },
       data: validatedData,
       include: {
-        user: { select: userSelectBasic },
+        user: { select: userSelectPublicExtended },
         comments: {
           where: { parentId: null },
           orderBy: { createdAt: "desc" },

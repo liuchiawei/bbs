@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import type { PostWithUser } from "@/lib/types";
 import { unstable_cache } from "next/cache";
+import { userSelectPublicExtended } from "@/lib/validations";
 
 export interface GetPostsOptions {
   userId?: string;
@@ -34,13 +35,7 @@ export async function getPosts(
         orderBy: { createdAt: "desc" },
         include: {
           user: {
-            select: {
-              id: true,
-              userId: true,
-              name: true,
-              nickname: true,
-              avatar: true,
-            },
+            select: userSelectPublicExtended,
           },
           _count: {
             select: {
@@ -89,13 +84,7 @@ export async function getHotPosts(
         },
         include: {
           user: {
-            select: {
-              id: true,
-              userId: true,
-              name: true,
-              nickname: true,
-              avatar: true,
-            },
+            select: userSelectPublicExtended,
           },
           _count: {
             select: {
@@ -153,22 +142,14 @@ export async function getPostById(id: string) {
     where: { id },
     include: {
       user: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true,
-        },
+        select: userSelectPublicExtended,
       },
       comments: {
         where: { parentId: null },
         orderBy: { createdAt: "desc" },
         include: {
           user: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true,
-            },
+            select: userSelectPublicExtended,
           },
         },
       },
@@ -210,11 +191,7 @@ export async function createPost(
     },
     include: {
       user: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true,
-        },
+        select: userSelectPublicExtended,
       },
     },
   });
@@ -232,11 +209,7 @@ export async function updatePost(
     data,
     include: {
       user: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true,
-        },
+        select: userSelectPublicExtended,
       },
     },
   });
@@ -307,11 +280,7 @@ export async function getAllPostsAdmin(
       orderBy: { createdAt: "desc" },
       include: {
         user: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-          },
+          select: userSelectPublicExtended,
         },
         _count: {
           select: {
