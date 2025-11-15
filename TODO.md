@@ -27,10 +27,10 @@
   - `hover-card`: 取代現有的 ToolTip profile-card-mini 小卡
   - `field`, `input-group`: 用於 post-form, register-form, edit-profile-form 等表單
   - `dialog`: 電腦版的新貼文表單介面
+  - `sheet`: 手機板的貼文表單使用`Sheet`(side:down)
 
 **後端任務**:
 
-- 更改回覆格式，將回覆視為 post 的一種
 - 更新 Prisma Schema
 - 更新相關 API
 
@@ -55,7 +55,7 @@
 
 **難度**: ★★☆☆☆
 
-**描述**: 實作首頁貼文的無限捲動功能
+**描述**: 使用`react-window`實作首頁貼文的無限捲動功能。留意快速載入和效能優化表現。
 
 ---
 
