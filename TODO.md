@@ -395,5 +395,147 @@
 - 確保 AI 生成的標題符合內容規範和長度限制
 - 處理 AI API 延遲問題，考慮使用非同步處理或背景任務
 - 實作適當的錯誤處理，當 AI 服務不可用時應有 fallback 機制
-- 考慮添加使用者偏好設定，允許使用者選擇是否啟用自動生成標題功能
+- 使用者偏好設定功能請參考: [`feat/setting-page`](#featsetting-page)
+- 相關功能擴展請參考: [`feat/ai-generated-post`](#featai-generated-post)
 - 監控 AI API 使用量和成本
+
+---
+
+### feat/setting-page
+
+**難度**: ★★★☆☆
+
+**描述**: 建立使用者偏好設定頁面，提供個人化設定選項，包含 AI 相關功能的開關控制
+
+**前端任務**:
+
+- 建立設定頁面路由 (`/settings` 或 `/mypage/settings`)
+- 設計設定頁面 UI 結構:
+  - 使用 `tabs` 或 `accordion` 組件組織不同設定分類
+  - 整合 shadcn/ui 的 `switch`、`checkbox`、`select` 等表單組件
+  - 實作響應式設計，確保手機版體驗良好
+- 實作 AI 功能設定區塊:
+  - 自動生成標題開關 (`autoGenerateTitle`)
+  - AI 修飾文章內容開關 (`enableAIContentEnhancement`)
+  - 顯示設定說明和提示文字
+  - 實作即時儲存功能（debounce 優化）
+- 實作其他設定區塊（可擴展）:
+  - 通知設定
+  - 隱私設定
+  - 顯示偏好設定
+- 添加設定變更的視覺回饋（toast 通知）
+- 實作設定載入狀態和錯誤處理
+
+**後端任務**:
+
+- 更新 Prisma Schema，在 `User` 或 `Profile` model 中新增設定欄位:
+  - `autoGenerateTitle`: `Boolean` (預設值: `true`)
+  - `enableAIContentEnhancement`: `Boolean` (預設值: `false`)
+  - 或建立獨立的 `UserSettings` model 以支援未來擴展
+- 建立設定 API (`/api/user/settings`):
+  - `GET /api/user/settings`: 取得使用者設定
+  - `PATCH /api/user/settings`: 更新使用者設定
+  - 實作權限驗證，確保使用者只能修改自己的設定
+- 修改發文 API (`/api/posts`):
+  - 在自動生成標題邏輯中，檢查使用者的 `autoGenerateTitle` 設定
+  - 僅在使用者啟用該功能時才自動生成標題
+- 實作設定驗證邏輯:
+  - 確保設定值的有效性
+  - 處理預設值邏輯
+
+**資料庫結構變更** (Prisma Schema):
+
+- 方案一：在 `User` model 中新增欄位:
+  - `autoGenerateTitle`: `Boolean @default(true)`
+  - `enableAIContentEnhancement`: `Boolean @default(false)`
+- 方案二：建立 `UserSettings` model (推薦，便於未來擴展):
+  - `id`: `String @id @default(uuid())`
+  - `userId`: `String @unique`
+  - `user`: `User @relation(fields: [userId], references: [id])`
+  - `autoGenerateTitle`: `Boolean @default(true)`
+  - `enableAIContentEnhancement`: `Boolean @default(false)`
+  - `createdAt`: `DateTime @default(now())`
+  - `updatedAt`: `DateTime @updatedAt`
+- 執行 migration 更新資料庫結構
+
+**注意事項**:
+
+- 設定頁面應與 [`feat/ai`](#featai) 和 [`feat/ai-generated-post`](#featai-generated-post) 功能整合
+- 考慮使用 localStorage 作為前端快取，減少 API 呼叫
+- 實作設定變更的歷史記錄（可選，用於除錯和審計）
+- 確保設定變更的即時性，避免使用者體驗不一致
+- 考慮添加設定匯入/匯出功能（可選）
+
+---
+
+### feat/ai-generated-post
+
+**難度**: ★★★★☆
+
+**描述**: 擴展 AI 功能，讓使用者能夠使用 AI 修飾和優化文章內容，提供更完善的寫作輔助功能
+
+**前端任務**:
+
+- 在發文表單中新增 AI 修飾功能:
+  - 添加 "AI 修飾內容" 按鈕，位於內容編輯器工具列
+  - 實作載入狀態顯示（progress indicator 或 skeleton）
+  - 顯示修飾前後的對比預覽（可選，使用 diff view）
+  - 允許使用者接受或拒絕 AI 修飾結果
+- 實作 AI 修飾選項 UI:
+  - 提供多種修飾模式選擇（如：潤色、簡化、擴充、專業化等）
+  - 使用 `select` 或 `radio-group` 組件
+  - 添加修飾強度調整（可選）
+- 在設定頁面整合 AI 修飾偏好設定:
+  - 參考 [`feat/setting-page`](#featsetting-page) 的實作
+  - 添加 "自動啟用 AI 修飾" 開關
+  - 預設修飾模式選擇
+- 實作修飾歷史記錄（可選）:
+  - 儲存使用者使用過的修飾記錄
+  - 允許快速套用之前的修飾結果
+- 添加 AI 修飾的視覺標記:
+  - 在貼文詳情頁面顯示 "AI 修飾" 標籤（類似 `isAIGenerated` 標籤）
+  - 使用 `text-muted-foreground` 樣式
+
+**後端任務**:
+
+- 擴展 AI 服務層 (`lib/ai` 或 `services/ai`):
+  - 實作 `enhanceContent()` 函數，用於修飾文章內容
+  - 支援多種修飾模式（潤色、簡化、擴充、專業化等）
+  - 實作內容長度控制，避免修飾後內容過長
+  - 添加快取機制（可選，避免重複修飾相同內容）
+- 建立 AI 修飾 API 端點 (`/api/ai/enhance-content`):
+  - 接收原始內容和修飾模式作為輸入
+  - 使用 OpenAI API 進行內容修飾
+  - 實作錯誤處理和重試邏輯
+  - 設定適當的 prompt 和模型參數
+  - 實作 rate limiting 和成本控制
+- 更新 Prisma Schema，在 `Post` model 中新增欄位:
+  - `isAIEnhanced`: `Boolean` (預設值: `false`)
+  - `aiEnhancementMode`: `String?` (可選，記錄使用的修飾模式)
+  - 執行 migration 更新資料庫結構
+- 修改發文 API (`/api/posts`):
+  - 當使用者提交修飾後的內容時，設定 `isAIEnhanced` 為 `true`
+  - 記錄 `aiEnhancementMode`（如果提供）
+  - 檢查使用者的 `enableAIContentEnhancement` 設定（如果實作自動修飾功能）
+- 實作內容驗證:
+  - 確保修飾後的內容符合平台規範
+  - 檢查內容長度限制
+  - 驗證內容品質（避免無意義的修飾）
+
+**資料庫結構變更** (Prisma Schema):
+
+- 在 `Post` model 中新增欄位:
+  - `isAIEnhanced`: `Boolean @default(false)`
+  - `aiEnhancementMode`: `String?` (可選，如: "polish", "simplify", "expand", "professionalize")
+  - 執行 migration 更新資料庫結構
+
+**注意事項**:
+
+- 與 [`feat/ai`](#featai) 共用相同的 AI 服務層和基礎設施
+- 與 [`feat/setting-page`](#featsetting-page) 整合，提供使用者偏好設定
+- 考慮 API 成本和效能，實作適當的快取和限流機制
+- 確保 AI 修飾不會改變使用者的原意和語氣
+- 提供使用者明確的控制權，避免過度自動化
+- 實作內容版本控制（可選），允許使用者查看修飾前後的差異
+- 監控 AI API 使用量和成本，特別是內容修飾可能消耗更多 tokens
+- 考慮實作批量修飾功能（可選），允許使用者一次修飾多段內容
