@@ -345,3 +345,55 @@
 - 整合 Google OAuth API
 - 建立 Google 帳號綁定邏輯
 - 更新使用者認證流程
+
+---
+
+### feat/ai
+
+**難度**: ★★★★☆
+
+**描述**: 整合 Vercel AI SDK，當使用者發文時若未提供標題，自動使用 OpenAI LLM 生成合適的標題
+
+**前端任務**:
+
+- 在 `PostCard` 和貼文詳情頁面中，當 `isAIGenerated` 為 `true` 時顯示標籤 "(自動生成)"，使用 `text-muted-foreground` 樣式
+- 更新發文表單 UI，標題欄位改為可選（optional）
+- 在發文表單中顯示載入狀態，當 AI 正在生成標題時提供視覺回饋
+- 考慮添加使用者手動觸發 AI 生成標題的按鈕（可選功能）
+
+**後端任務**:
+
+- 安裝相關套件:
+  - `ai` (Vercel AI SDK)
+  - `openai` (OpenAI SDK)
+- 建立 AI API 端點 (`/api/ai/generate-title`):
+  - 接收貼文內容作為輸入
+  - 使用 OpenAI API 生成合適的標題
+  - 實作錯誤處理和重試邏輯
+  - 設定適當的 prompt 和模型參數（temperature, max_tokens 等）
+- 修改發文 API (`/api/posts`):
+  - 更新 validation schema，將標題欄位改為可選
+  - 當標題為空或未提供時，自動呼叫 AI API 生成標題
+  - 設定 `isAIGenerated` 欄位值（使用者提供標題時設為 `false`，AI 生成時設為 `true`）
+  - 處理 AI API 失敗的情況（fallback 機制或錯誤處理）
+- 實作 AI 服務層 (`lib/ai` 或 `services/ai`):
+  - 封裝 OpenAI 呼叫邏輯
+  - 實作標題生成函數
+  - 添加快取機制（可選，避免重複生成相同內容的標題）
+  - 實作 rate limiting 和成本控制
+
+**資料庫結構變更** (Prisma Schema):
+
+- 在 `Post` model 中新增欄位:
+  - `isAIGenerated`: `Boolean` (預設值: `false`)
+  - 執行 migration 更新資料庫結構
+
+**注意事項**:
+
+- 環境變數設定：需要在 `.env.local` 或 `.env` 中設定 `OPENAI_API_KEY`
+- 考慮 API 成本和 rate limiting，實作適當的限流機制
+- 確保 AI 生成的標題符合內容規範和長度限制
+- 處理 AI API 延遲問題，考慮使用非同步處理或背景任務
+- 實作適當的錯誤處理，當 AI 服務不可用時應有 fallback 機制
+- 考慮添加使用者偏好設定，允許使用者選擇是否啟用自動生成標題功能
+- 監控 AI API 使用量和成本
