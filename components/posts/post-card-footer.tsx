@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PostCardAuthor from "@/components/posts/post-card-author";
 import { CardFooter } from "@/components/ui/card";
 import {
   Tooltip,
@@ -8,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Eye, MessageCircle, Heart } from "lucide-react";
 import { PostWithUser } from "@/lib/types";
+import { User } from "@/lib/types";
 import { t } from "@/lib/constants";
 
 interface PostCardFooterProps {
@@ -50,20 +52,23 @@ export default function PostCardFooter({
 
   return (
     <CardFooter className="flex items-center justify-between">
-      {post.createdAt && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="text-sm text-muted-foreground">
-              {getTimeAgo(new Date(post.createdAt))}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            {new Date(post.createdAt).toLocaleDateString() +
-              " " +
-              new Date(post.createdAt).toLocaleTimeString()}
-          </TooltipContent>
-        </Tooltip>
-      )}
+      <div className="flex items-center gap-2">
+        <PostCardAuthor user={post.user as User} />
+        {post.createdAt && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="text-sm text-muted-foreground">
+                {getTimeAgo(new Date(post.createdAt))}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              {new Date(post.createdAt).toLocaleDateString() +
+                " " +
+                new Date(post.createdAt).toLocaleTimeString()}
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
       <div className="flex items-center">
         <Tooltip>
           <TooltipTrigger asChild>

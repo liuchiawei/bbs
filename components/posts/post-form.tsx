@@ -5,11 +5,12 @@ import { useRouter, usePathname } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import PostCardHeader from "./post-card-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { postSchema } from "@/lib/validations";
 import { t } from "@/lib/constants";
@@ -26,7 +27,10 @@ interface PostFormProps {
   mode?: "create" | "edit";
 }
 
-export function PostForm({ initialData, mode = "create" }: PostFormProps) {
+export function PostForm({
+  initialData,
+  mode = "create",
+}: PostFormProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(false);
@@ -118,13 +122,9 @@ export function PostForm({ initialData, mode = "create" }: PostFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-3xl mx-auto">
-      <CardHeader>
-        <CardTitle>
-          {mode === "edit" ? `${t("EDIT")}` : t("NEW_POST")}
-        </CardTitle>
-      </CardHeader>
+    <Card className="w-full">
       <CardContent>
+        <PostCardHeader />
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="title">{t("TITLE")}</Label>

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import type { CommentWithUser } from "@/lib/types";
+import { userSelectPublicExtended } from "@/lib/validations";
 
 /**
  * Get comments for a post
@@ -14,11 +15,7 @@ export async function getCommentsByPostId(postId: string): Promise<CommentWithUs
     orderBy: { createdAt: "desc" },
     include: {
       user: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true,
-        },
+        select: userSelectPublicExtended,
       },
     },
   });
@@ -36,11 +33,7 @@ export async function getCommentReplies(commentId: string): Promise<CommentWithU
     orderBy: { createdAt: "asc" },
     include: {
       user: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true,
-        },
+        select: userSelectPublicExtended,
       },
     },
   });
@@ -57,11 +50,7 @@ export async function getCommentById(id: string) {
     where: { id },
     include: {
       user: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true,
-        },
+        select: userSelectPublicExtended,
       },
     },
   });
@@ -78,11 +67,7 @@ export async function createComment(userId: string, data: { content: string; pos
     },
     include: {
       user: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true,
-        },
+        select: userSelectPublicExtended,
       },
     },
   });

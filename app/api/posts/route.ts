@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { createPostSchema, postIncludeBasic } from "@/lib/validations";
@@ -67,6 +67,9 @@ export async function POST(request: NextRequest) {
     // パフォーマンス優先：必要なパスのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
     revalidatePath("/");
     revalidatePath(`/user/${session.userId}/posts`);
+    // 熱門貼文のキャッシュも無効化
+    // Also invalidate hot posts cache
+    revalidateTag("hot-posts", 'max');
 
     return NextResponse.json({
       message: "Post created successfully",

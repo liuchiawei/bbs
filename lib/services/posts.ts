@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
 import type { PostWithUser } from "@/lib/types";
+import { unstable_cache } from "next/cache";
+import { userSelectPublicExtended } from "@/lib/validations";
 
 export interface GetPostsOptions {
   userId?: string;
@@ -9,42 +11,126 @@ export interface GetPostsOptions {
 
 /**
  * Get posts with optional filtering
+ * unstable_cacheを使用してISRを実装
+ * Use unstable_cache to implement ISR
  */
 export async function getPosts(
   options: GetPostsOptions = {}
 ): Promise<PostWithUser[]> {
-  "use cache";
   const { userId, limit = 20, page = 1 } = options;
 
-  const where: any = {};
-  if (userId) where.userId = userId;
+  // unstable_cacheを使用してISRを実装
+  // Use unstable_cache to implement ISR
+  return unstable_cache(
+    async () => {
+      const where: any = {};
+      if (userId) where.userId = userId;
 
-  const skip = (page - 1) * limit;
+      const skip = (page - 1) * limit;
 
-  const posts = await prisma.post.findMany({
-    where,
-    skip,
-    take: limit,
-    orderBy: { createdAt: "desc" },
-    include: {
-      user: {
-        select: {
-          id: true,
-          userId: true,
-          name: true,
-          nickname: true,
-          avatar: true,
+      const posts = await prisma.post.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: {
+          user: {
+            select: userSelectPublicExtended,
+          },
+          _count: {
+            select: {
+              comments: true,
+            },
+          },
         },
-      },
-      _count: {
-        select: {
-          comments: true,
-        },
-      },
+      });
+
+      return posts as PostWithUser[];
     },
-  });
+    [`posts-${userId || "all"}-${page}-${limit}`], // Cache key（パラメータを含む）
+    {
+      tags: ["posts"], // Cache tag for revalidation
+      revalidate: 60, // ISR間隔：60秒ごとに再検証
+    }
+  )();
+}
 
-  return posts as PostWithUser[];
+/**
+ * Get hot posts based on engagement metrics
+ * 熱門貼文を取得（エンゲージメント指標に基づく）
+ * Uses ISR with cache tags for optimal performance
+ */
+export async function getHotPosts(
+  options: { limit?: number; timeRangeHours?: number } = {}
+): Promise<PostWithUser[]> {
+  const { limit = 20, timeRangeHours = 48 } = options;
+
+  // unstable_cacheを使用してISRを実装
+  // Use unstable_cache to implement ISR
+  return unstable_cache(
+    async () => {
+      // 時間範囲を計算（例：48時間前から現在まで）
+      // Calculate time range (e.g., last 48 hours)
+      const timeThreshold = new Date();
+      timeThreshold.setHours(timeThreshold.getHours() - timeRangeHours);
+
+      // すべての投稿を取得して熱度スコアを計算
+      // Fetch all posts and calculate hot score
+      const posts = await prisma.post.findMany({
+        where: {
+          createdAt: {
+            gte: timeThreshold,
+          },
+        },
+        include: {
+          user: {
+            select: userSelectPublicExtended,
+          },
+          _count: {
+            select: {
+              comments: true,
+            },
+          },
+        },
+      });
+
+      // 熱度スコアを計算してソート
+      // Calculate hot score and sort
+      const postsWithScore = posts.map((post) => {
+        // 時間減衰係数を計算（新しい投稿ほど高いスコア）
+        // Calculate time decay factor (newer posts get higher score)
+        const hoursSinceCreation =
+          (Date.now() - new Date(post.createdAt).getTime()) / (1000 * 60 * 60);
+        const timeDecay = Math.max(0, 1 - hoursSinceCreation / timeRangeHours);
+
+        // 熱度スコア = (likes × 2) + (comments × 1.5) + (views × 0.1) + 時間減衰
+        // Hot score = (likes × 2) + (comments × 1.5) + (views × 0.1) + time decay
+        const hotScore =
+          post.likes * 2 +
+          post._count.comments * 1.5 +
+          post.views * 0.1 +
+          timeDecay * 10;
+
+        return {
+          ...post,
+          hotScore,
+        };
+      });
+
+      // 熱度スコアで降順ソート
+      // Sort by hot score descending
+      postsWithScore.sort((a, b) => b.hotScore - a.hotScore);
+
+      // 上位limit件を返す
+      // Return top limit posts
+      return postsWithScore.slice(0, limit) as PostWithUser[];
+    },
+    ["hot-posts"], // Cache key
+    {
+      tags: ["hot-posts"], // Cache tag for revalidation
+      revalidate: 60, // ISR間隔：60秒ごとに再検証
+    }
+  )();
 }
 
 /**
@@ -56,22 +142,14 @@ export async function getPostById(id: string) {
     where: { id },
     include: {
       user: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true,
-        },
+        select: userSelectPublicExtended,
       },
       comments: {
         where: { parentId: null },
         orderBy: { createdAt: "desc" },
         include: {
           user: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true,
-            },
+            select: userSelectPublicExtended,
           },
         },
       },
@@ -113,11 +191,7 @@ export async function createPost(
     },
     include: {
       user: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true,
-        },
+        select: userSelectPublicExtended,
       },
     },
   });
@@ -135,11 +209,7 @@ export async function updatePost(
     data,
     include: {
       user: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true,
-        },
+        select: userSelectPublicExtended,
       },
     },
   });
@@ -210,11 +280,7 @@ export async function getAllPostsAdmin(
       orderBy: { createdAt: "desc" },
       include: {
         user: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-          },
+          select: userSelectPublicExtended,
         },
         _count: {
           select: {

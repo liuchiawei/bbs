@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { userSelectPublicExtended } from "@/lib/validations";
 
 export async function GET(
   request: NextRequest,
@@ -13,11 +14,7 @@ export async function GET(
       orderBy: { createdAt: "asc" },
       include: {
         user: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-          },
+          select: userSelectPublicExtended,
         },
       },
     });

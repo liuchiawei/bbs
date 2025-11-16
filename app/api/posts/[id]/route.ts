@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { updatePostSchema, userSelectBasic, commentIncludeBasic } from "@/lib/validations";
+import { updatePostSchema, commentIncludeBasic } from "@/lib/validations";
+import { userSelectPublicExtended } from "@/lib/validations";
 import { z } from "zod";
 
 export async function GET(
@@ -17,7 +18,7 @@ export async function GET(
       where: { id },
       data: { views: { increment: 1 } },
       include: {
-        user: { select: userSelectBasic },
+        user: { select: userSelectPublicExtended },
         comments: {
           where: { parentId: null },
           orderBy: { createdAt: "desc" },
@@ -74,7 +75,7 @@ export async function PATCH(
       where: { id },
       data: validatedData,
       include: {
-        user: { select: userSelectBasic },
+        user: { select: userSelectPublicExtended },
         comments: {
           where: { parentId: null },
           orderBy: { createdAt: "desc" },
@@ -89,6 +90,9 @@ export async function PATCH(
     revalidatePath("/");
     revalidatePath(`/user/${existingPost.userId}/posts`);
     revalidatePath(`/posts/${id}`);
+    // 貼文更新時，熱門貼文のキャッシュも無効化
+    // When post is updated, also invalidate hot posts cache
+    revalidateTag("hot-posts", 'max');
 
     return NextResponse.json({
       message: "Post updated successfully",
@@ -145,6 +149,9 @@ export async function DELETE(
     revalidatePath("/");
     revalidatePath(`/user/${existingPost.userId}/posts`);
     revalidatePath(`/posts/${id}`);
+    // 貼文削除時，熱門貼文のキャッシュも無効化
+    // When post is deleted, also invalidate hot posts cache
+    revalidateTag("hot-posts", 'max');
 
     return NextResponse.json({
       message: "Post deleted successfully",
