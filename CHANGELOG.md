@@ -67,6 +67,49 @@
 
 ---
 
+### feat/top-page-timeline
+
+**難度**: ★☆☆☆☆
+
+**描述**: 在首頁使用垂直 progress bar indicator，保留現有 timeline 的漸層顏色、寬度與類似的垂直設計。使用 motion 建立新的 progress bar 元件，確保不會導致版面變形且不影響效能和頁面讀取速度。
+
+**組件實作** (`components/ui/scroll-progress-bar.tsx`):
+
+- 創建獨立的 `ScrollProgressBar` 組件
+- 使用 Motion 的 `useScroll()` 追蹤整個頁面的滾動進度（無需 target）
+- 使用 `useTransform` 將 `scrollYProgress` 映射到 `scaleY`（0 到 1）
+- 使用 `useTransform` 實現前 10% 滾動的淡入效果（opacity）
+- 使用 `fixed` 定位，位於左側（`left-8`），不影響文檔流
+- 使用 `pointer-events-none` 避免阻擋使用者互動
+- 使用 `transformOrigin: "top"` 確保從頂部開始縮放
+- 應用 `contain: layout style paint` CSS 屬性以隔離渲染
+- 使用 `will-change: transform` 提示瀏覽器優化
+- 漸層顏色：`from-rose-500 via-orange-500 to-transparent`（與現有 Timeline 一致）
+- 寬度：2px（與現有 Timeline 一致）
+- 響應式：手機版隱藏（`hidden md:block`）
+
+**首頁整合** (`app/page.tsx`):
+
+- 導入 `ScrollProgressBar` 組件
+- 在 `<section>` 開頭放置組件（在 `<HomeHeader />` 之前）
+
+**效能優化重點**:
+
+- 使用 `scaleY` 而非 `height`：GPU 加速，無 layout 重排
+- 簡化實現：無需 `useEffect` 和狀態管理
+- 直接使用 `scrollYProgress`，程式碼更簡潔
+- 使用 `transformOrigin: "top"` 確保正確的縮放方向
+
+**成果**:
+
+- 實現了流暢的垂直滾動進度指示器
+- 使用 GPU 加速的 `scaleY` 動畫，確保 60fps 的流暢表現
+- 不影響文檔流，避免版面變形
+- 與現有 Timeline 組件並存，視覺風格一致
+- 響應式設計，手機版自動隱藏
+
+---
+
 ### feat/isr-hot-posts
 
 **難度**: ★★★☆☆

@@ -14,9 +14,11 @@
 
 ### feat/top-page-timeline
 
+**狀態**: 已完成（詳細記錄見 CHANGELOG.md）
+
 **難度**: ★☆☆☆☆
 
-**描述**: 在首頁使用垂直progress bar indicator，保留現有timeline的漸層顏色、寬度與類似的垂直設計。使用motion建立新的progress bar元件，思考不會導致版面變形又不影響效能和頁面讀取速度的方式
+**描述**: 在首頁使用垂直 progress bar indicator，保留現有 timeline 的漸層顏色、寬度與類似的垂直設計。使用 motion 建立新的 progress bar 元件，思考不會導致版面變形又不影響效能和頁面讀取速度的方式
 
 ### feat/post-form-redesign
 
