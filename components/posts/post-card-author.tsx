@@ -12,7 +12,7 @@ export default function PostCardAuthor({ user }: { user: User }) {
   return (
     <HoverCard>
       <HoverCardTrigger asChild>
-        <Link href={`/user/${user.userId}`} className="flex items-center gap-2">
+        <Link href={`/user/${user.userId}`} className="flex items-center gap-2 w-fit">
           <Avatar className="size-6">
             <AvatarImage src={user.avatar || undefined} />
             <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>

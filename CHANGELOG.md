@@ -1,5 +1,81 @@
 # 開發日誌 / Development Log
 
+## 2025-01-16
+
+### refactor/post-page-server-component
+
+**難度**: ★★★★☆
+
+**描述**: 將 Post 頁面從客戶端組件轉換為伺服器組件，解決回覆評論後無法獲取最新評論的問題，並利用 Next.js 16 的自動快取更新機制提升性能和 SEO
+
+**問題分析**:
+
+- Post 頁面原本是客戶端組件，使用 `useEffect` 和 `fetch` 獲取數據
+- 回覆評論後，`router.refresh()` 不會觸發 `useEffect` 重新執行
+- 導致回覆評論後頁面無法顯示最新的評論數據
+
+**解決方案架構**:
+
+- 將 Post 頁面轉換為伺服器組件，利用 Next.js 16 的 `revalidatePath` 和 `router.refresh()` 自動更新機制
+- 將需要互動的功能拆分為獨立的客戶端組件
+
+**組件重構**:
+
+- 創建 `components/posts/post-edit-form.tsx`：
+  - 將編輯功能拆分為獨立的客戶端組件
+  - 使用 `router.refresh()` 在更新成功後刷新頁面
+  - 處理表單狀態和驗證（使用 react-hook-form）
+  
+- 創建 `components/posts/post-content.tsx`：
+  - 將點讚、編輯按鈕等互動功能拆分為客戶端組件
+  - 處理客戶端狀態（如 isLiked）
+  - 整合評論列表和表單
+  - 使用 `useEffect` 獲取用戶點讚狀態
+
+**伺服器組件轉換** (`app/posts/[id]/page.tsx`):
+
+- 移除 `"use client"` 指令
+- 改為 async 函數，在伺服器端獲取數據
+- 使用 `getPostById` 和 `getCurrentUser` 獲取數據
+- 使用 `incrementPostViews` 非同步增加瀏覽次數
+- 處理 404 情況（使用 `notFound()`）
+- 將數據傳遞給 `PostContent` 客戶端組件
+
+**評論組件更新**:
+
+- 更新 `components/comments/comment-item.tsx`：
+  - 在回覆成功後調用 `router.refresh()` 來刷新整個頁面
+  - 移除舊的手動 refetch 邏輯（`setReloadTrigger`）
+  - 簡化回覆成功後的處理邏輯
+
+- `components/comments/comment-form.tsx`：
+  - 已包含 `router.refresh()` 邏輯（無需修改）
+  - 當沒有 `onSuccess` callback 時自動調用 `router.refresh()`
+
+**快取機制驗證**:
+
+- 確認 `app/api/comments/route.ts` 中的 `revalidatePath` 設置正確
+- 確認 `app/api/posts/[id]/route.ts` 中的 `revalidatePath` 設置正確
+- 當 API 調用 `revalidatePath` 後，`router.refresh()` 會自動觸發伺服器組件重新獲取數據
+
+**性能優勢**:
+
+- ✅ **自動快取更新**：當 `revalidatePath` 被調用後，`router.refresh()` 會自動觸發伺服器組件重新獲取數據
+- ✅ **性能更優**：伺服器端渲染，減少客戶端 JavaScript 負載
+- ✅ **SEO 更好**：完整的 HTML 在伺服器端生成
+- ✅ **資源消耗更少**：利用 Next.js 16 的伺服器端快取機制
+- ✅ **最小化網絡請求**：只在回覆成功後觸發一次刷新
+
+**成果**:
+
+- 成功解決回覆評論後無法獲取最新評論的問題
+- Post 頁面現在是伺服器組件，利用 Next.js 16 的最佳實踐
+- 當用戶回覆評論後，頁面會自動從資料庫獲取最新的評論數據
+- 代碼結構更清晰，互動功能與數據獲取邏輯分離
+- 更好的性能和 SEO 表現
+
+---
+
 ## 2025-11-16
 
 ### refactor/unify-user-data-types

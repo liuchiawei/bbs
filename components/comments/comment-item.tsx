@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import PostCardAuthor from "@/components/posts/post-card-author";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -135,27 +136,12 @@ export function CommentItem({
       className={`${level > 0 ? "ml-8 border-l-2 pl-4" : ""}`}
     >
       <div className="flex gap-3 p-4 rounded-lg hover:bg-muted/50 transition-colors">
-        <Link href={`/user/${comment.user.userId}`}>
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={comment.user.avatar || undefined} />
-            <AvatarFallback>
-              {comment.user.name.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-        </Link>
         <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-2">
-            <Link
-              href={`/user/${comment.user.userId}`}
-              className="hover:underline"
-            >
-              {comment.user.name}
-            </Link>
-            <span className="text-sm text-muted-foreground">
-              {new Date(comment.createdAt).toLocaleDateString()}
-              {new Date(comment.createdAt).toLocaleTimeString()}
-            </span>
-          </div>
+          <PostCardAuthor user={comment.user} />
+          <span className="text-sm text-muted-foreground">
+            {new Date(comment.createdAt).toLocaleDateString()}
+            {new Date(comment.createdAt).toLocaleTimeString()}
+          </span>
 
           <p className="text-sm">{comment.content}</p>
 
@@ -225,13 +211,9 @@ export function CommentItem({
                 parentId={effectiveRootId}
                 onSuccess={() => {
                   setShowReplyForm(false);
-                  if (level === 0) {
-                    // If this is a root comment, reload its replies
-                    setReloadTrigger((prev) => prev + 1);
-                  } else if (onReplyAdded) {
-                    // If this is a reply, tell the root to reload
-                    onReplyAdded();
-                  }
+                  // サーバーコンポーネントに変換したため、router.refresh()でページ全体を更新
+                  // Since we converted to server component, refresh the entire page with router.refresh()
+                  router.refresh();
                 }}
                 placeholder={t("WRITE_REPLY")}
               />
