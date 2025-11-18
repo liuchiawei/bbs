@@ -71,8 +71,8 @@ export async function POST(request: NextRequest) {
     revalidatePath(`/user/${session.userId}/posts`);
     // 貼文作成時、すべての関連キャッシュを無効化
     // When post is created, invalidate all related caches
-    revalidateTag("posts"); // 投稿リストのキャッシュを無効化 / Invalidate posts list cache
-    revalidateTag("hot-posts", 'max'); // 熱門貼文のキャッシュも無効化 / Also invalidate hot posts cache
+    revalidateTag('posts', 'max'); // 投稿リストのキャッシュを無効化 / Invalidate posts list cache
+    revalidateTag('hot-posts', 'max'); // 熱門貼文のキャッシュも無効化 / Also invalidate hot posts cache
 
     return NextResponse.json({
       message: "Post created successfully",

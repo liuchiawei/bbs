@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     // コメント数が変更されたので、ホームページと熱門貼文のキャッシュを無効化
     // Comment count changed, invalidate home page and hot posts cache
     revalidatePath("/");
-    revalidateTag("posts");
+    revalidateTag("posts", 'max');
     revalidateTag("hot-posts", 'max');
 
     return NextResponse.json({

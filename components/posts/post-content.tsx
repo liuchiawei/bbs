@@ -61,11 +61,7 @@ interface PostContentProps {
   postId: string;
 }
 
-export function PostContent({
-  post,
-  currentUserId,
-  postId,
-}: PostContentProps) {
+export function PostContent({ post, currentUserId, postId }: PostContentProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
 
@@ -214,39 +210,35 @@ export function PostContent({
                     </p>
                   </div>
                 )}
-            </>
-          }
 
-                {!isDeleted && (
-                  <div className="space-y-4">
-                    {post.comments.length === 0 ? (
-                      <p className="text-center text-muted-foreground py-8">
-                        {t("NO_COMMENTS_BE_FIRST")}
-                      </p>
-                    ) : (
-                      post.comments.map((comment) => (
-                        <CommentItem
-                          key={comment.id}
-                          comment={{
-                            ...comment,
-                            updatedAt: comment.createdAt,
-                            user: {
-                              ...comment.user,
-                              email: "",
-                            },
-                          }}
-                          postId={post.id}
-                          currentUserId={currentUserId}
-                        />
-                      ))
-                    )}
-                  </div>
-                )}
+                <div className="space-y-4">
+                  {post.comments.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      {t("NO_COMMENTS_BE_FIRST")}
+                    </p>
+                  ) : (
+                    post.comments.map((comment) => (
+                      <CommentItem
+                        key={comment.id}
+                        comment={{
+                          ...comment,
+                          updatedAt: comment.createdAt,
+                          user: {
+                            ...comment.user,
+                            email: "",
+                          },
+                        }}
+                        postId={post.id}
+                        currentUserId={currentUserId}
+                      />
+                    ))
+                  )}
+                </div>
               </div>
-            )}
+            </>
+          )}
         </>
       )}
     </>
   );
 }
-

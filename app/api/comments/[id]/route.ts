@@ -67,8 +67,8 @@ export async function DELETE(
     // コメント数が変更されたので、ホームページと熱門貼文のキャッシュを無効化
     // Comment count changed, invalidate home page and hot posts cache
     revalidatePath("/");
-    revalidateTag("posts");
-    revalidateTag("hot-posts", 'max');
+    revalidateTag('posts', 'max');
+    revalidateTag('hot-posts', 'max');
 
     return NextResponse.json({
       message: "Comment deleted successfully",

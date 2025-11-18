@@ -93,7 +93,7 @@ export async function PATCH(
     revalidatePath(`/posts/${id}`);
     // 貼文更新時、すべての関連キャッシュを無効化
     // When post is updated, invalidate all related caches
-    revalidateTag("posts"); // 投稿リストのキャッシュを無効化 / Invalidate posts list cache
+    revalidateTag("posts", 'max'); // 投稿リストのキャッシュを無効化 / Invalidate posts list cache
     revalidateTag("hot-posts", 'max'); // 熱門貼文のキャッシュも無効化 / Also invalidate hot posts cache
 
     return NextResponse.json({
@@ -162,8 +162,8 @@ export async function DELETE(
     revalidatePath(`/posts/${id}`);
     // 貼文削除時、すべての関連キャッシュを無効化
     // When post is deleted, invalidate all related caches
-    revalidateTag("posts"); // 投稿リストのキャッシュを無効化 / Invalidate posts list cache
-    revalidateTag("hot-posts", 'max'); // 熱門貼文のキャッシュも無効化 / Also invalidate hot posts cache
+    revalidateTag("posts", 'max'); // 投稿リストのキャッシュを無効化 / Invalidate posts list cache
+    revalidateTag('hot-posts', 'max'); // 熱門貼文のキャッシュも無効化 / Also invalidate hot posts cache
 
     return NextResponse.json({
       message: "Post deleted successfully",

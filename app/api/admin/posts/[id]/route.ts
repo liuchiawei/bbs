@@ -35,7 +35,7 @@ export async function DELETE(
     }
     // 管理員削除時、すべての関連キャッシュを無効化
     // When admin deletes post, invalidate all related caches
-    revalidateTag("posts"); // 投稿リストのキャッシュを無効化 / Invalidate posts list cache
+    revalidateTag("posts", 'max'); // 投稿リストのキャッシュを無効化 / Invalidate posts list cache
     revalidateTag("hot-posts", 'max'); // 熱門貼文のキャッシュも無効化 / Also invalidate hot posts cache
 
     return NextResponse.json({
