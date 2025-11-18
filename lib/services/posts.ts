@@ -23,7 +23,9 @@ export async function getPosts(
   // Use unstable_cache to implement ISR
   return unstable_cache(
     async () => {
-      const where: any = {};
+      const where: any = {
+        deletedAt: null, // 削除されていない投稿のみ取得 / Only get non-deleted posts
+      };
       if (userId) where.userId = userId;
 
       const skip = (page - 1) * limit;
@@ -74,13 +76,14 @@ export async function getHotPosts(
       const timeThreshold = new Date();
       timeThreshold.setHours(timeThreshold.getHours() - timeRangeHours);
 
-      // すべての投稿を取得して熱度スコアを計算
-      // Fetch all posts and calculate hot score
+      // 削除されていない投稿を取得して熱度スコアを計算
+      // Fetch non-deleted posts and calculate hot score
       const posts = await prisma.post.findMany({
         where: {
           createdAt: {
             gte: timeThreshold,
           },
+          deletedAt: null, // 削除されていない投稿のみ / Only non-deleted posts
         },
         include: {
           user: {
@@ -135,6 +138,8 @@ export async function getHotPosts(
 
 /**
  * Get a single post by ID with full details
+ * 削除された投稿も取得可能（表示のため）
+ * Can retrieve deleted posts for display purposes
  */
 export async function getPostById(id: string) {
   "use cache";
@@ -164,6 +169,7 @@ export async function getPostById(id: string) {
 
 /**
  * Get total count of posts with optional filtering
+ * 削除されていない投稿のみカウント / Only count non-deleted posts
  */
 export async function getPostsCount(
   options: Omit<GetPostsOptions, "limit" | "page"> = {}
@@ -171,7 +177,9 @@ export async function getPostsCount(
   "use cache";
   const { userId } = options;
 
-  const where: any = {};
+  const where: any = {
+    deletedAt: null, // 削除されていない投稿のみ / Only non-deleted posts
+  };
   if (userId) where.userId = userId;
 
   return await prisma.post.count({ where });
@@ -216,12 +224,24 @@ export async function updatePost(
 }
 
 /**
- * Delete a post
+ * Soft delete a post
+ * 投稿をソフトデリート
+ */
+export async function softDeletePost(id: string) {
+  return await prisma.post.update({
+    where: { id },
+    data: {
+      deletedAt: new Date(),
+    },
+  });
+}
+
+/**
+ * Delete a post (deprecated - use softDeletePost instead)
+ * @deprecated Use softDeletePost instead
  */
 export async function deletePost(id: string) {
-  return await prisma.post.delete({
-    where: { id },
-  });
+  return await softDeletePost(id);
 }
 
 /**
@@ -266,15 +286,24 @@ export async function hasUserLikedPost(
 
 /**
  * Admin: Get all posts with pagination
+ * 管理員用：すべての投稿を取得（削除された投稿も含む）
+ * Admin: Get all posts including deleted ones
  */
 export async function getAllPostsAdmin(
-  options: { page?: number; limit?: number } = {}
+  options: { page?: number; limit?: number; includeDeleted?: boolean } = {}
 ) {
-  const { page = 1, limit = 20 } = options;
+  const { page = 1, limit = 20, includeDeleted = true } = options;
   const skip = (page - 1) * limit;
+
+  const where: any = {};
+  // デフォルトでは削除された投稿も含める / By default include deleted posts
+  if (!includeDeleted) {
+    where.deletedAt = null;
+  }
 
   const [posts, total] = await Promise.all([
     prisma.post.findMany({
+      where,
       skip,
       take: limit,
       orderBy: { createdAt: "desc" },
@@ -289,7 +318,7 @@ export async function getAllPostsAdmin(
         },
       },
     }),
-    prisma.post.count(),
+    prisma.post.count({ where }),
   ]);
 
   return {
@@ -304,10 +333,9 @@ export async function getAllPostsAdmin(
 }
 
 /**
- * Admin: Delete any post
+ * Admin: Soft delete any post
+ * 管理員用：任意の投稿をソフトデリート
  */
 export async function deletePostAdmin(postId: string) {
-  return await prisma.post.delete({
-    where: { id: postId },
-  });
+  return await softDeletePost(postId);
 }

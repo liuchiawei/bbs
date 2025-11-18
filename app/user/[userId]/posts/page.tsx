@@ -14,6 +14,9 @@ async function getUserPosts(userId: string) {
       id: true,
       name: true,
       posts: {
+        where: {
+          deletedAt: null, // 削除されていない投稿のみ取得 / Only get non-deleted posts
+        },
         orderBy: { createdAt: "desc" },
         include: {
           user: {

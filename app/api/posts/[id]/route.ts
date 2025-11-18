@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { updatePostSchema, commentIncludeBasic } from "@/lib/validations";
 import { userSelectPublicExtended } from "@/lib/validations";
+import { softDeletePost } from "@/lib/services/posts";
 import { z } from "zod";
 
 export async function GET(
@@ -90,9 +91,10 @@ export async function PATCH(
     revalidatePath("/");
     revalidatePath(`/user/${existingPost.userId}/posts`);
     revalidatePath(`/posts/${id}`);
-    // 貼文更新時，熱門貼文のキャッシュも無効化
-    // When post is updated, also invalidate hot posts cache
-    revalidateTag("hot-posts", 'max');
+    // 貼文更新時、すべての関連キャッシュを無効化
+    // When post is updated, invalidate all related caches
+    revalidateTag("posts"); // 投稿リストのキャッシュを無効化 / Invalidate posts list cache
+    revalidateTag("hot-posts", 'max'); // 熱門貼文のキャッシュも無効化 / Also invalidate hot posts cache
 
     return NextResponse.json({
       message: "Post updated successfully",
@@ -126,32 +128,42 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Check if user owns the post - only select userId
+    // Check if user owns the post
     const existingPost = await prisma.post.findUnique({
       where: { id },
-      select: { userId: true },
+      select: { userId: true, deletedAt: true },
     });
 
     if (!existingPost) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
     }
 
+    // 既に削除されているかチェック
+    // Check if already deleted
+    if (existingPost.deletedAt) {
+      return NextResponse.json(
+        { error: "Post already deleted" },
+        { status: 400 }
+      );
+    }
+
     if (existingPost.userId !== session.userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    await prisma.post.delete({
-      where: { id },
-    });
+    // ソフトデリートを実行
+    // Perform soft delete
+    await softDeletePost(id);
 
     // データベース操作完了後、キャッシュを無効化して最新データを取得できるようにする
     // パフォーマンス優先：必要なパスのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
     revalidatePath("/");
     revalidatePath(`/user/${existingPost.userId}/posts`);
     revalidatePath(`/posts/${id}`);
-    // 貼文削除時，熱門貼文のキャッシュも無効化
-    // When post is deleted, also invalidate hot posts cache
-    revalidateTag("hot-posts", 'max');
+    // 貼文削除時、すべての関連キャッシュを無効化
+    // When post is deleted, invalidate all related caches
+    revalidateTag("posts"); // 投稿リストのキャッシュを無効化 / Invalidate posts list cache
+    revalidateTag("hot-posts", 'max'); // 熱門貼文のキャッシュも無効化 / Also invalidate hot posts cache
 
     return NextResponse.json({
       message: "Post deleted successfully",

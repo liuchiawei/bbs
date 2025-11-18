@@ -28,6 +28,7 @@ interface PostContentProps {
     views: number;
     likes: number;
     createdAt: string;
+    deletedAt?: string | null; // ソフトデリート用のタイムスタンプ / Soft delete timestamp
     user: {
       id: string;
       userId: string;
@@ -69,6 +70,7 @@ export function PostContent({
   const [isLiked, setIsLiked] = useState(false);
 
   const isOwner = currentUserId === post.user.id;
+  const isDeleted = !!post.deletedAt; // 削除されているかチェック / Check if deleted
 
   // ユーザーが投稿にいいねをしているかチェック
   // Check if user has liked the post
@@ -110,7 +112,8 @@ export function PostContent({
         </div>
 
         <div className="flex items-center gap-2">
-          {isOwner && !isEditing && (
+          {/* 削除された投稿の場合は編集・削除ボタンを非表示 / Hide edit/delete buttons for deleted posts */}
+          {isOwner && !isEditing && !isDeleted && (
             <>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -142,7 +145,7 @@ export function PostContent({
         <>
           <h1 className="text-3xl font-bold mb-4">{post.title}</h1>
 
-          {post.tags.length > 0 && (
+          {post.tags.length > 0 && !isDeleted && (
             <div className="flex flex-wrap gap-2 mb-4">
               {post.tags.map((tag, index) => (
                 <Badge key={index} variant="outline">
@@ -152,78 +155,95 @@ export function PostContent({
             </div>
           )}
 
-          <div className="prose prose-gray dark:prose-invert max-w-none">
-            <p className="whitespace-pre-wrap">{post.content}</p>
-          </div>
+          {/* 削除された投稿の場合はプレースホルダーを表示 / Show placeholder for deleted posts */}
+          {isDeleted ? (
+            <div className="prose prose-gray dark:prose-invert max-w-none">
+              <p className="text-muted-foreground italic py-8 text-center">
+                {t("POST_DELETED_PLACEHOLDER")}
+              </p>
+            </div>
+          ) : (
+            <div className="prose prose-gray dark:prose-invert max-w-none">
+              <p className="whitespace-pre-wrap">{post.content}</p>
+            </div>
+          )}
 
           <Separator />
 
-          <div className="flex items-center gap-6 text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Eye className="h-5 w-5" />
-              <span>
-                {post.views} {t("VIEWS")}
-              </span>
-            </div>
-            <PostLikeButton
-              postId={post.id}
-              initialLikes={post.likes}
-              initialIsLiked={isLiked}
-              isAuthenticated={!!currentUserId}
-            />
-            <div className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5" />
-              <span>
-                {post._count.comments} {t("COMMENTS").toLowerCase()}
-              </span>
-            </div>
-          </div>
+          {/* 削除された投稿の場合は統計情報とコメントセクションを非表示 / Hide stats and comments for deleted posts */}
+          {!isDeleted && (
+            <>
+              <div className="flex items-center gap-6 text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Eye className="h-5 w-5" />
+                  <span>
+                    {post.views} {t("VIEWS")}
+                  </span>
+                </div>
+                <PostLikeButton
+                  postId={post.id}
+                  initialLikes={post.likes}
+                  initialIsLiked={isLiked}
+                  isAuthenticated={!!currentUserId}
+                />
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5" />
+                  <span>
+                    {post._count.comments} {t("COMMENTS").toLowerCase()}
+                  </span>
+                </div>
+              </div>
 
-          <Separator />
+              <Separator />
 
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">{t("COMMENTS")}</h2>
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold">{t("COMMENTS")}</h2>
 
-            {currentUserId ? (
-              <CommentForm postId={post.id} />
-            ) : (
-              <div className="text-center py-4 bg-muted rounded-lg">
-                <p className="text-muted-foreground">
-                  <Link
-                    href="/login"
-                    className="text-primary hover:underline"
-                  >
-                    {t("LOGIN")}
-                  </Link>{" "}
-                  {t("LOGIN_TO_COMMENT")}
-                </p>
+                {currentUserId ? (
+                  <CommentForm postId={post.id} />
+                ) : (
+                  <div className="text-center py-4 bg-muted rounded-lg">
+                    <p className="text-muted-foreground">
+                      <Link
+                        href="/login"
+                        className="text-primary hover:underline"
+                      >
+                        {t("LOGIN")}
+                      </Link>{" "}
+                      {t("LOGIN_TO_COMMENT")}
+                    </p>
+                  </div>
+                )}
+            </>
+          )}
+
+                {!isDeleted && (
+                  <div className="space-y-4">
+                    {post.comments.length === 0 ? (
+                      <p className="text-center text-muted-foreground py-8">
+                        {t("NO_COMMENTS_BE_FIRST")}
+                      </p>
+                    ) : (
+                      post.comments.map((comment) => (
+                        <CommentItem
+                          key={comment.id}
+                          comment={{
+                            ...comment,
+                            updatedAt: comment.createdAt,
+                            user: {
+                              ...comment.user,
+                              email: "",
+                            },
+                          }}
+                          postId={post.id}
+                          currentUserId={currentUserId}
+                        />
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             )}
-
-            <div className="space-y-4">
-              {post.comments.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  {t("NO_COMMENTS_BE_FIRST")}
-                </p>
-              ) : (
-                post.comments.map((comment) => (
-                  <CommentItem
-                    key={comment.id}
-                    comment={{
-                      ...comment,
-                      updatedAt: comment.createdAt,
-                      user: {
-                        ...comment.user,
-                        email: "",
-                      },
-                    }}
-                    postId={post.id}
-                    currentUserId={currentUserId}
-                  />
-                ))
-              )}
-            </div>
-          </div>
         </>
       )}
     </>

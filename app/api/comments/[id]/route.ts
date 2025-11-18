@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { softDeleteComment } from "@/lib/services/comments";
 
 export async function DELETE(
   request: NextRequest,
@@ -27,22 +28,36 @@ export async function DELETE(
       );
     }
 
+    // 既に削除されているかチェック
+    // Check if already deleted
+    if (existingComment.deletedAt) {
+      return NextResponse.json(
+        { error: "Comment already deleted" },
+        { status: 400 }
+      );
+    }
+
     if (existingComment.userId !== session.userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Delete comment and its replies
-    await prisma.comment.deleteMany({
-      where: {
-        OR: [{ id }, { parentId: id }],
-      },
-    });
+    // ソフトデリートを実行（再帰的にすべての子コメントも削除）
+    // Perform soft delete (recursively delete all child comments)
+    await softDeleteComment(id);
 
-    // If it's a reply, decrement parent comment's replies count
+    // 親コメントの返信数を更新（削除されていない返信のみカウント）
+    // Update parent comment's reply count (only count non-deleted replies)
     if (existingComment.parentId) {
+      const nonDeletedRepliesCount = await prisma.comment.count({
+        where: {
+          parentId: existingComment.parentId,
+          deletedAt: null,
+        },
+      });
+
       await prisma.comment.update({
         where: { id: existingComment.parentId },
-        data: { replies: { decrement: 1 } },
+        data: { replies: nonDeletedRepliesCount },
       });
     }
 

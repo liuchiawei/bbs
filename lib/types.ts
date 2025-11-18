@@ -70,6 +70,7 @@ export interface Post {
   likes: number;
   createdAt: Date | string;
   updatedAt: Date | string;
+  deletedAt?: Date | string | null; // ソフトデリート用のタイムスタンプ / Soft delete timestamp
 }
 
 export interface PostWithUser extends Post {
@@ -94,6 +95,7 @@ export interface Comment {
   replies: number;
   createdAt: Date | string;
   updatedAt: Date | string;
+  deletedAt?: Date | string | null; // ソフトデリート用のタイムスタンプ / Soft delete timestamp
 }
 
 export interface CommentWithUser extends Comment {

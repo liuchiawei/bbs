@@ -27,11 +27,19 @@ export async function POST(request: NextRequest) {
         include: commentIncludeBasic,
       });
 
-      // If it's a reply, increment parent comment's replies count
+      // If it's a reply, update parent comment's replies count (only count non-deleted replies)
+      // 返信の場合、親コメントの返信数を更新（削除されていない返信のみカウント）
       if (validatedData.parentId) {
+        const nonDeletedRepliesCount = await tx.comment.count({
+          where: {
+            parentId: validatedData.parentId,
+            deletedAt: null,
+          },
+        });
+
         await tx.comment.update({
           where: { id: validatedData.parentId },
-          data: { replies: { increment: 1 } },
+          data: { replies: nonDeletedRepliesCount },
         });
       }
 

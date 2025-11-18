@@ -38,6 +38,7 @@ export default async function PostPage({
             post={{
               ...post,
               createdAt: post.createdAt.toString(),
+              deletedAt: post.deletedAt?.toString() || null,
               comments: post.comments.map((comment) => ({
                 ...comment,
                 createdAt: comment.createdAt.toString(),
