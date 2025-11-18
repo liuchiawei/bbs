@@ -41,8 +41,10 @@ export async function POST(request: NextRequest) {
     // データベース操作完了後、キャッシュを無効化して最新データを取得できるようにする
     // パフォーマンス優先：必要なパスのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
     revalidatePath(`/posts/${validatedData.postId}`);
-    // コメント数が変更されたので、熱門貼文のキャッシュを無効化
-    // Comment count changed, invalidate hot posts cache
+    // コメント数が変更されたので、ホームページと熱門貼文のキャッシュを無効化
+    // Comment count changed, invalidate home page and hot posts cache
+    revalidatePath("/");
+    revalidateTag("posts");
     revalidateTag("hot-posts", 'max');
 
     return NextResponse.json({

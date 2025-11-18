@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 
@@ -44,6 +45,15 @@ export async function DELETE(
         data: { replies: { decrement: 1 } },
       });
     }
+
+    // データベース操作完了後、キャッシュを無効化して最新データを取得できるようにする
+    // パフォーマンス優先：必要なパスのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
+    revalidatePath(`/posts/${existingComment.postId}`);
+    // コメント数が変更されたので、ホームページと熱門貼文のキャッシュを無効化
+    // Comment count changed, invalidate home page and hot posts cache
+    revalidatePath("/");
+    revalidateTag("posts");
+    revalidateTag("hot-posts", 'max');
 
     return NextResponse.json({
       message: "Comment deleted successfully",

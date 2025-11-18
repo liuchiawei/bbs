@@ -1,6 +1,6 @@
 # 開發日誌 / Development Log
 
-## 2025-01-16
+## 2025-11-18
 
 ### refactor/post-page-server-component
 
@@ -25,7 +25,6 @@
   - 將編輯功能拆分為獨立的客戶端組件
   - 使用 `router.refresh()` 在更新成功後刷新頁面
   - 處理表單狀態和驗證（使用 react-hook-form）
-  
 - 創建 `components/posts/post-content.tsx`：
   - 將點讚、編輯按鈕等互動功能拆分為客戶端組件
   - 處理客戶端狀態（如 isLiked）
@@ -44,6 +43,7 @@
 **評論組件更新**:
 
 - 更新 `components/comments/comment-item.tsx`：
+
   - 在回覆成功後調用 `router.refresh()` 來刷新整個頁面
   - 移除舊的手動 refetch 邏輯（`setReloadTrigger`）
   - 簡化回覆成功後的處理邏輯
@@ -73,6 +73,59 @@
 - 當用戶回覆評論後，頁面會自動從資料庫獲取最新的評論數據
 - 代碼結構更清晰，互動功能與數據獲取邏輯分離
 - 更好的性能和 SEO 表現
+
+---
+
+### fix/home-page-cache-after-comment
+
+**難度**: ★★☆☆☆
+
+**描述**: 修復在 post 頁面評論後返回首頁時，首頁快取未更新的問題，確保首頁能顯示最新的評論數據
+
+**問題分析**:
+
+- 當用戶在 post 頁面評論後返回首頁時，首頁不會顯示最新的評論數據
+- 首頁使用 `getPosts()` 函數，該函數使用 `unstable_cache` 並設置了 cache tag `["posts"]`
+- 評論 API (`app/api/comments/route.ts`) 原本只更新：
+  - `revalidatePath(/posts/${postId})` - 只更新該 post 頁面
+  - `revalidateTag("hot-posts")` - 只更新熱門貼文快取
+- **缺少** `revalidateTag("posts")` 來更新首頁的快取
+- **缺少** `revalidatePath("/")` 來更新首頁路徑
+
+**解決方案**:
+
+- 在評論 API 中添加首頁快取的重新驗證，與創建 Post 的處理保持一致
+
+**API Routes 更新**:
+
+- 更新 `app/api/comments/route.ts` (POST)：
+
+  - 添加 `revalidatePath("/")` - 更新首頁路徑快取
+  - 添加 `revalidateTag("posts")` - 更新首頁使用的 `["posts"]` tag 快取
+  - 保留現有的 `revalidatePath(/posts/${postId})` 和 `revalidateTag("hot-posts")`
+
+- 更新 `app/api/comments/[id]/route.ts` (DELETE)：
+  - 導入 `revalidatePath` 和 `revalidateTag`
+  - 添加相同的快取重新驗證邏輯：
+    - `revalidatePath(/posts/${postId})` - 更新該 post 頁面
+    - `revalidatePath("/")` - 更新首頁路徑
+    - `revalidateTag("posts")` - 更新首頁快取
+    - `revalidateTag("hot-posts")` - 更新熱門貼文快取
+
+**性能考量**:
+
+- ✅ 使用 `revalidateTag("posts")` 只更新相關的快取，不會影響其他頁面
+- ✅ 使用 `revalidatePath("/")` 確保首頁路徑也被更新
+- ✅ 與現有的 `revalidateTag("hot-posts")` 並存，確保所有相關快取都被更新
+- ✅ 最小化快取更新範圍，只更新必要的快取
+
+**成果**:
+
+- 當用戶在 post 頁面評論後返回首頁時，首頁會自動顯示最新的評論數據
+- 首頁的評論數量會正確更新
+- 刪除評論後，首頁的評論數量也會正確更新
+- 與創建 Post 的行為保持一致
+- 所有會影響首頁顯示的評論操作都正確更新快取
 
 ---
 
