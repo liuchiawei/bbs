@@ -215,7 +215,7 @@ export function PostContent({
                   </div>
                 )}
             </>
-          )}
+          }
 
                 {!isDeleted && (
                   <div className="space-y-4">
