@@ -2,6 +2,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
+import { User } from "./types";
 
 const secret = new TextEncoder().encode(
   process.env.JWT_SECRET || "your-secret-key-change-this-in-production"
@@ -82,5 +83,5 @@ export async function getCurrentUser() {
     },
   });
 
-  return user;
+  return user as User;
 }

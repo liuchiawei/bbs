@@ -2,26 +2,13 @@ import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { userSelectFull } from "@/lib/validations";
 
 // ユーザーデータを取得する関数（キャッシュ用）
 async function getUserData(userId: string) {
   return await prisma.user.findUnique({
     where: { id: userId },
-    select: {
-      id: true,
-      userId: true,
-      name: true,
-      nickname: true,
-      email: true,
-      gender: true,
-      birthDate: true,
-      avatar: true,
-      isAdmin: true,
-      isBanned: true,
-      points: true,
-      createdAt: true,
-      updatedAt: true,
-    },
+    select: userSelectFull,
   });
 }
 

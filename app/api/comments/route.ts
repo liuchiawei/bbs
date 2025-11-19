@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { createCommentSchema, commentIncludeBasic } from "@/lib/validations";
@@ -27,11 +27,19 @@ export async function POST(request: NextRequest) {
         include: commentIncludeBasic,
       });
 
-      // If it's a reply, increment parent comment's replies count
+      // If it's a reply, update parent comment's replies count (only count non-deleted replies)
+      // 返信の場合、親コメントの返信数を更新（削除されていない返信のみカウント）
       if (validatedData.parentId) {
+        const nonDeletedRepliesCount = await tx.comment.count({
+          where: {
+            parentId: validatedData.parentId,
+            deletedAt: null,
+          },
+        });
+
         await tx.comment.update({
           where: { id: validatedData.parentId },
-          data: { replies: { increment: 1 } },
+          data: { replies: nonDeletedRepliesCount },
         });
       }
 
@@ -41,6 +49,11 @@ export async function POST(request: NextRequest) {
     // データベース操作完了後、キャッシュを無効化して最新データを取得できるようにする
     // パフォーマンス優先：必要なパスのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
     revalidatePath(`/posts/${validatedData.postId}`);
+    // コメント数が変更されたので、ホームページと熱門貼文のキャッシュを無効化
+    // Comment count changed, invalidate home page and hot posts cache
+    revalidatePath("/");
+    revalidateTag("posts", 'max');
+    revalidateTag("hot-posts", 'max');
 
     return NextResponse.json({
       message: "Comment created successfully",

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { z } from "zod";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { userSelectFull, userSelectWithStats } from "@/lib/validations";
 
 const updateUserSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").optional(),
@@ -19,26 +20,7 @@ export async function GET(
     const { userId } = await params;
     const user = await prisma.user.findUnique({
       where: { userId },
-      select: {
-        id: true,
-        userId: true,
-        name: true,
-        nickname: true,
-        email: true,
-        gender: true,
-        birthDate: true,
-        avatar: true,
-        isAdmin: true,
-        points: true,
-        createdAt: true,
-        updatedAt: true,
-        _count: {
-          select: {
-            posts: true,
-            comments: true,
-          },
-        },
-      },
+      select: userSelectWithStats,
     });
 
     if (!user) {
@@ -89,20 +71,7 @@ export async function PATCH(
     const user = await prisma.user.update({
       where: { userId },
       data: updateData,
-      select: {
-        id: true,
-        userId: true,
-        name: true,
-        nickname: true,
-        email: true,
-        gender: true,
-        birthDate: true,
-        avatar: true,
-        isAdmin: true,
-        points: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: userSelectFull,
     });
 
     // Next.js 16のrevalidateTagを使用して特定ユーザーのキャッシュをクリア

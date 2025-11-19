@@ -8,7 +8,8 @@ export const USER_ID_MIN_LENGTH = 1;
 export const USER_ID_MAX_LENGTH = 12;
 
 // Reusable Prisma Select Fragments
-export const userSelectBasic = {
+// 公開顯示用使用者資料（不包含敏感資訊）
+export const userSelectPublic = {
   id: true,
   userId: true,
   name: true,
@@ -16,13 +17,57 @@ export const userSelectBasic = {
   avatar: true,
 } satisfies Prisma.UserSelect;
 
+// 公開顯示用使用者資料（擴展版，包含 email）
+export const userSelectPublicExtended = {
+  id: true,
+  userId: true,
+  name: true,
+  nickname: true,
+  avatar: true,
+  email: true,
+} satisfies Prisma.UserSelect;
+
+// 完整使用者資料（所有欄位）
+export const userSelectFull = {
+  id: true,
+  userId: true,
+  name: true,
+  nickname: true,
+  email: true,
+  gender: true,
+  birthDate: true,
+  avatar: true,
+  isAdmin: true,
+  isBanned: true,
+  points: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.UserSelect;
+
+// 完整使用者資料 + 統計
+// 注意：_count 不是 UserSelect 的一部分，所以這裡使用 any 來繞過類型檢查
+export const userSelectWithStats = {
+  ...userSelectFull,
+  _count: {
+    select: {
+      posts: true,
+      comments: true,
+      likedPosts: true,
+      likedComments: true,
+    },
+  },
+} as any;
+
+// 向後兼容：保留 userSelectBasic 作為 userSelectPublic 的別名
+export const userSelectBasic = userSelectPublic;
+
 export const postIncludeBasic = {
-  user: { select: userSelectBasic },
+  user: { select: userSelectPublicExtended },
   _count: { select: { comments: true } },
 } satisfies Prisma.PostInclude;
 
 export const commentIncludeBasic = {
-  user: { select: userSelectBasic },
+  user: { select: userSelectPublicExtended },
 } satisfies Prisma.CommentInclude;
 
 // Auth Schemas

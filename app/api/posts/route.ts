@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { createPostSchema, postIncludeBasic } from "@/lib/validations";
@@ -14,7 +14,9 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: any = {
+      deletedAt: null, // 削除されていない投稿のみ取得 / Only get non-deleted posts
+    };
     if (userId) where.userId = userId;
 
     const [posts, total] = await Promise.all([
@@ -67,6 +69,10 @@ export async function POST(request: NextRequest) {
     // パフォーマンス優先：必要なパスのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
     revalidatePath("/");
     revalidatePath(`/user/${session.userId}/posts`);
+    // 貼文作成時、すべての関連キャッシュを無効化
+    // When post is created, invalidate all related caches
+    revalidateTag('posts', 'max'); // 投稿リストのキャッシュを無効化 / Invalidate posts list cache
+    revalidateTag('hot-posts', 'max'); // 熱門貼文のキャッシュも無効化 / Also invalidate hot posts cache
 
     return NextResponse.json({
       message: "Post created successfully",

@@ -11,7 +11,8 @@
       "Bash(find:*)",
       "Bash(pnpm run:*)",
       "Bash(cmd //c:*)",
-      "Bash(robocopy:*)"
+      "Bash(robocopy:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

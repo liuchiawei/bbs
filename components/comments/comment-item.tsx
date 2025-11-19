@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import PostCardAuthor from "@/components/posts/post-card-author";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -126,6 +127,7 @@ export function CommentItem({
   }, [comment.id, comment.replies, level, reloadTrigger]);
 
   const isOwner = currentUserId === comment.user.id;
+  const isDeleted = !!comment.deletedAt; // 削除されているかチェック / Check if deleted
 
   return (
     <motion.div
@@ -135,103 +137,95 @@ export function CommentItem({
       className={`${level > 0 ? "ml-8 border-l-2 pl-4" : ""}`}
     >
       <div className="flex gap-3 p-4 rounded-lg hover:bg-muted/50 transition-colors">
-        <Link href={`/user/${comment.user.userId}`}>
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={comment.user.avatar || undefined} />
-            <AvatarFallback>
-              {comment.user.name.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-        </Link>
         <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-2">
-            <Link
-              href={`/user/${comment.user.userId}`}
-              className="hover:underline"
-            >
-              {comment.user.name}
-            </Link>
-            <span className="text-sm text-muted-foreground">
-              {new Date(comment.createdAt).toLocaleDateString()}
-              {new Date(comment.createdAt).toLocaleTimeString()}
-            </span>
-          </div>
+          <PostCardAuthor user={comment.user} />
+          <span className="text-sm text-muted-foreground">
+            {new Date(comment.createdAt).toLocaleDateString()}
+            {new Date(comment.createdAt).toLocaleTimeString()}
+          </span>
 
-          <p className="text-sm">{comment.content}</p>
+          {/* 削除されたコメントの場合はプレースホルダーを表示 / Show placeholder for deleted comments */}
+          {isDeleted ? (
+            <p className="text-sm text-muted-foreground italic">
+              {t("COMMENT_DELETED_PLACEHOLDER")}
+            </p>
+          ) : (
+            <p className="text-sm">{comment.content}</p>
+          )}
 
-          <div className="flex items-center gap-4">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleLike}
-                  disabled={isLiking}
-                  className="h-8 gap-1"
-                >
-                  <Heart
-                    className={`h-3 w-3 ${
-                      isLiked ? "fill-red-500 text-red-500" : ""
-                    }`}
-                  />
-                  <span className="text-xs">{likes}</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {isLiked ? t("UNLIKE") : t("LIKE")}
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setShowReplyForm(!showReplyForm);
-                  }}
-                  className="h-8 gap-1"
-                >
-                  <MessageCircle className="h-3 w-3" />
-                  {comment.replies > 0 && (
-                    <span className="text-xs">{comment.replies}</span>
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t("REPLY")}</TooltipContent>
-            </Tooltip>
-
-            {isOwner && (
+          {/* 削除されたコメントの場合は操作ボタンを非表示 / Hide action buttons for deleted comments */}
+          {!isDeleted && (
+            <div className="flex items-center gap-4">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={handleDelete}
-                    className="h-8 gap-1 text-destructive hover:text-destructive"
+                    onClick={handleLike}
+                    disabled={isLiking}
+                    className="h-8 gap-1"
                   >
-                    <Trash2 className="size-4" />
+                    <Heart
+                      className={`h-3 w-3 ${
+                        isLiked ? "fill-red-500 text-red-500" : ""
+                      }`}
+                    />
+                    <span className="text-xs">{likes}</span>
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>{t("DELETE")}</TooltipContent>
+                <TooltipContent>
+                  {isLiked ? t("UNLIKE") : t("LIKE")}
+                </TooltipContent>
               </Tooltip>
-            )}
-          </div>
 
-          {showReplyForm && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setShowReplyForm(!showReplyForm);
+                    }}
+                    className="h-8 gap-1"
+                  >
+                    <MessageCircle className="h-3 w-3" />
+                    {comment.replies > 0 && (
+                      <span className="text-xs">{comment.replies}</span>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t("REPLY")}</TooltipContent>
+              </Tooltip>
+
+              {isOwner && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleDelete}
+                      className="h-8 gap-1 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{t("DELETE")}</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          )}
+
+          {/* 削除されていない場合のみ返信フォームを表示 / Show reply form only if not deleted */}
+          {!isDeleted && showReplyForm && (
             <div className="mt-4">
               <CommentForm
                 postId={postId}
                 parentId={effectiveRootId}
                 onSuccess={() => {
                   setShowReplyForm(false);
-                  if (level === 0) {
-                    // If this is a root comment, reload its replies
-                    setReloadTrigger((prev) => prev + 1);
-                  } else if (onReplyAdded) {
-                    // If this is a reply, tell the root to reload
-                    onReplyAdded();
-                  }
+                  // サーバーコンポーネントに変換したため、router.refresh()でページ全体を更新
+                  // Since we converted to server component, refresh the entire page with router.refresh()
+                  router.refresh();
                 }}
                 placeholder={t("WRITE_REPLY")}
               />
