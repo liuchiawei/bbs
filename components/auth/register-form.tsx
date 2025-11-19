@@ -8,7 +8,6 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
   CardContent,
@@ -56,7 +55,6 @@ export function RegisterForm() {
   });
 
   const userId = watch("userId");
-  const gender = watch("gender");
 
   // Real-time userId availability check with abort controller
   useEffect(() => {
@@ -208,26 +206,6 @@ export function RegisterForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="name">{t("NAME_LABEL")}</Label>
-              <Input id="name" {...register("name")} />
-              {errors.name && (
-                <p className="text-sm text-destructive">
-                  {errors.name.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="nickname">{t("NICKNAME_LABEL")}</Label>
-              <Input id="nickname" {...register("nickname")} />
-              {errors.nickname && (
-                <p className="text-sm text-destructive">
-                  {errors.nickname.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="email">{t("EMAIL")}</Label>
               <Input id="email" type="email" {...register("email")} />
               {errors.email && (
@@ -259,25 +237,6 @@ export function RegisterForm() {
                   {errors.confirmPassword.message}
                 </p>
               )}
-            </div>
-
-            <div className="space-y-2">
-              <Label>{t("GENDER_OPTIONAL")}</Label>
-              <Tabs
-                value={gender || ""}
-                onValueChange={(value) => setValue("gender", value)}
-              >
-                <TabsList className="w-full grid grid-cols-3">
-                  <TabsTrigger value="male">{t("MALE")}</TabsTrigger>
-                  <TabsTrigger value="female">{t("FEMALE")}</TabsTrigger>
-                  <TabsTrigger value="other">{t("OTHER")}</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="birthDate">{t("BIRTH_DATE_OPTIONAL")}</Label>
-              <Input id="birthDate" type="date" {...register("birthDate")} />
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>

@@ -33,8 +33,9 @@ export default async function UserPage({
   }
 
   const user = userData as UserProfilePage;
+  const profile = user.profile;
 
-  const isOwnProfile = session?.id === user.id;
+  const isOwnProfile = session?.userId === user.userId;
 
   return (
     <>
@@ -42,16 +43,16 @@ export default async function UserPage({
         <CardHeader>
           <div className="flex items-center gap-6">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={user.avatar || undefined} />
+              <AvatarImage src={profile.avatar || undefined} />
               <AvatarFallback className="text-3xl">
-                {user.name.charAt(0).toUpperCase()}
+                {profile.name.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
 
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-2">
                 <h1 className="text-3xl font-bold">
-                  {user.nickname ? user.nickname : user.name}
+                  {profile.nickname ? profile.nickname : profile.name}
                 </h1>
                 {user.isAdmin && <Badge variant="destructive">Admin</Badge>}
               </div>
@@ -123,26 +124,68 @@ export default async function UserPage({
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {user.name && (
+              {profile.name && (
                 <div>
                   <p className="text-sm text-muted-foreground">{t("NAME")}</p>
-                  <p className="font-medium">{user.name}</p>
+                  <p className="font-medium">{profile.name}</p>
                 </div>
               )}
-              {user.birthDate && (
+              {profile.birthDate && (
                 <div>
                   <p className="text-sm text-muted-foreground">
                     {t("BIRTHDAY")}
                   </p>
                   <p className="font-medium">
-                    {new Date(user.birthDate).toLocaleDateString()}
+                    {new Date(profile.birthDate).toLocaleDateString()}
                   </p>
                 </div>
               )}
-              {user.gender && (
+              {profile.gender && (
                 <div>
                   <p className="text-sm text-muted-foreground">{t("GENDER")}</p>
-                  <p className="font-medium">{user.gender}</p>
+                  <p className="font-medium">{profile.gender}</p>
+                </div>
+              )}
+              {profile.height && (
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("HEIGHT")}</p>
+                  <p className="font-medium">{profile.height} cm</p>
+                </div>
+              )}
+              {profile.weight && (
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("WEIGHT")}</p>
+                  <p className="font-medium">{profile.weight} kg</p>
+                </div>
+              )}
+              {profile.description && (
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("DESCRIPTION")}</p>
+                  <p className="font-medium whitespace-pre-wrap">{profile.description}</p>
+                </div>
+              )}
+              {profile.record && (
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("RECORD")}</p>
+                  <p className="font-medium">{profile.record}</p>
+                </div>
+              )}
+              {profile.train_start && (
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("TRAIN_START_YEAR")}</p>
+                  <p className="font-medium">{profile.train_start}</p>
+                </div>
+              )}
+              {profile.stance && (
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("STANCE")}</p>
+                  <p className="font-medium">{profile.stance}</p>
+                </div>
+              )}
+              {profile.gym && (
+                <div>
+                  <p className="text-sm text-muted-foreground">{t("GYM")}</p>
+                  <p className="font-medium">{profile.gym}</p>
                 </div>
               )}
               <div>

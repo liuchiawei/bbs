@@ -14,12 +14,16 @@ export default async function UserCommentsPage({
   params: Promise<{ userId: string }>;
 }) {
   const { userId } = await params;
-  const user = await getUserComments(userId);
+  const userData = await getUserComments(userId);
   const currentUser = await getCurrentUser();
 
-  if (!user) {
+  if (!userData) {
     notFound();
   }
+
+  // TypeScript 類型窄化：確保 user 不為 null
+  // TypeScript type narrowing: ensure user is not null
+  const user = userData;
 
   return (
     <>
@@ -33,10 +37,15 @@ export default async function UserCommentsPage({
       </div>
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">{user.name}{t("COMMENTS_BY")}</h1>
+        <h1 className="text-3xl font-bold">
+          {user.profile?.name || user.userId}
+          {t("COMMENTS_BY")}
+        </h1>
         <p className="text-muted-foreground mt-2">
           {user.comments.length}{" "}
-          {user.comments.length === 1 ? t("COMMENT_SINGULAR") : t("COMMENT_PLURAL")}
+          {user.comments.length === 1
+            ? t("COMMENT_SINGULAR")
+            : t("COMMENT_PLURAL")}
         </p>
       </div>
 
@@ -75,8 +84,12 @@ export default async function UserCommentsPage({
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
-                    <span>{comment.likes} {t("LIKES_LABEL")}</span>
-                    <span>{comment.replies} {t("REPLIES_LABEL")}</span>
+                    <span>
+                      {comment.likes} {t("LIKES_LABEL")}
+                    </span>
+                    <span>
+                      {comment.replies} {t("REPLIES_LABEL")}
+                    </span>
                   </div>
                   {currentUser &&
                     (currentUser.id === comment.userId ||

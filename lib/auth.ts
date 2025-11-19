@@ -69,19 +69,32 @@ export async function getCurrentUser() {
 
   if (!session) return null;
 
+  // 使用 userId 查詢（因為 session 中包含 userId）
+  // Use userId to query (because session contains userId)
   const user = await prisma.user.findUnique({
-    where: { id: session.id },
+    where: { userId: session.userId },
     select: {
       id: true,
       userId: true,
-      name: true,
-      nickname: true,
       email: true,
-      avatar: true,
       isAdmin: true,
       isBanned: true,
+      profile: {
+        select: {
+          name: true,
+          nickname: true,
+          avatar: true,
+        },
+      },
     },
   });
 
-  return user as User;
+  if (!user) return null;
+
+  return {
+    ...user,
+    name: user.profile?.name || user.userId,
+    nickname: user.profile?.nickname || null,
+    avatar: user.profile?.avatar || null,
+  } as User;
 }

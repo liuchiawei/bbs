@@ -14,16 +14,11 @@ datasource db {
 }
 
 model User {
-  // basic information
+  // basic information (login only)
   id        String   @id @default(uuid())
   userId    String   @unique
-  name      String
-  nickname  String?  
   email     String   @unique
   password  String
-  gender    String?
-  birthDate DateTime?
-  avatar    String?
   // role
   isAdmin   Boolean  @default(false)
   isBanned  Boolean  @default(false)
@@ -32,32 +27,54 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // relationships
+  profile   Profile?
   posts     Post[]
   comments  Comment[]
   likedPosts PostLike[]
   likedComments CommentLike[]
 }
 
-model Post {
+model Category {
   // basic information
-  id        String   @id @default(uuid())
-  title     String
-  content   String
-  userId    String
-  tags      String[]
-  // statistics
-  views     Int      @default(0)
-  likes     Int      @default(0)
+  id           String   @id @default(uuid())
+  name         String   @unique
+  slug         String?  @unique
+  description  String?
+  displayOrder Int      @default(1) // 表示順序 / Display order
   // timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime? // ソフトデリート用のタイムスタンプ / Soft delete timestamp
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  deletedAt    DateTime? // ソフトデリート用のタイムスタンプ / Soft delete timestamp
   // relationships
-  user User @relation(fields: [userId], references: [userId])
-  comments Comment[]
-  likedBy PostLike[]
+  posts        Post[]
 
   @@index([deletedAt]) // クエリパフォーマンス向上のためのインデックス / Index for query performance
+  @@index([displayOrder]) // ソートパフォーマンス向上のためのインデックス / Index for sort performance
+}
+
+model Post {
+  // basic information
+  id         String   @id @default(uuid())
+  title      String
+  content    String
+  userId     String
+  tags       String[]
+  categoryId String?  // カテゴリID（オプション） / Category ID (optional)
+  // statistics
+  views      Int      @default(0)
+  likes      Int      @default(0)
+  // timestamps
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  deletedAt  DateTime? // ソフトデリート用のタイムスタンプ / Soft delete timestamp
+  // relationships
+  user       User     @relation(fields: [userId], references: [userId])
+  category   Category? @relation(fields: [categoryId], references: [id])
+  comments   Comment[]
+  likedBy    PostLike[]
+
+  @@index([deletedAt]) // クエリパフォーマンス向上のためのインデックス / Index for query performance
+  @@index([categoryId]) // カテゴリクエリパフォーマンス向上のためのインデックス / Index for category query performance
 }
 
 model Comment {
@@ -106,4 +123,35 @@ model CommentLike {
   @@unique([userId, commentId])
   @@index([userId])
   @@index([commentId])
+}
+
+model Profile {
+  // basic information
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  name      String
+  nickname  String?
+  gender    String?
+  birthDate DateTime?
+  avatar    String?
+  // additional fields
+  height    Int?
+  weight    Int?
+  description String?
+  record    String?
+  train_start Int?
+  stance    String?
+  gym       String?
+  // visibility settings (JSON format: { "name": "public", "nickname": "friends", ... })
+  visibility Json    @default("{}")
+  // soft delete
+  deletedAt DateTime?
+  // timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // relationships
+  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([deletedAt])
 }

@@ -29,11 +29,16 @@ interface PostContentProps {
     likes: number;
     createdAt: string;
     deletedAt?: string | null; // ソフトデリート用のタイムスタンプ / Soft delete timestamp
+    category?: {
+      id: string;
+      name: string;
+      slug?: string | null;
+    } | null;
     user: {
       id: string;
       userId: string;
       name: string;
-      nickname?: string | null;
+      nickname: string | null; // 嚴格為 string | null（不允許 undefined）
       avatar: string | null;
     };
     comments: Array<{
@@ -49,7 +54,7 @@ interface PostContentProps {
         id: string;
         userId: string;
         name: string;
-        nickname?: string | null;
+        nickname: string | null; // 嚴格為 string | null（不允許 undefined）
         avatar: string | null;
       };
     }>;
@@ -135,11 +140,17 @@ export function PostContent({ post, currentUserId, postId }: PostContentProps) {
           initialTitle={post.title}
           initialContent={post.content}
           initialTags={post.tags}
+          initialCategoryId={post.category?.id || null}
           onCancel={() => setIsEditing(false)}
         />
       ) : (
         <>
-          <h1 className="text-3xl font-bold mb-4">{post.title}</h1>
+          <div className="flex items-center gap-2 mb-4">
+            <h1 className="text-3xl font-bold">{post.title}</h1>
+            {post.category && !isDeleted && (
+              <Badge variant="outline">{post.category.name}</Badge>
+            )}
+          </div>
 
           {post.tags.length > 0 && !isDeleted && (
             <div className="flex flex-wrap gap-2 mb-4">

@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { updatePostSchema, commentIncludeBasic } from "@/lib/validations";
+import { updatePostSchema, commentIncludeBasic, categorySelect } from "@/lib/validations";
 import { userSelectPublicExtended } from "@/lib/validations";
-import { softDeletePost } from "@/lib/services/posts";
+import { softDeletePost, updatePost } from "@/lib/services/posts";
 import { z } from "zod";
 
 export async function GET(
@@ -20,6 +20,9 @@ export async function GET(
       data: { views: { increment: 1 } },
       include: {
         user: { select: userSelectPublicExtended },
+        category: {
+          select: categorySelect,
+        },
         comments: {
           where: { parentId: null },
           orderBy: { createdAt: "desc" },
@@ -31,6 +34,11 @@ export async function GET(
 
     if (!post) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    // 削除されたカテゴリの場合はnullに設定 / Set category to null if deleted
+    if (post.category?.deletedAt) {
+      post.category = null;
     }
 
     return NextResponse.json({ post });
@@ -72,18 +80,11 @@ export async function PATCH(
     const body = await request.json();
     const validatedData = updatePostSchema.parse(body);
 
-    const post = await prisma.post.update({
-      where: { id },
-      data: validatedData,
-      include: {
-        user: { select: userSelectPublicExtended },
-        comments: {
-          where: { parentId: null },
-          orderBy: { createdAt: "desc" },
-          include: commentIncludeBasic,
-        },
-        _count: { select: { comments: true } },
-      },
+    const post = await updatePost(id, {
+      title: validatedData.title,
+      content: validatedData.content,
+      tags: validatedData.tags,
+      categoryId: validatedData.categoryId,
     });
 
     // データベース操作完了後、キャッシュを無効化して最新データを取得できるようにする
@@ -95,6 +96,7 @@ export async function PATCH(
     // When post is updated, invalidate all related caches
     revalidateTag("posts", 'max'); // 投稿リストのキャッシュを無効化 / Invalidate posts list cache
     revalidateTag("hot-posts", 'max'); // 熱門貼文のキャッシュも無効化 / Also invalidate hot posts cache
+    revalidateTag("categories", "max"); // カテゴリキャッシュも無効化 / Also invalidate categories cache
 
     return NextResponse.json({
       message: "Post updated successfully",

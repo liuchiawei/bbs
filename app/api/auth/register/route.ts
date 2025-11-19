@@ -3,6 +3,8 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { hashPassword, createToken, setSession } from "@/lib/auth";
 import { registerSchema } from "@/lib/validations";
+import type { ProfileVisibilitySettings } from "@/lib/types";
+import type { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { t } from "@/lib/constants";
 
@@ -14,10 +16,7 @@ export async function POST(request: NextRequest) {
     // Check if user already exists
     const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [
-          { email: validatedData.email },
-          { userId: validatedData.userId },
-        ],
+        OR: [{ email: validatedData.email }, { userId: validatedData.userId }],
       },
     });
 
@@ -39,19 +38,46 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hashPassword(validatedData.password);
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        userId: validatedData.userId,
-        name: validatedData.name,
-        nickname: validatedData.nickname || null,
-        email: validatedData.email,
-        password: hashedPassword,
-        gender: validatedData.gender,
-        birthDate: validatedData.birthDate
-          ? new Date(validatedData.birthDate)
-          : null,
-      },
+    // 預設可見性：所有欄位為public
+    // Default visibility: all fields public
+    const defaultVisibility: ProfileVisibilitySettings = {
+      name: "public",
+      nickname: "public",
+      gender: "public",
+      birthDate: "public",
+      avatar: "public",
+      height: "public",
+      weight: "public",
+      description: "public",
+      record: "public",
+      train_start: "public",
+      stance: "public",
+      gym: "public",
+    };
+
+    // Create user and profile in transaction
+    const user = await prisma.$transaction(async (tx) => {
+      // Create user
+      const newUser = await tx.user.create({
+        data: {
+          userId: validatedData.userId,
+          email: validatedData.email,
+          password: hashedPassword,
+        },
+      });
+
+      // Create profile with default name (using userId) and default visibility
+      // PrismaのJson型に変換するため、型アサーションを使用
+      // Use type assertion to convert to Prisma Json type
+      await tx.profile.create({
+        data: {
+          userId: validatedData.userId,
+          name: validatedData.userId, // 使用userId作為預設name
+          visibility: defaultVisibility as any,
+        },
+      });
+
+      return newUser;
     });
 
     // Create token
@@ -66,7 +92,8 @@ export async function POST(request: NextRequest) {
 
     // Next.js 16のrevalidateTagを使用して特定ユーザーのキャッシュをクリア
     // パフォーマンス優先：特定のユーザーのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
-    revalidateTag(`user-${user.userId}`, 'max');
+    revalidateTag(`user-${user.userId}`, "max");
+    revalidateTag(`profile-${user.userId}`, "max");
     // ホームページのキャッシュもクリア
     revalidatePath("/");
 

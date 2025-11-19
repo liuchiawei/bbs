@@ -6,9 +6,9 @@ import {
   HoverCardContent,
 } from "@/components/ui/hover-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User } from "@/lib/types";
+import { UserPublic } from "@/lib/types";
 
-export default function PostCardAuthor({ user }: { user: User }) {
+export default function PostCardAuthor({ user }: { user: UserPublic }) {
   return (
     <HoverCard>
       <HoverCardTrigger asChild>

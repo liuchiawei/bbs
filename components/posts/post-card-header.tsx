@@ -1,14 +1,24 @@
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { Category } from "@/lib/types";
 
-// TODO: Post Category Tag with Link
-export default function PostCardHeader() {
+export default function PostCardHeader({
+  category,
+}: {
+  category?: Category | null;
+}) {
   return (
-    <div className="flex gap-2 md:gap-3">
+    <Link
+      href={`/category/${category?.slug || "general"}`}
+      className="flex gap-2 md:gap-3"
+    >
       <Avatar className="size-8">
-        <AvatarImage src="" />
-        <AvatarFallback>{"Boxing".charAt(0).toUpperCase()}</AvatarFallback>
+        {/* TODO: 補充Category圖片 */}
+        <AvatarImage src={category?.slug || "general"} />
+        <AvatarFallback>
+          {category?.name?.charAt(0).toUpperCase() || "G"}
+        </AvatarFallback>
       </Avatar>
-    </div>
+    </Link>
   );
 }

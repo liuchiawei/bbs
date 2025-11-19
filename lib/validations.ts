@@ -7,41 +7,69 @@ export const USER_ID_REGEX = /^[a-zA-Z0-9]{1,12}$/;
 export const USER_ID_MIN_LENGTH = 1;
 export const USER_ID_MAX_LENGTH = 12;
 
-// Reusable Prisma Select Fragments
-// 公開顯示用使用者資料（不包含敏感資訊）
-export const userSelectPublic = {
+// Profile Select Constants
+export const profileSelectPublic = {
   id: true,
   userId: true,
   name: true,
   nickname: true,
   avatar: true,
+} satisfies Prisma.ProfileSelect;
+
+export const profileSelectFull = {
+  id: true,
+  userId: true,
+  name: true,
+  nickname: true,
+  gender: true,
+  birthDate: true,
+  avatar: true,
+  height: true,
+  weight: true,
+  description: true,
+  record: true,
+  train_start: true,
+  stance: true,
+  gym: true,
+  visibility: true,
+  deletedAt: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.ProfileSelect;
+
+// Reusable Prisma Select Fragments
+// 公開顯示用使用者資料（從Profile讀取，不包含敏感資訊）
+export const userSelectPublic = {
+  id: true,
+  userId: true,
+  profile: {
+    select: profileSelectPublic,
+  },
 } satisfies Prisma.UserSelect;
 
 // 公開顯示用使用者資料（擴展版，包含 email）
 export const userSelectPublicExtended = {
   id: true,
   userId: true,
-  name: true,
-  nickname: true,
-  avatar: true,
   email: true,
+  profile: {
+    select: profileSelectPublic,
+  },
 } satisfies Prisma.UserSelect;
 
-// 完整使用者資料（所有欄位）
+// 完整使用者資料（所有欄位 + Profile）
 export const userSelectFull = {
   id: true,
   userId: true,
-  name: true,
-  nickname: true,
   email: true,
-  gender: true,
-  birthDate: true,
-  avatar: true,
   isAdmin: true,
   isBanned: true,
   points: true,
   createdAt: true,
   updatedAt: true,
+  profile: {
+    select: profileSelectFull,
+  },
 } satisfies Prisma.UserSelect;
 
 // 完整使用者資料 + 統計
@@ -61,13 +89,44 @@ export const userSelectWithStats = {
 // 向後兼容：保留 userSelectBasic 作為 userSelectPublic 的別名
 export const userSelectBasic = userSelectPublic;
 
+// Category Select
+export const categorySelect = {
+  id: true,
+  name: true,
+  slug: true,
+  description: true,
+  displayOrder: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+} satisfies Prisma.CategorySelect;
+
 export const postIncludeBasic = {
-  user: { select: userSelectPublicExtended },
+  user: { 
+    select: {
+      id: true,
+      userId: true,
+      email: true,
+      profile: {
+        select: profileSelectPublic,
+      },
+    },
+  },
+  category: { select: categorySelect },
   _count: { select: { comments: true } },
 } satisfies Prisma.PostInclude;
 
 export const commentIncludeBasic = {
-  user: { select: userSelectPublicExtended },
+  user: { 
+    select: {
+      id: true,
+      userId: true,
+      email: true,
+      profile: {
+        select: profileSelectPublic,
+      },
+    },
+  },
 } satisfies Prisma.CommentInclude;
 
 // Auth Schemas
@@ -83,6 +142,42 @@ export const registerSchema = z.object({
       APP_CONSTANTS.USER_ID_REGEX,
       t("ALERT_USER_ID_CAN_ONLY_CONTAIN_ENGLISH_LETTERS_AND_NUMBERS")
     ),
+  email: z.string().email(t("ALERT_INVALID_EMAIL_ADDRESS")),
+  password: z
+    .string()
+    .min(APP_CONSTANTS.USER_PASSWORD_MIN_LENGTH, t("ALERT_PASSWORD_MIN_LENGTH"))
+    .max(
+      APP_CONSTANTS.USER_PASSWORD_MAX_LENGTH,
+      `Password must be ${APP_CONSTANTS.USER_PASSWORD_MAX_LENGTH} characters or less`
+    ),
+});
+
+export const loginSchema = z.object({
+  userId: z.string().min(1, t("ALERT_USER_ID_REQUIRED")),
+  password: z.string().min(1, t("ALERT_PASSWORD_REQUIRED")),
+});
+
+// Profile Visibility Schemas
+export const profileVisibilitySchema = z.enum(["public", "friends", "private"]);
+
+export const profileVisibilitySettingsSchema = z.object({
+  name: profileVisibilitySchema.optional(),
+  nickname: profileVisibilitySchema.optional(),
+  gender: profileVisibilitySchema.optional(),
+  birthDate: profileVisibilitySchema.optional(),
+  avatar: profileVisibilitySchema.optional(),
+  height: profileVisibilitySchema.optional(),
+  weight: profileVisibilitySchema.optional(),
+  description: profileVisibilitySchema.optional(),
+  record: profileVisibilitySchema.optional(),
+  train_start: profileVisibilitySchema.optional(),
+  stance: profileVisibilitySchema.optional(),
+  gym: profileVisibilitySchema.optional(),
+});
+
+// Profile Schemas
+export const createProfileSchema = z.object({
+  userId: z.string(),
   name: z
     .string()
     .min(
@@ -100,24 +195,28 @@ export const registerSchema = z.object({
       `Nickname must be ${APP_CONSTANTS.USER_NICKNAME_MAX_LENGTH} characters or less`
     )
     .optional(),
-  email: z.string().email(t("ALERT_INVALID_EMAIL_ADDRESS")),
-  password: z
-    .string()
-    .min(APP_CONSTANTS.USER_PASSWORD_MIN_LENGTH, t("ALERT_PASSWORD_MIN_LENGTH"))
-    .max(
-      APP_CONSTANTS.USER_PASSWORD_MAX_LENGTH,
-      `Password must be ${APP_CONSTANTS.USER_PASSWORD_MAX_LENGTH} characters or less`
-    ),
   gender: z.string().optional(),
   birthDate: z.string().optional(),
+  avatar: z.string().url().optional().nullable(),
+  height: z.number().int().positive().max(300).optional().nullable(), // cm
+  weight: z.number().int().positive().max(500).optional().nullable(), // kg
+  description: z.string().max(1000).optional().nullable(),
+  record: z.string().max(500).optional().nullable(),
+  train_start: z.number().int().min(1900).max(2100).optional().nullable(), // 西元年
+  stance: z.string().max(50).optional().nullable(),
+  gym: z.string().max(100).optional().nullable(),
+  visibility: profileVisibilitySettingsSchema.optional(), // 可見性設定（可選，預設全public）
 });
 
-export const loginSchema = z.object({
-  userId: z.string().min(1, t("ALERT_USER_ID_REQUIRED")),
-  password: z.string().min(1, t("ALERT_PASSWORD_REQUIRED")),
+export const updateProfileSchema = createProfileSchema.partial().extend({
+  userId: z.string().optional(), // userId不可更新
 });
 
-// User Schemas
+export const updateVisibilitySchema = z.object({
+  visibility: profileVisibilitySettingsSchema,
+});
+
+// User Schemas (deprecated - use Profile schemas instead)
 export const updateUserSchema = z.object({
   name: z
     .string()
@@ -166,13 +265,27 @@ export const createPostSchema = z.object({
   title: z.string().min(1, t("ALERT_TITLE_REQUIRED")),
   content: z.string().min(1, t("ALERT_CONTENT_REQUIRED")),
   tags: tagsSchema.optional().default([]),
+  categoryId: z.string().uuid().optional().nullable(),
 });
 
 export const updatePostSchema = z.object({
   title: z.string().min(1, t("ALERT_TITLE_REQUIRED")).optional(),
   content: z.string().min(1, t("ALERT_CONTENT_REQUIRED")).optional(),
   tags: tagsSchema.optional(),
+  categoryId: z.string().uuid().optional().nullable(),
 });
+
+// Category Schemas
+export const categorySchema = z.object({
+  name: z.string().min(1).max(50),
+  slug: z.string().optional(),
+  description: z.string().max(200).optional(),
+  displayOrder: z.number().int().positive().min(1),
+});
+
+export const createCategorySchema = categorySchema;
+
+export const updateCategorySchema = categorySchema.partial();
 
 // Comment Schemas
 export const createCommentSchema = z.object({

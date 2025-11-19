@@ -2,13 +2,13 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { UserWithCounts } from "@/lib/types";
+import { UserPublic } from "@/lib/types";
 import { AnonymousUser } from "@/lib/constants";
 
 export default function ProfileHoverCard({
   user = AnonymousUser,
 }: {
-  user?: UserWithCounts;
+  user?: UserPublic;
 }) {
   return (
     <div className="w-full space-y-4 **:data-muted:text-muted-foreground **:data-muted:text-sm">
@@ -32,8 +32,7 @@ export default function ProfileHoverCard({
           {/* TODO: 增加追蹤人數 followers */}
           {/* TODO: 按下追蹤按鈕時即時更新追蹤人數 */}
           <span>100 Followers</span>
-          <span>{user._count?.posts || 0} Posts</span>
-          <span>{user._count?.comments || 0} Comments</span>
+          {/* TODO: 從API獲取統計資料 */}
         </Label>
       </Link>
       <div className="grid grid-rows-[auto_1fr_auto] gap-2">

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
-import type { User, UserWithCounts, UserWithStats, UserProfilePage } from "@/lib/types";
-import { userSelectFull, userSelectWithStats, userSelectPublicExtended } from "@/lib/validations";
+import type { User, UserWithCounts, UserWithStats, UserProfilePage, UserWithProfile, PostWithUser, CommentWithUser, CommentWithUserAndPost } from "@/lib/types";
+import { userSelectFull, userSelectWithStats, userSelectPublicExtended, profileSelectPublic, categorySelect } from "@/lib/validations";
+import { transformUser } from "@/lib/utils";
 
 /**
  * Check if a userId is available
@@ -20,10 +21,10 @@ export async function checkUserIdAvailability(
  */
 export async function getUserById(id: string): Promise<User | null> {
   "use cache";
-  return await prisma.user.findUnique({
+  return (await prisma.user.findUnique({
     where: { id },
     select: userSelectFull,
-  });
+  })) as User | null;
 }
 
 /**
@@ -44,16 +45,23 @@ export async function getUserWithCounts(
  * Get a user's profile data (for settings/edit pages)
  * Cache を使用してパフォーマンスを最適化
  */
-export async function getUserProfile(userId: string) {
+export async function getUserProfile(userId: string): Promise<UserWithProfile | null> {
   "use cache";
-  return await prisma.user.findUnique({
-    where: { id: userId },
+  const user = await prisma.user.findUnique({
+    where: { userId },
     select: userSelectFull,
   });
+  
+  if (!user || !user.profile) {
+    return null;
+  }
+  
+  return user as UserWithProfile;
 }
 
 /**
- * Update user profile
+ * Update user profile (deprecated - use Profile Service instead)
+ * @deprecated Use updateProfile from lib/services/profiles instead
  */
 export async function updateUserProfile(
   userId: string,
@@ -65,9 +73,16 @@ export async function updateUserProfile(
     points?: number;
   }
 ) {
+  // 僅更新points（User欄位）
+  // Only update points (User field)
+  const updateData: any = {};
+  if (data.points !== undefined) {
+    updateData.points = data.points;
+  }
+  
   return await prisma.user.update({
-    where: { id: userId },
-    data,
+    where: { userId },
+    data: updateData,
     select: userSelectFull,
   });
 }
@@ -83,6 +98,7 @@ export async function getUserProfilePage(userId: string, recentPostsLimit = 6): 
     select: {
       ...userSelectFull,
       posts: {
+        where: { deletedAt: null },
         orderBy: { createdAt: "desc" },
         take: recentPostsLimit,
         select: {
@@ -96,7 +112,14 @@ export async function getUserProfilePage(userId: string, recentPostsLimit = 6): 
           updatedAt: true,
           userId: true,
           user: {
-            select: userSelectPublicExtended,
+            select: {
+              id: true,
+              userId: true,
+              email: true,
+              profile: {
+                select: profileSelectPublic,
+              },
+            },
           },
           _count: {
             select: {
@@ -115,13 +138,18 @@ export async function getUserProfilePage(userId: string, recentPostsLimit = 6): 
       },
     },
   });
-  return result as UserProfilePage | null;
+  
+  if (!result || !result.profile) {
+    return null;
+  }
+  
+  return result as UserProfilePage;
 }
 
 /**
  * Get user's liked posts
  */
-export async function getUserLikedPosts(userId: string) {
+export async function getUserLikedPosts(userId: string): Promise<PostWithUser[]> {
   "use cache";
   const likes = await prisma.postLike.findMany({
     where: { userId },
@@ -131,6 +159,9 @@ export async function getUserLikedPosts(userId: string) {
         include: {
           user: {
             select: userSelectPublicExtended,
+          },
+          category: {
+            select: categorySelect,
           },
           _count: {
             select: {
@@ -142,13 +173,25 @@ export async function getUserLikedPosts(userId: string) {
     },
   });
 
-  return likes.map((like) => like.post);
+  // 使用 transformUser 轉換用戶資料為扁平結構
+  // Use transformUser to transform user data to flat structure
+  const transformedPosts = likes.map((like) => {
+    const transformedUser = transformUser(like.post.user);
+    return {
+      ...like.post,
+      category: like.post.category?.deletedAt ? null : like.post.category,
+      user: transformedUser,
+      _count: like.post._count,
+    };
+  });
+  
+  return transformedPosts as PostWithUser[];
 }
 
 /**
  * Get user's liked comments
  */
-export async function getUserLikedComments(userId: string) {
+export async function getUserLikedComments(userId: string): Promise<CommentWithUserAndPost[]> {
   "use cache";
   const likes = await prisma.commentLike.findMany({
     where: { userId },
@@ -170,7 +213,22 @@ export async function getUserLikedComments(userId: string) {
     },
   });
 
-  return likes.map((like) => like.comment);
+  // 使用 transformUser 轉換用戶資料為扁平結構
+  // Use transformUser to transform user data to flat structure
+  return likes.map((like) => ({
+    id: like.comment.id,
+    content: like.comment.content,
+    userId: like.comment.userId,
+    postId: like.comment.postId,
+    parentId: like.comment.parentId,
+    likes: like.comment.likes,
+    replies: like.comment.replies,
+    createdAt: like.comment.createdAt,
+    updatedAt: like.comment.updatedAt,
+    deletedAt: like.comment.deletedAt,
+    user: transformUser(like.comment.user),
+    post: like.comment.post,
+  })) as CommentWithUserAndPost[];
 }
 
 /**
@@ -179,15 +237,26 @@ export async function getUserLikedComments(userId: string) {
 export async function getUserComments(userId: string) {
   "use cache";
   return await prisma.user.findUnique({
-    where: { id: userId },
+    where: { userId },
     select: {
       id: true,
-      name: true,
+      userId: true,
+      profile: {
+        select: profileSelectPublic,
+      },
       comments: {
+        where: { deletedAt: null },
         orderBy: { createdAt: "desc" },
         include: {
           user: {
-            select: userSelectPublicExtended,
+            select: {
+              id: true,
+              userId: true,
+              email: true,
+              profile: {
+                select: profileSelectPublic,
+              },
+            },
           },
           post: {
             select: {
@@ -219,14 +288,19 @@ export async function getAllUsers(
       select: {
         id: true,
         userId: true,
-        name: true,
-        nickname: true,
         email: true,
-        avatar: true,
         isAdmin: true,
         isBanned: true,
         points: true,
         createdAt: true,
+        profile: {
+          where: { deletedAt: null },
+          select: {
+            name: true,
+            nickname: true,
+            avatar: true,
+          },
+        },
         _count: {
           select: {
             posts: true,
@@ -261,14 +335,18 @@ export async function getUsersCount(): Promise<number> {
  */
 export async function banUser(userId: string) {
   return await prisma.user.update({
-    where: { id: userId },
+    where: { userId },
     data: { isBanned: true },
     select: {
       id: true,
       userId: true,
-      name: true,
       email: true,
       isBanned: true,
+      profile: {
+        select: {
+          name: true,
+        },
+      },
     },
   });
 }
@@ -278,14 +356,18 @@ export async function banUser(userId: string) {
  */
 export async function unbanUser(userId: string) {
   return await prisma.user.update({
-    where: { id: userId },
+    where: { userId },
     data: { isBanned: false },
     select: {
       id: true,
       userId: true,
-      name: true,
       email: true,
       isBanned: true,
+      profile: {
+        select: {
+          name: true,
+        },
+      },
     },
   });
 }

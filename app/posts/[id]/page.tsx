@@ -14,10 +14,7 @@ export default async function PostPage({
 
   // 投稿データを取得し、viewsを増やす
   // Fetch post data and increment views
-  const [post, user] = await Promise.all([
-    getPostById(id),
-    getCurrentUser(),
-  ]);
+  const [post, user] = await Promise.all([getPostById(id), getCurrentUser()]);
 
   if (!post) {
     notFound();
@@ -39,9 +36,40 @@ export default async function PostPage({
               ...post,
               createdAt: post.createdAt.toString(),
               deletedAt: post.deletedAt?.toString() || null,
+              category: post.category
+                ? {
+                    id: post.category.id,
+                    name: post.category.name,
+                    slug: post.category.slug || null,
+                  }
+                : null,
+              // 明確確保 user 類型正確，移除 email 欄位（PostContent 不需要）
+              // Explicitly ensure user type is correct, remove email field (PostContent doesn't need it)
+              user: {
+                id: post.user.id,
+                userId: post.user.userId,
+                name: post.user.name,
+                nickname: post.user.nickname ?? null, // 確保 undefined 轉為 null
+                avatar: post.user.avatar ?? null, // 確保 undefined 轉為 null
+              },
               comments: post.comments.map((comment) => ({
-                ...comment,
+                id: comment.id,
+                content: comment.content,
+                likes: comment.likes,
+                replies: comment.replies,
                 createdAt: comment.createdAt.toString(),
+                userId: comment.userId,
+                postId: comment.postId,
+                parentId: comment.parentId ?? null, // 確保 undefined 轉為 null
+                // 明確確保 comment.user 類型正確，移除 email 欄位
+                // Explicitly ensure comment.user type is correct, remove email field
+                user: {
+                  id: comment.user.id,
+                  userId: comment.user.userId,
+                  name: comment.user.name,
+                  nickname: comment.user.nickname ?? null, // 確保 undefined 轉為 null
+                  avatar: comment.user.avatar ?? null, // 確保 undefined 轉為 null
+                },
               })),
             }}
             currentUserId={user?.id}

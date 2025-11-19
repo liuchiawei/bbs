@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
@@ -17,6 +24,7 @@ import {
 import { Edit, X, Save } from "lucide-react";
 import { toast } from "sonner";
 import { t } from "@/lib/constants";
+import type { Category } from "@/lib/types";
 
 // フォーム用のスキーマ（tagsは文字列として扱う）
 const postFormSchema = z.object({
@@ -32,6 +40,7 @@ interface PostEditFormProps {
   initialTitle: string;
   initialContent: string;
   initialTags: string[];
+  initialCategoryId?: string | null;
   onCancel: () => void;
 }
 
@@ -40,10 +49,32 @@ export function PostEditForm({
   initialTitle,
   initialContent,
   initialTags,
+  initialCategoryId,
   onCancel,
 }: PostEditFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
+    initialCategoryId || ""
+  );
+
+  // カテゴリリストを取得 / Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch("/api/categories");
+        if (response.ok) {
+          const data = await response.json();
+          setCategories(data.data || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const {
     register,
@@ -78,6 +109,7 @@ export function PostEditForm({
           title: data.title,
           content: data.content,
           tags: tags,
+          categoryId: selectedCategoryId || null,
         }),
       });
 
@@ -106,6 +138,7 @@ export function PostEditForm({
       content: initialContent,
       tags: initialTags.join(", "),
     });
+    setSelectedCategoryId(initialCategoryId || "");
     onCancel();
   };
 
@@ -156,6 +189,26 @@ export function PostEditForm({
             {...register("tags")}
             placeholder="e.g. javascript, react, nextjs"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="category">{t("CATEGORY")}</Label>
+          <Select
+            value={selectedCategoryId}
+            onValueChange={setSelectedCategoryId}
+          >
+            <SelectTrigger id="category">
+              <SelectValue placeholder={t("SELECT_CATEGORY")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">{t("NO_CATEGORY")}</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
