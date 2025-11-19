@@ -21,9 +21,9 @@ import {
 import { toast } from "sonner";
 import { postSchema } from "@/lib/validations";
 import { t } from "@/lib/constants";
-import type { Category } from "@/lib/types";
+import type { Category, Event } from "@/lib/types";
 
-type PostFormData = z.infer<typeof postSchema>;
+type PostFormData = z.infer<typeof postSchema> & { eventId?: string };
 
 interface PostFormProps {
   initialData?: {
@@ -31,6 +31,8 @@ interface PostFormProps {
     title: string;
     content: string;
     tags: string[];
+    categoryId?: string | null;
+    eventId?: string | null;
   };
   mode?: "create" | "edit";
 }
@@ -43,7 +45,9 @@ export function PostForm({
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("none");
+  const [selectedEventId, setSelectedEventId] = useState<string>("none");
 
   const {
     register,
@@ -60,6 +64,14 @@ export function PostForm({
         }
       : undefined,
   });
+
+  // 初期データのカテゴリとイベントIDを設定
+  useEffect(() => {
+    if (initialData) {
+      if (initialData.categoryId) setSelectedCategoryId(initialData.categoryId);
+      if (initialData.eventId) setSelectedEventId(initialData.eventId);
+    }
+  }, [initialData]);
 
   // カテゴリリストを取得 / Fetch categories
   useEffect(() => {
@@ -81,6 +93,19 @@ export function PostForm({
     };
 
     fetchCategories();
+
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch("/api/events?status=OPEN");
+        if (response.ok) {
+          const data = await response.json();
+          setEvents(data.events || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch events:", error);
+      }
+    };
+    fetchEvents();
   }, []);
 
   // ホームページに戻った時にフォームをクリア
@@ -93,6 +118,7 @@ export function PostForm({
         tags: "",
       });
       setSelectedCategoryId("none");
+      setSelectedEventId("none");
     }
   }, [pathname, mode, initialData, reset]);
 
@@ -121,6 +147,7 @@ export function PostForm({
           content: data.content,
           tags,
           categoryId: selectedCategoryId === "none" ? null : selectedCategoryId,
+          eventId: selectedEventId === "none" ? null : selectedEventId,
         }),
       });
 
@@ -142,6 +169,7 @@ export function PostForm({
           tags: "",
         });
         setSelectedCategoryId("none");
+        setSelectedEventId("none");
       }
 
       // API routeでrevalidatePath()が呼ばれているため、キャッシュは既に無効化されている
@@ -207,6 +235,26 @@ export function PostForm({
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="event">Event (Optional)</Label>
+            <Select
+              value={selectedEventId}
+              onValueChange={setSelectedEventId}
+            >
+              <SelectTrigger id="event">
+                <SelectValue placeholder="Select an event" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No Event</SelectItem>
+                {events.map((event) => (
+                  <SelectItem key={event.id} value={event.id}>
+                    {event.name} ({new Date(event.fight_date).toLocaleDateString()})
                   </SelectItem>
                 ))}
               </SelectContent>

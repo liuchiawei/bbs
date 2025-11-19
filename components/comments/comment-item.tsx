@@ -15,8 +15,10 @@ import { Heart, MessageCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "motion/react";
 import { CommentForm } from "./comment-form";
-import type { CommentWithUser } from "@/lib/types";
+import type { CommentWithUser, BettingLog } from "@/lib/types";
 import { t } from "@/lib/constants";
+import { Badge } from "@/components/ui/badge";
+import { Trophy } from "lucide-react";
 
 interface CommentItemProps {
   comment: CommentWithUser;
@@ -26,6 +28,7 @@ interface CommentItemProps {
   level?: number;
   rootCommentId?: string;
   onReplyAdded?: () => void;
+  bet?: BettingLog | null;
 }
 
 export function CommentItem({
@@ -36,6 +39,7 @@ export function CommentItem({
   level = 0,
   rootCommentId,
   onReplyAdded,
+  bet,
 }: CommentItemProps) {
   const router = useRouter();
   const [likes, setLikes] = useState(comment.likes);
@@ -138,7 +142,15 @@ export function CommentItem({
     >
       <div className="flex gap-3 p-4 rounded-lg hover:bg-muted/50 transition-colors">
         <div className="flex-1 space-y-2">
-          <PostCardAuthor user={comment.user} />
+          <div className="flex items-center gap-2">
+            <PostCardAuthor user={comment.user} />
+            {bet && (
+              <Badge variant="secondary" className="flex items-center gap-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100 border-yellow-200 dark:border-yellow-800">
+                <Trophy className="w-3 h-3" />
+                Bet: {bet.target_winner_id} ({Number(bet.bet_amount)})
+              </Badge>
+            )}
+          </div>
           <span className="text-sm text-muted-foreground">
             {new Date(comment.createdAt).toLocaleDateString()}
             {new Date(comment.createdAt).toLocaleTimeString()}

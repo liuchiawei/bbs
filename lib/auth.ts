@@ -79,6 +79,8 @@ export async function getCurrentUser() {
       email: true,
       isAdmin: true,
       isBanned: true,
+      points: true,
+      virtual_score: true,
       profile: {
         select: {
           name: true,

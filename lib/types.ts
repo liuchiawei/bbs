@@ -92,6 +92,7 @@ export interface User {
   isAdmin?: boolean;
   isBanned?: boolean;
   points?: number;
+  virtual_score?: number;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   profile?: Profile | null;
@@ -319,3 +320,27 @@ export interface AdminPostListItem {
     comments: number;
   };
 }
+
+// Betting Types
+export interface BettingLog {
+  id: string;
+  userId: string;
+  eventId: string;
+  bet_amount: number | string; // Decimal handling
+  target_winner_id: string;
+  odds_snapshot: number | string;
+  settlement_status: "PENDING" | "WON" | "LOST" | "VOID";
+  createdAt: Date | string;
+}
+
+export interface Event {
+  id: string;
+  name: string;
+  fight_date: Date | string;
+  status: "PENDING" | "OPEN" | "CLOSED" | "SETTLED" | "CANCELLED";
+  winner_id?: string | null;
+  is_manual_override: boolean;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+

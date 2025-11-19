@@ -24,6 +24,7 @@ model User {
   isBanned  Boolean  @default(false)
   // points system
   points    Int      @default(1000)
+  virtual_score Decimal @default(1000) // Added for betting system
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // relationships
@@ -32,6 +33,7 @@ model User {
   comments  Comment[]
   likedPosts PostLike[]
   likedComments CommentLike[]
+  bets      BettingLog[]
 }
 
 model Category {
@@ -60,6 +62,7 @@ model Post {
   userId     String
   tags       String[]
   categoryId String?  // カテゴリID（オプション） / Category ID (optional)
+  eventId    String?  // 関連するイベントID / Related Event ID
   // statistics
   views      Int      @default(0)
   likes      Int      @default(0)
@@ -70,6 +73,7 @@ model Post {
   // relationships
   user       User     @relation(fields: [userId], references: [userId])
   category   Category? @relation(fields: [categoryId], references: [id])
+  event      Event?   @relation(fields: [eventId], references: [id])
   comments   Comment[]
   likedBy    PostLike[]
 
@@ -154,4 +158,59 @@ model Profile {
 
   @@index([userId])
   @@index([deletedAt])
+}
+
+model Event {
+  id               String      @id @default(uuid())
+  name             String
+  fight_date       DateTime
+  status           EventStatus @default(PENDING)
+  winner_id        String?
+  is_manual_override Boolean   @default(false)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  posts            Post[]
+  bets             BettingLog[]
+}
+
+enum EventStatus {
+  PENDING
+  OPEN
+  CLOSED
+  SETTLED
+  CANCELLED
+}
+
+model BettingLog {
+  id               String    @id @default(uuid())
+  userId           String
+  eventId          String
+  bet_amount       Decimal
+  target_winner_id String
+  odds_snapshot    Decimal
+  final_payout     Decimal?
+  settlement_status BetStatus @default(PENDING)
+  createdAt        DateTime  @default(now())
+
+  user             User      @relation(fields: [userId], references: [userId])
+  event            Event     @relation(fields: [eventId], references: [id])
+
+  @@index([userId])
+  @@index([eventId])
+}
+
+enum BetStatus {
+  PENDING
+  WON
+  LOST
+  VOID
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  adminId     String
+  action_type String
+  description String
+  createdAt   DateTime @default(now())
 }
