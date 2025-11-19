@@ -76,13 +76,15 @@ export async function POST(request: NextRequest) {
     revalidatePath("/");
 
     // Return user without password, with profile data flattened
+    // 使用 ?? 運算符確保 undefined 轉為 null，符合類型定義
+    // Use ?? operator to ensure undefined converts to null, matching type definition
     const { password: _, profile, ...userWithoutPassword } = user;
     
     const userResponse = {
       ...userWithoutPassword,
       name: profile?.name || user.userId,
-      nickname: profile?.nickname || null,
-      avatar: profile?.avatar || null,
+      nickname: profile?.nickname ?? null,
+      avatar: profile?.avatar ?? null,
     };
 
     return NextResponse.json({

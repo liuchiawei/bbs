@@ -67,8 +67,8 @@ export async function PATCH(
 
     // 清除快取
     // Clear cache
-    revalidateTag(`profile-${userId}`);
-    revalidateTag(`user-${userId}`);
+    revalidateTag(`profile-${userId}`, 'max');
+    revalidateTag(`user-${userId}`, 'max');
 
     return NextResponse.json({
       message: "Visibility updated successfully",

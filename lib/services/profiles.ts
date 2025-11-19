@@ -208,14 +208,14 @@ export async function createProfile(
       train_start: data.train_start || null,
       stance: data.stance || null,
       gym: data.gym || null,
-      visibility: data.visibility || defaultVisibility,
+      visibility: data.visibility || defaultVisibility as any,
     },
     select: profileSelectFull,
   });
 
   // 清除快取
   // Clear cache
-  revalidateTag(`profile-${userId}`);
+  revalidateTag(`profile-${userId}`, 'max');
 
   return {
     ...profile,
@@ -257,7 +257,7 @@ export async function updateProfile(
 
   // 清除快取
   // Clear cache
-  revalidateTag(`profile-${userId}`);
+  revalidateTag(`profile-${userId}`, 'max');
 
   return {
     ...profile,
@@ -275,13 +275,13 @@ export async function updateVisibility(
 ): Promise<Profile> {
   const profile = await prisma.profile.update({
     where: { userId },
-    data: { visibility },
+    data: { visibility: visibility as any },
     select: profileSelectFull,
   });
 
   // 清除快取
   // Clear cache
-  revalidateTag(`profile-${userId}`);
+  revalidateTag(`profile-${userId}`, 'max');
 
   return {
     ...profile,
@@ -302,7 +302,7 @@ export async function softDeleteProfile(userId: string): Promise<Profile> {
 
   // 清除快取
   // Clear cache
-  revalidateTag(`profile-${userId}`);
+  revalidateTag(`profile-${userId}`, 'max');
 
   return {
     ...profile,
@@ -323,7 +323,7 @@ export async function restoreProfile(userId: string): Promise<Profile> {
 
   // 清除快取
   // Clear cache
-  revalidateTag(`profile-${userId}`);
+  revalidateTag(`profile-${userId}`, 'max');
 
   return {
     ...profile,

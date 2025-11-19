@@ -103,12 +103,14 @@ export interface UserWithProfile extends User {
 }
 
 // 公開顯示用使用者資料（從Profile讀取顯示資料）
+// 注意：nickname 和 avatar 嚴格為 string | null（不允許 undefined）
+// Note: nickname and avatar are strictly string | null (undefined not allowed)
 export interface UserPublic {
   id: string;
   userId: string;
   name: string; // 從profile.name讀取
-  nickname?: string | null; // 從profile.nickname讀取
-  avatar?: string | null; // 從profile.avatar讀取
+  nickname: string | null; // 從profile.nickname讀取（null 表示未設定）
+  avatar: string | null; // 從profile.avatar讀取（null 表示未設定）
 }
 
 // 公開顯示用使用者資料（擴展版，包含 email）

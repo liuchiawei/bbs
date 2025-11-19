@@ -1,34 +1,7 @@
 import { prisma } from "@/lib/db";
-import type { CommentWithUser, UserPublicExtended } from "@/lib/types";
+import type { CommentWithUser } from "@/lib/types";
 import { userSelectPublicExtended } from "@/lib/validations";
-
-/**
- * 將嵌套的profile結構轉換為扁平結構
- * Convert nested profile structure to flat structure
- */
-function transformUser(user: any): UserPublicExtended {
-  if (!user.profile) {
-    // 如果沒有profile，使用userId作為預設值
-    // If no profile, use userId as default
-    return {
-      id: user.id,
-      userId: user.userId,
-      email: user.email,
-      name: user.userId,
-      nickname: null,
-      avatar: null,
-    };
-  }
-  
-  return {
-    id: user.id,
-    userId: user.userId,
-    email: user.email,
-    name: user.profile.name || user.userId,
-    nickname: user.profile.nickname || null,
-    avatar: user.profile.avatar || null,
-  };
-}
+import { transformUser } from "@/lib/utils";
 
 /**
  * Get comments for a post

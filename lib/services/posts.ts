@@ -1,35 +1,8 @@
 import { prisma } from "@/lib/db";
-import type { PostWithUser, UserPublicExtended } from "@/lib/types";
+import type { PostWithDetails, UserPublicExtended } from "@/lib/types";
 import { unstable_cache } from "next/cache";
 import { userSelectPublicExtended, categorySelect } from "@/lib/validations";
-
-/**
- * 將嵌套的profile結構轉換為扁平結構
- * Convert nested profile structure to flat structure
- */
-function transformUser(user: any): UserPublicExtended {
-  if (!user.profile) {
-    // 如果沒有profile，使用userId作為預設值
-    // If no profile, use userId as default
-    return {
-      id: user.id,
-      userId: user.userId,
-      email: user.email,
-      name: user.userId,
-      nickname: null,
-      avatar: null,
-    };
-  }
-  
-  return {
-    id: user.id,
-    userId: user.userId,
-    email: user.email,
-    name: user.profile.name || user.userId,
-    nickname: user.profile.nickname || null,
-    avatar: user.profile.avatar || null,
-  };
-}
+import { transformUser } from "@/lib/utils";
 
 export interface GetPostsOptions {
   userId?: string;
@@ -191,7 +164,7 @@ export async function getHotPosts(
  * 削除された投稿も取得可能（表示のため）
  * Can retrieve deleted posts for display purposes
  */
-export async function getPostById(id: string) {
+export async function getPostById(id: string): Promise<PostWithDetails | null> {
   "use cache";
   const post = await prisma.post.findUnique({
     where: { id },
@@ -227,7 +200,7 @@ export async function getPostById(id: string) {
     ...post,
     category: post.category?.deletedAt ? null : post.category,
     user: transformUser(post.user),
-    comments: post.comments.map((comment: any) => ({
+    comments: post.comments.map((comment) => ({
       ...comment,
       user: transformUser(comment.user),
     })),

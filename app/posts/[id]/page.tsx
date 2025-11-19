@@ -14,10 +14,7 @@ export default async function PostPage({
 
   // 投稿データを取得し、viewsを増やす
   // Fetch post data and increment views
-  const [post, user] = await Promise.all([
-    getPostById(id),
-    getCurrentUser(),
-  ]);
+  const [post, user] = await Promise.all([getPostById(id), getCurrentUser()]);
 
   if (!post) {
     notFound();
@@ -46,9 +43,23 @@ export default async function PostPage({
                     slug: post.category.slug || null,
                   }
                 : null,
+              // 明確確保 user 類型正確（transformUser 已確保 avatar 為 string | null）
+              // Explicitly ensure user type is correct (transformUser ensures avatar is string | null)
+              user: {
+                ...post.user,
+                avatar: post.user.avatar ?? null, // 確保 undefined 轉為 null
+                nickname: post.user.nickname ?? null, // 確保 undefined 轉為 null
+              },
               comments: post.comments.map((comment) => ({
                 ...comment,
                 createdAt: comment.createdAt.toString(),
+                // 明確確保 comment.user 類型正確
+                // Explicitly ensure comment.user type is correct
+                user: {
+                  ...comment.user,
+                  avatar: comment.user.avatar ?? null, // 確保 undefined 轉為 null
+                  nickname: comment.user.nickname ?? null, // 確保 undefined 轉為 null
+                },
               })),
             }}
             currentUserId={user?.id}

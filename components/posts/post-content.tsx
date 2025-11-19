@@ -38,7 +38,7 @@ interface PostContentProps {
       id: string;
       userId: string;
       name: string;
-      nickname?: string | null;
+      nickname: string | null; // 嚴格為 string | null（不允許 undefined）
       avatar: string | null;
     };
     comments: Array<{
@@ -54,7 +54,7 @@ interface PostContentProps {
         id: string;
         userId: string;
         name: string;
-        nickname?: string | null;
+        nickname: string | null; // 嚴格為 string | null（不允許 undefined）
         avatar: string | null;
       };
     }>;

@@ -316,6 +316,83 @@
 
 ---
 
+### refactor/type-optimization
+
+**難度**: ★★☆☆☆
+
+**描述**: 優化類型定義和用戶資料轉換邏輯，統一處理 `undefined` 轉 `null`，提高類型安全性和代碼維護性
+
+**問題分析**:
+
+- `UserPublicExtended` 類型中 `avatar` 和 `nickname` 可能為 `undefined`，但類型定義為 `string | null`
+- `transformUser` 函數在多個服務文件中重複定義，造成代碼重複
+- 類型不一致導致 TypeScript 編譯錯誤
+- 缺乏統一的用戶資料轉換邏輯
+
+**解決方案**:
+
+**類型定義優化** (`lib/types.ts`):
+
+- 修正 `UserPublic` 和 `UserPublicExtended` 介面：
+  - `nickname`: 從 `nickname?: string | null` 改為 `nickname: string | null`（嚴格類型，不允許 `undefined`）
+  - `avatar`: 從 `avatar?: string | null` 改為 `avatar: string | null`（嚴格類型，不允許 `undefined`）
+- 添加註釋說明類型嚴格性
+
+**共享工具函數** (`lib/utils.ts`):
+
+- 新增 `transformUser()` 函數：
+  - 統一處理嵌套的 profile 結構轉換為扁平結構
+  - 使用 `??` 運算符確保 `undefined` 轉為 `null`
+  - 明確的類型定義，確保返回 `UserPublicExtended` 類型
+  - 減少代碼重複，提高維護性
+
+**服務層更新**:
+
+- **`lib/services/posts.ts`**:
+  - 移除重複的 `transformUser` 函數定義
+  - 導入並使用共享的 `transformUser` 函數
+  - `getPostById()` 明確返回 `PostWithDetails | null` 類型
+- **`lib/services/comments.ts`**:
+  - 移除重複的 `transformUser` 函數定義
+  - 導入並使用共享的 `transformUser` 函數
+
+**API 路由更新**:
+
+- **`app/api/auth/me/route.ts`**:
+  - 使用 `??` 運算符確保 `nickname` 和 `avatar` 的 `undefined` 轉為 `null`
+  - 添加註釋說明類型轉換邏輯
+- **`app/api/auth/login/route.ts`**:
+  - 使用 `??` 運算符確保類型一致性
+  - 添加註釋說明類型轉換邏輯
+
+**組件更新**:
+
+- **`components/posts/post-content.tsx`**:
+  - 更新 `PostContentProps` 介面中的 `user` 和 `comments[].user` 類型定義
+  - `nickname` 從 `nickname?: string | null` 改為 `nickname: string | null`
+- **`app/posts/[id]/page.tsx`**:
+  - 明確處理類型轉換，確保 `user` 和 `comment.user` 的 `avatar` 和 `nickname` 正確轉換
+  - 使用 `??` 運算符確保 `undefined` 轉為 `null`
+
+**效能優化**:
+
+- 統一轉換邏輯減少代碼重複，提高維護性
+- 嚴格類型定義減少運行時錯誤
+- 統一的轉換函數便於後續優化和擴展
+
+**主要修改文件**:
+
+1. `lib/types.ts` - 修正 `UserPublic` 和 `UserPublicExtended` 類型定義
+2. `lib/utils.ts` - 新增共享的 `transformUser` 函數
+3. `lib/services/posts.ts` - 使用共享的 `transformUser` 函數，明確返回類型
+4. `lib/services/comments.ts` - 使用共享的 `transformUser` 函數
+5. `app/api/auth/me/route.ts` - 使用 `??` 運算符確保類型一致性
+6. `app/api/auth/login/route.ts` - 使用 `??` 運算符確保類型一致性
+7. `components/posts/post-content.tsx` - 更新類型定義
+8. `app/posts/[id]/page.tsx` - 明確處理類型轉換
+
+---
+
 ## 2025-11-18
 
 ### refactor/post-soft-delete
