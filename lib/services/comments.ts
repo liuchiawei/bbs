@@ -8,7 +8,9 @@ import { transformUser } from "@/lib/utils";
  * 削除されたコメントも含めて取得（削除された親コメントの返信を表示するため）
  * Includes deleted comments to display replies to deleted parent comments
  */
-export async function getCommentsByPostId(postId: string): Promise<CommentWithUser[]> {
+export async function getCommentsByPostId(
+  postId: string
+): Promise<CommentWithUser[]> {
   "use cache";
   const comments = await prisma.comment.findMany({
     where: {
@@ -36,7 +38,9 @@ export async function getCommentsByPostId(postId: string): Promise<CommentWithUs
  * 削除された返信も含めて取得（返信構造を保持するため）
  * Includes deleted replies to maintain reply structure
  */
-export async function getCommentReplies(commentId: string): Promise<CommentWithUser[]> {
+export async function getCommentReplies(
+  commentId: string
+): Promise<CommentWithUser[]> {
   "use cache";
   const replies = await prisma.comment.findMany({
     where: { parentId: commentId },
@@ -69,9 +73,9 @@ export async function getCommentById(id: string) {
       },
     },
   });
-  
+
   if (!comment) return null;
-  
+
   return {
     ...comment,
     user: transformUser(comment.user),
@@ -81,7 +85,10 @@ export async function getCommentById(id: string) {
 /**
  * Create a new comment
  */
-export async function createComment(userId: string, data: { content: string; postId: string; parentId?: string }) {
+export async function createComment(
+  userId: string,
+  data: { content: string; postId: string; parentId?: string }
+) {
   const comment = await prisma.comment.create({
     data: {
       ...data,
@@ -93,7 +100,7 @@ export async function createComment(userId: string, data: { content: string; pos
       },
     },
   });
-  
+
   return {
     ...comment,
     user: transformUser(comment.user),
@@ -106,7 +113,7 @@ export async function createComment(userId: string, data: { content: string; pos
  */
 export async function softDeleteComment(id: string) {
   const deletedAt = new Date();
-  
+
   // 再帰的にすべての子コメントを取得してソフトデリート
   // Recursively get all child comments and soft delete them
   const getAllChildIds = async (parentId: string): Promise<string[]> => {
@@ -114,23 +121,23 @@ export async function softDeleteComment(id: string) {
       where: { parentId },
       select: { id: true },
     });
-    
+
     const childIds = children.map((c) => c.id);
     const allChildIds = [...childIds];
-    
+
     // 各子コメントの子コメントも再帰的に取得
     // Recursively get children of each child comment
     for (const childId of childIds) {
       const grandChildren = await getAllChildIds(childId);
       allChildIds.push(...grandChildren);
     }
-    
+
     return allChildIds;
   };
-  
+
   const childIds = await getAllChildIds(id);
   const allIdsToDelete = [id, ...childIds];
-  
+
   // すべてのコメントをソフトデリート
   // Soft delete all comments
   await prisma.comment.updateMany({
@@ -141,7 +148,7 @@ export async function softDeleteComment(id: string) {
       deletedAt,
     },
   });
-  
+
   return { deletedCount: allIdsToDelete.length };
 }
 

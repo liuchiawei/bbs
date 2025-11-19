@@ -43,22 +43,32 @@ export default async function PostPage({
                     slug: post.category.slug || null,
                   }
                 : null,
-              // 明確確保 user 類型正確（transformUser 已確保 avatar 為 string | null）
-              // Explicitly ensure user type is correct (transformUser ensures avatar is string | null)
+              // 明確確保 user 類型正確，移除 email 欄位（PostContent 不需要）
+              // Explicitly ensure user type is correct, remove email field (PostContent doesn't need it)
               user: {
-                ...post.user,
-                avatar: post.user.avatar ?? null, // 確保 undefined 轉為 null
+                id: post.user.id,
+                userId: post.user.userId,
+                name: post.user.name,
                 nickname: post.user.nickname ?? null, // 確保 undefined 轉為 null
+                avatar: post.user.avatar ?? null, // 確保 undefined 轉為 null
               },
               comments: post.comments.map((comment) => ({
-                ...comment,
+                id: comment.id,
+                content: comment.content,
+                likes: comment.likes,
+                replies: comment.replies,
                 createdAt: comment.createdAt.toString(),
-                // 明確確保 comment.user 類型正確
-                // Explicitly ensure comment.user type is correct
+                userId: comment.userId,
+                postId: comment.postId,
+                parentId: comment.parentId ?? null, // 確保 undefined 轉為 null
+                // 明確確保 comment.user 類型正確，移除 email 欄位
+                // Explicitly ensure comment.user type is correct, remove email field
                 user: {
-                  ...comment.user,
-                  avatar: comment.user.avatar ?? null, // 確保 undefined 轉為 null
+                  id: comment.user.id,
+                  userId: comment.user.userId,
+                  name: comment.user.name,
                   nickname: comment.user.nickname ?? null, // 確保 undefined 轉為 null
+                  avatar: comment.user.avatar ?? null, // 確保 undefined 轉為 null
                 },
               })),
             }}

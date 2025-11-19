@@ -9,7 +9,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Eye, MessageCircle, Heart } from "lucide-react";
 import { PostWithUser } from "@/lib/types";
-import { User } from "@/lib/types";
 import { t } from "@/lib/constants";
 
 interface PostCardFooterProps {
@@ -53,7 +52,7 @@ export default function PostCardFooter({
   return (
     <CardFooter className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <PostCardAuthor user={post.user as User} />
+        <PostCardAuthor user={post.user} />
         {post.createdAt && (
           <Tooltip>
             <TooltipTrigger asChild>

@@ -98,10 +98,9 @@ export function ProfileManagement() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{t("USER")}</TableHead>
             <TableHead>{t("NAME")}</TableHead>
             <TableHead>{t("EMAIL")}</TableHead>
-            <TableHead>{t("STATUS")}</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead>{t("CREATED_AT")}</TableHead>
             <TableHead>{t("ACTIONS")}</TableHead>
           </TableRow>
@@ -109,7 +108,10 @@ export function ProfileManagement() {
         <TableBody>
           {profiles.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+              <TableCell
+                colSpan={5}
+                className="text-center py-8 text-muted-foreground"
+              >
                 {t("NO_PROFILES_FOUND")}
               </TableCell>
             </TableRow>
@@ -124,12 +126,14 @@ export function ProfileManagement() {
                         {profile.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <Link href={`/user/${profile.userId}`} className="font-medium hover:underline">
+                    <Link
+                      href={`/user/${profile.userId}`}
+                      className="font-medium hover:underline"
+                    >
                       {profile.name}
                     </Link>
                   </div>
                 </TableCell>
-                <TableCell>{profile.name}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {profile.user?.email || "-"}
                 </TableCell>
@@ -189,7 +193,9 @@ export function ProfileManagement() {
           </span>
           <Button
             variant="outline"
-            onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+            onClick={() =>
+              setPage((p) => Math.min(pagination.totalPages, p + 1))
+            }
             disabled={page === pagination.totalPages}
           >
             {t("NEXT")}
@@ -199,4 +205,3 @@ export function ProfileManagement() {
     </div>
   );
 }
-

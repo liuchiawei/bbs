@@ -15,7 +15,11 @@ import { AvatarUpload } from "./avatar-upload";
 import { ProfileVisibilitySettings } from "./profile-visibility-settings";
 import { toast } from "sonner";
 import { motion } from "motion/react";
-import type { Profile, UserWithProfile } from "@/lib/types";
+import type {
+  Profile,
+  UserWithProfile,
+  ProfileVisibilitySettings as ProfileVisibilitySettingsType,
+} from "@/lib/types";
 import { t } from "@/lib/constants";
 import { updateProfileSchema } from "@/lib/validations";
 
@@ -63,7 +67,9 @@ export function EditProfileForm({ user }: { user: UserWithProfile }) {
   };
 
   // 可見性設定更新
-  const handleVisibilityChange = (newVisibility: ProfileVisibilitySettings) => {
+  const handleVisibilityChange = (
+    newVisibility: ProfileVisibilitySettingsType
+  ) => {
     setValue("visibility", newVisibility);
   };
 
@@ -93,10 +99,10 @@ export function EditProfileForm({ user }: { user: UserWithProfile }) {
       }
 
       toast.success(t("SUCCESS_UPDATED"));
-      
+
       // user-updatedイベントを発火
       window.dispatchEvent(new CustomEvent("user-updated"));
-      
+
       router.refresh();
       router.push(`/user/${user.userId}`);
     } catch (error) {
@@ -120,7 +126,9 @@ export function EditProfileForm({ user }: { user: UserWithProfile }) {
           <Tabs defaultValue="basic" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="basic">{t("BASIC_INFO")}</TabsTrigger>
-              <TabsTrigger value="visibility">{t("VISIBILITY_SETTINGS")}</TabsTrigger>
+              <TabsTrigger value="visibility">
+                {t("VISIBILITY_SETTINGS")}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="basic" className="space-y-4 mt-4">
@@ -174,7 +182,11 @@ export function EditProfileForm({ user }: { user: UserWithProfile }) {
 
                 <div className="space-y-2">
                   <Label htmlFor="birthDate">{t("BIRTH_DATE_OPTIONAL")}</Label>
-                  <Input id="birthDate" type="date" {...register("birthDate")} />
+                  <Input
+                    id="birthDate"
+                    type="date"
+                    {...register("birthDate")}
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -317,7 +329,9 @@ export function EditProfileForm({ user }: { user: UserWithProfile }) {
                     router.refresh();
                   } catch (error) {
                     toast.error(
-                      error instanceof Error ? error.message : t("ERROR_GENERIC")
+                      error instanceof Error
+                        ? error.message
+                        : t("ERROR_GENERIC")
                     );
                   } finally {
                     setIsLoading(false);

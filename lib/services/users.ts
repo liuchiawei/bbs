@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
-import type { User, UserWithCounts, UserWithStats, UserProfilePage, UserWithProfile } from "@/lib/types";
-import { userSelectFull, userSelectWithStats, userSelectPublicExtended, profileSelectPublic } from "@/lib/validations";
+import type { User, UserWithCounts, UserWithStats, UserProfilePage, UserWithProfile, PostWithUser, CommentWithUser, CommentWithUserAndPost } from "@/lib/types";
+import { userSelectFull, userSelectWithStats, userSelectPublicExtended, profileSelectPublic, categorySelect } from "@/lib/validations";
+import { transformUser } from "@/lib/utils";
 
 /**
  * Check if a userId is available
@@ -20,10 +21,10 @@ export async function checkUserIdAvailability(
  */
 export async function getUserById(id: string): Promise<User | null> {
   "use cache";
-  return await prisma.user.findUnique({
+  return (await prisma.user.findUnique({
     where: { id },
     select: userSelectFull,
-  });
+  })) as User | null;
 }
 
 /**
@@ -148,7 +149,7 @@ export async function getUserProfilePage(userId: string, recentPostsLimit = 6): 
 /**
  * Get user's liked posts
  */
-export async function getUserLikedPosts(userId: string) {
+export async function getUserLikedPosts(userId: string): Promise<PostWithUser[]> {
   "use cache";
   const likes = await prisma.postLike.findMany({
     where: { userId },
@@ -158,6 +159,9 @@ export async function getUserLikedPosts(userId: string) {
         include: {
           user: {
             select: userSelectPublicExtended,
+          },
+          category: {
+            select: categorySelect,
           },
           _count: {
             select: {
@@ -169,13 +173,25 @@ export async function getUserLikedPosts(userId: string) {
     },
   });
 
-  return likes.map((like) => like.post);
+  // 使用 transformUser 轉換用戶資料為扁平結構
+  // Use transformUser to transform user data to flat structure
+  const transformedPosts = likes.map((like) => {
+    const transformedUser = transformUser(like.post.user);
+    return {
+      ...like.post,
+      category: like.post.category?.deletedAt ? null : like.post.category,
+      user: transformedUser,
+      _count: like.post._count,
+    };
+  });
+  
+  return transformedPosts as PostWithUser[];
 }
 
 /**
  * Get user's liked comments
  */
-export async function getUserLikedComments(userId: string) {
+export async function getUserLikedComments(userId: string): Promise<CommentWithUserAndPost[]> {
   "use cache";
   const likes = await prisma.commentLike.findMany({
     where: { userId },
@@ -197,7 +213,22 @@ export async function getUserLikedComments(userId: string) {
     },
   });
 
-  return likes.map((like) => like.comment);
+  // 使用 transformUser 轉換用戶資料為扁平結構
+  // Use transformUser to transform user data to flat structure
+  return likes.map((like) => ({
+    id: like.comment.id,
+    content: like.comment.content,
+    userId: like.comment.userId,
+    postId: like.comment.postId,
+    parentId: like.comment.parentId,
+    likes: like.comment.likes,
+    replies: like.comment.replies,
+    createdAt: like.comment.createdAt,
+    updatedAt: like.comment.updatedAt,
+    deletedAt: like.comment.deletedAt,
+    user: transformUser(like.comment.user),
+    post: like.comment.post,
+  })) as CommentWithUserAndPost[];
 }
 
 /**

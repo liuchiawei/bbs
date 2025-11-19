@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import type { PostWithDetails, UserPublicExtended } from "@/lib/types";
+import type { PostWithDetails, PostWithUser, UserPublicExtended } from "@/lib/types";
 import { unstable_cache } from "next/cache";
 import { userSelectPublicExtended, categorySelect } from "@/lib/validations";
 import { transformUser } from "@/lib/utils";

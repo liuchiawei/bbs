@@ -1,6 +1,7 @@
 import { getUserLikedPosts, getUserLikedComments } from "@/lib/services/users";
 import { getSession } from "@/lib/auth";
-import type { PostWithUser } from "@/lib/types";
+import type { PostWithUser, CommentWithUserAndPost } from "@/lib/types";
+import { transformUser } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { PostCard } from "@/components/posts/post-card";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -23,10 +24,26 @@ export default async function UserLikesPage({
     redirect("/");
   }
 
-  const [likedPosts, likedComments] = await Promise.all([
+  const [likedPostsData, likedCommentsData] = await Promise.all([
     getUserLikedPosts(userId),
     getUserLikedComments(userId),
   ]);
+
+  // 明確轉換每個 post 的 user 欄位，確保符合 PostWithUser 類型
+  // Explicitly transform each post's user field to ensure it matches PostWithUser type
+  const likedPosts: PostWithUser[] = likedPostsData.map((post: any) => ({
+    ...post,
+    user: transformUser(post.user),
+  }));
+
+  // 明確轉換每個 comment 的 user 欄位，確保符合 CommentWithUserAndPost 類型
+  // Explicitly transform each comment's user field to ensure it matches CommentWithUserAndPost type
+  const likedComments: CommentWithUserAndPost[] = likedCommentsData.map(
+    (comment: any) => ({
+      ...comment,
+      user: transformUser(comment.user),
+    })
+  );
 
   return (
     <>
@@ -59,7 +76,7 @@ export default async function UserLikesPage({
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {likedPosts.map((post) => (
-                <PostCard key={post.id} post={post as PostWithUser} />
+                <PostCard key={post.id} post={post} />
               ))}
             </div>
           )}
@@ -109,8 +126,12 @@ export default async function UserLikesPage({
                       {comment.content}
                     </p>
                     <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
-                      <span>{comment.likes} {t("LIKES_LABEL")}</span>
-                      <span>{comment.replies} {t("REPLIES_LABEL")}</span>
+                      <span>
+                        {comment.likes} {t("LIKES_LABEL")}
+                      </span>
+                      <span>
+                        {comment.replies} {t("REPLIES_LABEL")}
+                      </span>
                     </div>
                   </CardContent>
                 </Card>

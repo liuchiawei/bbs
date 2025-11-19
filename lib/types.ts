@@ -209,6 +209,14 @@ export interface CommentWithUser extends Comment {
   user: UserPublicExtended;
 }
 
+// Comment with user and post (for liked comments page)
+export interface CommentWithUserAndPost extends CommentWithUser {
+  post: {
+    id: string;
+    title: string;
+  };
+}
+
 // API Response Types
 export interface ApiResponse<T = any> {
   message?: string;
