@@ -61,8 +61,21 @@ export const userSelectWithStats = {
 // 向後兼容：保留 userSelectBasic 作為 userSelectPublic 的別名
 export const userSelectBasic = userSelectPublic;
 
+// Category Select
+export const categorySelect = {
+  id: true,
+  name: true,
+  slug: true,
+  description: true,
+  displayOrder: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+} satisfies Prisma.CategorySelect;
+
 export const postIncludeBasic = {
   user: { select: userSelectPublicExtended },
+  category: { select: categorySelect },
   _count: { select: { comments: true } },
 } satisfies Prisma.PostInclude;
 
@@ -166,13 +179,27 @@ export const createPostSchema = z.object({
   title: z.string().min(1, t("ALERT_TITLE_REQUIRED")),
   content: z.string().min(1, t("ALERT_CONTENT_REQUIRED")),
   tags: tagsSchema.optional().default([]),
+  categoryId: z.string().uuid().optional().nullable(),
 });
 
 export const updatePostSchema = z.object({
   title: z.string().min(1, t("ALERT_TITLE_REQUIRED")).optional(),
   content: z.string().min(1, t("ALERT_CONTENT_REQUIRED")).optional(),
   tags: tagsSchema.optional(),
+  categoryId: z.string().uuid().optional().nullable(),
 });
+
+// Category Schemas
+export const categorySchema = z.object({
+  name: z.string().min(1).max(50),
+  slug: z.string().optional(),
+  description: z.string().max(200).optional(),
+  displayOrder: z.number().int().positive().min(1),
+});
+
+export const createCategorySchema = categorySchema;
+
+export const updateCategorySchema = categorySchema.partial();
 
 // Comment Schemas
 export const createCommentSchema = z.object({

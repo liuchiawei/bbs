@@ -59,6 +59,18 @@ export interface UserProfilePage extends User {
   _count: UserStats;
 }
 
+// Category Types
+export interface Category {
+  id: string;
+  name: string;
+  slug?: string | null;
+  description?: string | null;
+  displayOrder: number; // 表示順序 / Display order
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  deletedAt?: Date | string | null; // ソフトデリート用のタイムスタンプ / Soft delete timestamp
+}
+
 // Post Types
 export interface Post {
   id: string;
@@ -66,6 +78,7 @@ export interface Post {
   content: string;
   userId: string;
   tags: string[];
+  categoryId?: string | null;
   views: number;
   likes: number;
   createdAt: Date | string;
@@ -75,6 +88,7 @@ export interface Post {
 
 export interface PostWithUser extends Post {
   user: UserPublicExtended;
+  category?: Category | null;
   _count: {
     comments: number;
   };
@@ -157,12 +171,14 @@ export interface CreatePostInput {
   title: string;
   content: string;
   tags?: string[];
+  categoryId?: string | null;
 }
 
 export interface UpdatePostInput {
   title?: string;
   content?: string;
   tags?: string[];
+  categoryId?: string | null;
 }
 
 export interface CreateCommentInput {

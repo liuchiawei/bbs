@@ -11,9 +11,17 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { postSchema } from "@/lib/validations";
 import { t } from "@/lib/constants";
+import type { Category } from "@/lib/types";
 
 type PostFormData = z.infer<typeof postSchema>;
 
@@ -34,6 +42,8 @@ export function PostForm({
   const router = useRouter();
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
 
   const {
     register,
@@ -51,6 +61,28 @@ export function PostForm({
       : undefined,
   });
 
+  // カテゴリリストを取得 / Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        // 公開APIから取得 / Get from public API
+        const response = await fetch("/api/categories");
+        if (response.ok) {
+          const data = await response.json();
+          // displayOrderでソート / Sort by displayOrder
+          const sortedCategories = (data.data || []).sort(
+            (a: Category, b: Category) => a.displayOrder - b.displayOrder
+          );
+          setCategories(sortedCategories);
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   // ホームページに戻った時にフォームをクリア
   // これにより、投稿後に戻った場合でもフォームが空の状態になる
   useEffect(() => {
@@ -60,6 +92,7 @@ export function PostForm({
         content: "",
         tags: "",
       });
+      setSelectedCategoryId("");
     }
   }, [pathname, mode, initialData, reset]);
 
@@ -87,6 +120,7 @@ export function PostForm({
           title: data.title,
           content: data.content,
           tags,
+          categoryId: selectedCategoryId || null,
         }),
       });
 
@@ -107,6 +141,7 @@ export function PostForm({
           content: "",
           tags: "",
         });
+        setSelectedCategoryId("");
       }
 
       // API routeでrevalidatePath()が呼ばれているため、キャッシュは既に無効化されている
@@ -156,6 +191,26 @@ export function PostForm({
               {...register("tags")}
               placeholder={t("TAGS_PLACEHOLDER")}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="category">{t("CATEGORY")}</Label>
+            <Select
+              value={selectedCategoryId}
+              onValueChange={setSelectedCategoryId}
+            >
+              <SelectTrigger id="category">
+                <SelectValue placeholder={t("SELECT_CATEGORY")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">{t("NO_CATEGORY")}</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex gap-2">

@@ -39,6 +39,13 @@ export default async function PostPage({
               ...post,
               createdAt: post.createdAt.toString(),
               deletedAt: post.deletedAt?.toString() || null,
+              category: post.category
+                ? {
+                    id: post.category.id,
+                    name: post.category.name,
+                    slug: post.category.slug || null,
+                  }
+                : null,
               comments: post.comments.map((comment) => ({
                 ...comment,
                 createdAt: comment.createdAt.toString(),

@@ -1,5 +1,108 @@
 # 開發日誌 / Development Log
 
+## 2025-11-19
+
+### feat/category-system
+
+**難度**: ★★★☆☆
+
+**描述**: 實作 Category 分類系統，包含 displayOrder 排序功能、軟刪除策略、管理員 CRUD 功能與預設 seed 資料
+
+**資料庫架構** (`prisma/schema.prisma`):
+
+- 新增 `Category` 模型：
+  - `id`: String @id @default(uuid())
+  - `name`: String @unique（分類名稱）
+  - `slug`: String @unique（URL 友善識別碼，可選）
+  - `description`: String?（分類描述，可選）
+  - `displayOrder`: Int @default(1)（顯示順序，必須 > 0）
+  - `deletedAt`: DateTime?（軟刪除時間戳）
+  - 索引：`@@index([deletedAt])`、`@@index([displayOrder])`
+- 更新 `Post` 模型：
+  - 新增 `categoryId`: String?（可選外鍵）
+  - 新增 `category`: Category? @relation
+  - 索引：`@@index([categoryId])`
+
+**類型定義更新** (`lib/types.ts`):
+
+- 新增 `Category` 介面（含 displayOrder、deletedAt）
+- 更新 `Post`、`PostWithUser` 介面加入 category 欄位
+
+**驗證 Schema** (`lib/validations.ts`):
+
+- 新增 `categorySchema`：name、slug、description、displayOrder（必須為正整數且 >= 1）
+- 更新 `postSchema` 支援 categoryId（可選）
+
+**Category Service** (`lib/services/categories.ts`):
+
+- `getAllCategories()`: 使用 `unstable_cache` 快取（tag: `'categories'`, revalidate: 300 秒），過濾已刪除，按 displayOrder 排序
+- `createCategory()`: 建立分類，驗證 name 唯一性與 displayOrder
+- `updateCategory()`: 更新分類，驗證 displayOrder 必須 >= 1
+- `softDeleteCategory()`: 軟刪除分類，將關聯 Post 的 categoryId 設為 null
+
+**Admin Category API**:
+
+- `GET /api/admin/categories`: 返回所有分類列表（管理員）
+- `POST /api/admin/categories`: 建立分類（含 displayOrder 驗證）
+- `PATCH /api/admin/categories/[id]`: 更新分類（含 displayOrder 驗證）
+- `DELETE /api/admin/categories/[id]`: 軟刪除分類，更新相關 Post
+
+**Post Service/API 更新**:
+
+- `lib/services/posts.ts`: 查詢時包含 category，驗證 category 存在且未刪除
+- `app/api/posts/route.ts`: 支援 categoryId 參數（可選）
+- `app/api/posts/[id]/route.ts`: 支援更新 categoryId
+
+**前端組件**:
+
+- `components/admin/category-management.tsx`: 分類管理介面（列表、新增、編輯、軟刪除），顯示 displayOrder 欄位並支援編輯
+- `components/admin/admin-tabs.tsx`: 加入 Category Management tab
+- `components/posts/post-form.tsx`: 新增 Category 選擇欄位（按 displayOrder 排序）
+- `components/posts/post-card.tsx`: 顯示分類標籤
+- `components/posts/post-content.tsx`: 顯示分類資訊
+
+**多語言支援** (`lib/constants.ts`):
+
+- 新增 Category 相關翻譯（四種語言）：CATEGORY_MANAGEMENT、DISPLAY_ORDER、DISPLAY_ORDER_INVALID、CATEGORY_DELETE_WARNING 等
+
+**Seed 資料** (`prisma/seed.ts`):
+
+- 建立 5 個預設分類：General (1)、Boxing (2)、Kick-Boxing (3)、Muay-Thai (4)、MMA (5)
+- 使用 `upsert` 避免重複建立
+
+**效能優化**:
+
+- Category 列表使用 ISR 快取（300 秒）
+- 建立索引提升查詢效能（deletedAt、displayOrder、categoryId）
+- Post 查詢使用 `include` 避免 N+1 查詢
+
+**向後兼容性**:
+
+- categoryId 為可選（nullable），現有 Post 不受影響
+- displayOrder 預設為 1
+- 所有 API 的 categoryId 參數為可選
+
+**主要修改文件**:
+
+1. `prisma/schema.prisma` - 新增 Category 模型，更新 Post 模型
+2. `lib/types.ts` - 新增 Category 類型，更新 Post 類型
+3. `lib/validations.ts` - 新增 categorySchema
+4. `lib/services/categories.ts` - 新建 Category Service
+5. `lib/services/posts.ts` - 更新 Post Service
+6. `app/api/admin/categories/route.ts` - 新建 Admin Category API
+7. `app/api/admin/categories/[id]/route.ts` - 新建 Admin Category 單一操作 API
+8. `app/api/posts/route.ts` - 更新 Post API
+9. `app/api/posts/[id]/route.ts` - 更新 Post API
+10. `components/admin/category-management.tsx` - 新建分類管理組件
+11. `components/admin/admin-tabs.tsx` - 更新 Admin Tabs
+12. `components/posts/post-form.tsx` - 更新 Post Form
+13. `components/posts/post-card.tsx` - 更新 PostCard
+14. `components/posts/post-content.tsx` - 更新 PostContent
+15. `lib/constants.ts` - 新增多語言翻譯
+16. `prisma/seed.ts` - 建立 Category seed 資料
+
+---
+
 ## 2025-11-18
 
 ### refactor/post-soft-delete

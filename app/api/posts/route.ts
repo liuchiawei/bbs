@@ -3,6 +3,7 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { createPostSchema, postIncludeBasic } from "@/lib/validations";
+import { createPost } from "@/lib/services/posts";
 import { z } from "zod";
 
 export async function GET(request: NextRequest) {
@@ -55,14 +56,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = createPostSchema.parse(body);
 
-    const post = await prisma.post.create({
-      data: {
-        title: validatedData.title,
-        content: validatedData.content,
-        tags: validatedData.tags,
-        userId: session.userId,
-      },
-      include: postIncludeBasic,
+    const post = await createPost(session.userId, {
+      title: validatedData.title,
+      content: validatedData.content,
+      tags: validatedData.tags || [],
+      categoryId: validatedData.categoryId,
     });
 
     // データベース操作完了後、キャッシュを無効化して最新データを取得できるようにする
@@ -73,6 +71,7 @@ export async function POST(request: NextRequest) {
     // When post is created, invalidate all related caches
     revalidateTag('posts', 'max'); // 投稿リストのキャッシュを無効化 / Invalidate posts list cache
     revalidateTag('hot-posts', 'max'); // 熱門貼文のキャッシュも無効化 / Also invalidate hot posts cache
+    revalidateTag('categories', 'max'); // カテゴリキャッシュも無効化 / Also invalidate categories cache
 
     return NextResponse.json({
       message: "Post created successfully",

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import type { PostWithUser } from "@/lib/types";
 import { unstable_cache } from "next/cache";
-import { userSelectPublicExtended } from "@/lib/validations";
+import { userSelectPublicExtended, categorySelect } from "@/lib/validations";
 
 export interface GetPostsOptions {
   userId?: string;
@@ -39,6 +39,9 @@ export async function getPosts(
           user: {
             select: userSelectPublicExtended,
           },
+          category: {
+            select: categorySelect,
+          },
           _count: {
             select: {
               comments: true,
@@ -47,7 +50,13 @@ export async function getPosts(
         },
       });
 
-      return posts as PostWithUser[];
+      // 削除されたカテゴリを持つPostのcategoryをnullに設定 / Set category to null for posts with deleted categories
+      const postsWithValidCategories = posts.map((post) => ({
+        ...post,
+        category: post.category?.deletedAt ? null : post.category,
+      }));
+
+      return postsWithValidCategories as PostWithUser[];
     },
     [`posts-${userId || "all"}-${page}-${limit}`], // Cache key（パラメータを含む）
     {
@@ -89,6 +98,9 @@ export async function getHotPosts(
           user: {
             select: userSelectPublicExtended,
           },
+          category: {
+            select: categorySelect,
+          },
           _count: {
             select: {
               comments: true,
@@ -97,9 +109,15 @@ export async function getHotPosts(
         },
       });
 
+      // 削除されたカテゴリを持つPostのcategoryをnullに設定 / Set category to null for posts with deleted categories
+      const postsWithValidCategories = posts.map((post) => ({
+        ...post,
+        category: post.category?.deletedAt ? null : post.category,
+      }));
+
       // 熱度スコアを計算してソート
       // Calculate hot score and sort
-      const postsWithScore = posts.map((post) => {
+      const postsWithScore = postsWithValidCategories.map((post) => {
         // 時間減衰係数を計算（新しい投稿ほど高いスコア）
         // Calculate time decay factor (newer posts get higher score)
         const hoursSinceCreation =
@@ -143,11 +161,14 @@ export async function getHotPosts(
  */
 export async function getPostById(id: string) {
   "use cache";
-  return await prisma.post.findUnique({
+  const post = await prisma.post.findUnique({
     where: { id },
     include: {
       user: {
         select: userSelectPublicExtended,
+      },
+      category: {
+        select: categorySelect,
       },
       comments: {
         where: { parentId: null },
@@ -165,6 +186,16 @@ export async function getPostById(id: string) {
       },
     },
   });
+
+  // 削除されたカテゴリの場合はnullに設定 / Set category to null if deleted
+  if (post && post.category?.deletedAt) {
+    return {
+      ...post,
+      category: null,
+    };
+  }
+
+  return post;
 }
 
 /**
@@ -190,16 +221,34 @@ export async function getPostsCount(
  */
 export async function createPost(
   userId: string,
-  data: { title: string; content: string; tags: string[] }
+  data: { title: string; content: string; tags: string[]; categoryId?: string | null }
 ) {
+  // カテゴリが指定されている場合、存在し未削除であることを確認
+  // If category is specified, verify it exists and is not deleted
+  if (data.categoryId) {
+    const category = await prisma.category.findUnique({
+      where: { id: data.categoryId },
+    });
+
+    if (!category || category.deletedAt) {
+      throw new Error("Category not found or has been deleted");
+    }
+  }
+
   return await prisma.post.create({
     data: {
-      ...data,
+      title: data.title,
+      content: data.content,
+      tags: data.tags,
+      categoryId: data.categoryId || null,
       userId,
     },
     include: {
       user: {
         select: userSelectPublicExtended,
+      },
+      category: {
+        select: categorySelect,
       },
     },
   });
@@ -210,14 +259,36 @@ export async function createPost(
  */
 export async function updatePost(
   id: string,
-  data: { title?: string; content?: string; tags?: string[] }
+  data: { title?: string; content?: string; tags?: string[]; categoryId?: string | null }
 ) {
+  // カテゴリが指定されている場合、存在し未削除であることを確認
+  // If category is specified, verify it exists and is not deleted
+  if (data.categoryId !== undefined) {
+    if (data.categoryId) {
+      const category = await prisma.category.findUnique({
+        where: { id: data.categoryId },
+      });
+
+      if (!category || category.deletedAt) {
+        throw new Error("Category not found or has been deleted");
+      }
+    }
+  }
+
   return await prisma.post.update({
     where: { id },
-    data,
+    data: {
+      ...(data.title !== undefined && { title: data.title }),
+      ...(data.content !== undefined && { content: data.content }),
+      ...(data.tags !== undefined && { tags: data.tags }),
+      ...(data.categoryId !== undefined && { categoryId: data.categoryId || null }),
+    },
     include: {
       user: {
         select: userSelectPublicExtended,
+      },
+      category: {
+        select: categorySelect,
       },
     },
   });
@@ -310,6 +381,9 @@ export async function getAllPostsAdmin(
       include: {
         user: {
           select: userSelectPublicExtended,
+        },
+        category: {
+          select: categorySelect,
         },
         _count: {
           select: {
