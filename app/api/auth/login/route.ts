@@ -19,10 +19,14 @@ export async function POST(request: NextRequest) {
         email: true,
         password: true,
         isBanned: true,
-        name: true,
-        nickname: true,
-        avatar: true,
         isAdmin: true,
+        profile: {
+          select: {
+            name: true,
+            nickname: true,
+            avatar: true,
+          },
+        },
       },
     });
 
@@ -71,12 +75,19 @@ export async function POST(request: NextRequest) {
     // ホームページのキャッシュもクリア
     revalidatePath("/");
 
-    // Return user without password
-    const { password: _, ...userWithoutPassword } = user;
+    // Return user without password, with profile data flattened
+    const { password: _, profile, ...userWithoutPassword } = user;
+    
+    const userResponse = {
+      ...userWithoutPassword,
+      name: profile?.name || user.userId,
+      nickname: profile?.nickname || null,
+      avatar: profile?.avatar || null,
+    };
 
     return NextResponse.json({
       message: "Login successful",
-      user: userWithoutPassword,
+      user: userResponse,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

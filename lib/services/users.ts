@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
-import type { User, UserWithCounts, UserWithStats, UserProfilePage } from "@/lib/types";
-import { userSelectFull, userSelectWithStats, userSelectPublicExtended } from "@/lib/validations";
+import type { User, UserWithCounts, UserWithStats, UserProfilePage, UserWithProfile } from "@/lib/types";
+import { userSelectFull, userSelectWithStats, userSelectPublicExtended, profileSelectPublic } from "@/lib/validations";
 
 /**
  * Check if a userId is available
@@ -44,16 +44,23 @@ export async function getUserWithCounts(
  * Get a user's profile data (for settings/edit pages)
  * Cache を使用してパフォーマンスを最適化
  */
-export async function getUserProfile(userId: string) {
+export async function getUserProfile(userId: string): Promise<UserWithProfile | null> {
   "use cache";
-  return await prisma.user.findUnique({
-    where: { id: userId },
+  const user = await prisma.user.findUnique({
+    where: { userId },
     select: userSelectFull,
   });
+  
+  if (!user || !user.profile) {
+    return null;
+  }
+  
+  return user as UserWithProfile;
 }
 
 /**
- * Update user profile
+ * Update user profile (deprecated - use Profile Service instead)
+ * @deprecated Use updateProfile from lib/services/profiles instead
  */
 export async function updateUserProfile(
   userId: string,
@@ -65,9 +72,16 @@ export async function updateUserProfile(
     points?: number;
   }
 ) {
+  // 僅更新points（User欄位）
+  // Only update points (User field)
+  const updateData: any = {};
+  if (data.points !== undefined) {
+    updateData.points = data.points;
+  }
+  
   return await prisma.user.update({
-    where: { id: userId },
-    data,
+    where: { userId },
+    data: updateData,
     select: userSelectFull,
   });
 }
@@ -83,6 +97,7 @@ export async function getUserProfilePage(userId: string, recentPostsLimit = 6): 
     select: {
       ...userSelectFull,
       posts: {
+        where: { deletedAt: null },
         orderBy: { createdAt: "desc" },
         take: recentPostsLimit,
         select: {
@@ -96,7 +111,14 @@ export async function getUserProfilePage(userId: string, recentPostsLimit = 6): 
           updatedAt: true,
           userId: true,
           user: {
-            select: userSelectPublicExtended,
+            select: {
+              id: true,
+              userId: true,
+              email: true,
+              profile: {
+                select: profileSelectPublic,
+              },
+            },
           },
           _count: {
             select: {
@@ -115,7 +137,12 @@ export async function getUserProfilePage(userId: string, recentPostsLimit = 6): 
       },
     },
   });
-  return result as UserProfilePage | null;
+  
+  if (!result || !result.profile) {
+    return null;
+  }
+  
+  return result as UserProfilePage;
 }
 
 /**
@@ -179,15 +206,26 @@ export async function getUserLikedComments(userId: string) {
 export async function getUserComments(userId: string) {
   "use cache";
   return await prisma.user.findUnique({
-    where: { id: userId },
+    where: { userId },
     select: {
       id: true,
-      name: true,
+      userId: true,
+      profile: {
+        select: profileSelectPublic,
+      },
       comments: {
+        where: { deletedAt: null },
         orderBy: { createdAt: "desc" },
         include: {
           user: {
-            select: userSelectPublicExtended,
+            select: {
+              id: true,
+              userId: true,
+              email: true,
+              profile: {
+                select: profileSelectPublic,
+              },
+            },
           },
           post: {
             select: {
@@ -219,14 +257,19 @@ export async function getAllUsers(
       select: {
         id: true,
         userId: true,
-        name: true,
-        nickname: true,
         email: true,
-        avatar: true,
         isAdmin: true,
         isBanned: true,
         points: true,
         createdAt: true,
+        profile: {
+          where: { deletedAt: null },
+          select: {
+            name: true,
+            nickname: true,
+            avatar: true,
+          },
+        },
         _count: {
           select: {
             posts: true,
@@ -261,14 +304,18 @@ export async function getUsersCount(): Promise<number> {
  */
 export async function banUser(userId: string) {
   return await prisma.user.update({
-    where: { id: userId },
+    where: { userId },
     data: { isBanned: true },
     select: {
       id: true,
       userId: true,
-      name: true,
       email: true,
       isBanned: true,
+      profile: {
+        select: {
+          name: true,
+        },
+      },
     },
   });
 }
@@ -278,14 +325,18 @@ export async function banUser(userId: string) {
  */
 export async function unbanUser(userId: string) {
   return await prisma.user.update({
-    where: { id: userId },
+    where: { userId },
     data: { isBanned: false },
     select: {
       id: true,
       userId: true,
-      name: true,
       email: true,
       isBanned: true,
+      profile: {
+        select: {
+          name: true,
+        },
+      },
     },
   });
 }

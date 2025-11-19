@@ -1,16 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getSession } from "@/lib/auth";
-import { z } from "zod";
-import { revalidatePath, revalidateTag } from "next/cache";
-import { userSelectFull, userSelectWithStats } from "@/lib/validations";
-
-const updateUserSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters").optional(),
-  gender: z.string().optional().nullable(),
-  birthDate: z.string().optional().nullable(),
-  avatar: z.string().optional().nullable(),
-});
+import { userSelectWithStats } from "@/lib/validations";
 
 export async function GET(
   request: NextRequest,
@@ -34,71 +24,4 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ userId: string }> }
-) {
-  try {
-    const session = await getSession();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { userId } = await params;
-
-    // Check if user is updating their own profile
-    if (session.userId !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    const body = await request.json();
-    const validatedData = updateUserSchema.parse(body);
-
-    const updateData: any = {};
-    if (validatedData.name !== undefined) updateData.name = validatedData.name;
-    if (validatedData.gender !== undefined) {
-      updateData.gender = validatedData.gender || null;
-    }
-    if (validatedData.birthDate !== undefined) {
-      updateData.birthDate = validatedData.birthDate
-        ? new Date(validatedData.birthDate)
-        : null;
-    }
-    if (validatedData.avatar !== undefined) {
-      updateData.avatar = validatedData.avatar || null;
-    }
-
-    const user = await prisma.user.update({
-      where: { userId },
-      data: updateData,
-      select: userSelectFull,
-    });
-
-    // Next.js 16のrevalidateTagを使用して特定ユーザーのキャッシュをクリア
-    // パフォーマンス優先：特定のユーザーのみキャッシュをクリアし、メモリオーバーヘッドを最小限に抑える
-    revalidateTag(`user-${user.userId}`, 'max');
-    // 関連ページのキャッシュもクリア
-    revalidatePath(`/user/${user.userId}`);
-    revalidatePath(`/user/${user.userId}/edit`);
-    revalidatePath(`/settings`);
-    revalidatePath("/"); // ホームページのキャッシュもクリア
-
-    return NextResponse.json({
-      message: "User updated successfully",
-      user,
-    });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Validation failed", details: error.flatten().fieldErrors },
-        { status: 400 }
-      );
-    }
-
-    console.error("Update user error:", error);
-    return NextResponse.json(
-      { error: "Failed to update user" },
-      { status: 500 }
-    );
-  }
-}
+// PATCH endpoint removed - use /api/profile/[userId] instead

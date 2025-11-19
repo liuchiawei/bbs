@@ -43,7 +43,7 @@ export function PostForm({
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("none");
 
   const {
     register,
@@ -92,7 +92,7 @@ export function PostForm({
         content: "",
         tags: "",
       });
-      setSelectedCategoryId("");
+      setSelectedCategoryId("none");
     }
   }, [pathname, mode, initialData, reset]);
 
@@ -120,7 +120,7 @@ export function PostForm({
           title: data.title,
           content: data.content,
           tags,
-          categoryId: selectedCategoryId || null,
+          categoryId: selectedCategoryId === "none" ? null : selectedCategoryId,
         }),
       });
 
@@ -141,7 +141,7 @@ export function PostForm({
           content: "",
           tags: "",
         });
-        setSelectedCategoryId("");
+        setSelectedCategoryId("none");
       }
 
       // API routeでrevalidatePath()が呼ばれているため、キャッシュは既に無効化されている
@@ -203,7 +203,7 @@ export function PostForm({
                 <SelectValue placeholder={t("SELECT_CATEGORY")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">{t("NO_CATEGORY")}</SelectItem>
+                <SelectItem value="none">{t("NO_CATEGORY")}</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}

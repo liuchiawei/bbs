@@ -103,6 +103,219 @@
 
 ---
 
+### feat/user-profile-separation
+
+**難度**: ★★★★★
+
+**描述**: 實作用戶 Profile 分離系統，將登錄資訊（email, userId, password）與個人資料（name, nickname, avatar 等）完全分離，簡化註冊流程，實作 Profile 軟刪除機制，並新增欄位可見性控制功能（public/friends/private）
+
+**資料庫架構** (`prisma/schema.prisma`):
+
+- **簡化 User 模型**：
+  - 移除 `name`, `nickname`, `gender`, `birthDate`, `avatar` 欄位
+  - 保留登錄相關欄位：`id`, `userId`, `email`, `password`
+  - 保留系統欄位：`isAdmin`, `isBanned`, `points`, `createdAt`, `updatedAt`
+  - 新增 `profile` 一對一關聯
+- **新增 Profile 模型**：
+  - 基本資訊：`id`, `userId` (unique), `name`, `nickname`, `gender`, `birthDate`, `avatar`
+  - 擴展欄位：`height`, `weight`, `description`, `record`, `train_start`, `stance`, `gym`
+  - 可見性設定：`visibility` (JSON) - 每個欄位可設定 public/friends/private
+  - 軟刪除：`deletedAt` (DateTime?)
+  - 時間戳：`createdAt`, `updatedAt`
+  - 索引：`@@index([userId])`, `@@index([deletedAt])`
+  - 關聯：`user` (User, onDelete: Cascade)
+
+**類型定義更新** (`lib/types.ts`):
+
+- 新增 `ProfileVisibility` 類型：`"public" | "friends" | "private"`
+- 新增 `ProfileVisibilitySettings` 介面：定義每個欄位的可見性設定
+- 新增 `Profile` 介面：完整的 Profile 資料結構
+- 新增 `ProfilePublic` 介面：公開顯示用 Profile
+- 新增 `CreateProfileInput`, `UpdateProfileInput`, `UpdateVisibilityInput` 介面
+- 簡化 `User` 介面：移除 profile 相關欄位，新增 `profile?: Profile | null`
+- 新增 `UserWithProfile` 介面：User + Profile 組合類型
+- 更新 `UserPublic`, `UserPublicExtended`：註明從 profile 讀取資料
+- 簡化 `RegisterInput`：僅保留 `userId`, `email`, `password`
+- 更新 `UserProfilePage`：使用 `UserWithProfile`
+- 新增 `UserWithProfileAndStats` 介面
+
+**驗證 Schema** (`lib/validations.ts`):
+
+- **簡化 `registerSchema`**：移除 `name`, `nickname`, `gender`, `birthDate`
+- **新增 Profile Schema**：
+  - `profileVisibilitySchema`: enum("public", "friends", "private")
+  - `profileVisibilitySettingsSchema`: 定義所有欄位的可見性設定
+  - `createProfileSchema`: 包含所有 Profile 欄位和驗證規則
+  - `updateProfileSchema`: 部分更新，userId 不可更新
+  - `updateVisibilitySchema`: 僅更新可見性設定
+- **更新 Select Constants**：
+  - 新增 `profileSelectPublic`: 公開顯示用 Profile 欄位
+  - 新增 `profileSelectFull`: 完整 Profile 欄位
+  - 更新 `userSelectPublic`: 包含 `profile` 關聯
+  - 更新 `userSelectPublicExtended`: 包含 `profile` 關聯
+  - 更新 `userSelectFull`: 包含 `profile` 關聯
+  - 更新 `postIncludeBasic`, `commentIncludeBasic`: 使用新的 profile 結構
+
+**Profile Service** (`lib/services/profiles.ts`):
+
+- `checkFieldVisibility()`: 檢查欄位是否對查看者可見
+- `filterProfileByVisibility()`: 根據可見性設定過濾 Profile 欄位
+- `getProfileByUserId()`: 取得 Profile（根據可見性過濾，使用 unstable_cache）
+- `getProfileByUserIdForOwner()`: 取得完整 Profile（不進行可見性過濾）
+- `createProfile()`: 創建 Profile，設定預設可見性（全 public）
+- `updateProfile()`: 更新 Profile
+- `updateVisibility()`: 更新可見性設定
+- `softDeleteProfile()`: 軟刪除 Profile
+- `restoreProfile()`: 恢復軟刪除的 Profile
+- `getProfileWithUser()`: 取得 User + Profile 組合
+
+**User Service 更新** (`lib/services/users.ts`):
+
+- 所有查詢加入 `profile` include
+- `getUserProfile()`: 返回 `UserWithProfile`，確保 profile 存在
+- `getUserProfilePage()`: 過濾軟刪除的 profile 和 posts
+- `getUserComments()`: 包含 profile 資料
+- `getAllUsers()`: 包含 profile 資料（管理員用）
+- `banUser()`, `unbanUser()`: 包含 profile 資料
+
+**Post/Comment Service 更新**:
+
+- `lib/services/posts.ts`: 新增 `transformUser()` 函數，將嵌套的 profile 結構轉換為扁平結構
+- `lib/services/comments.ts`: 新增 `transformUser()` 函數
+- 所有返回 User 資料的函數都使用 `transformUser()` 進行轉換
+
+**API 端點**:
+
+- **註冊 API** (`app/api/auth/register/route.ts`):
+  - 簡化註冊流程，僅接收 `userId`, `email`, `password`
+  - 使用 transaction 同時創建 User 和 Profile
+  - Profile 預設 name 使用 `userId`，設定預設可見性（全 public）
+- **登入 API** (`app/api/auth/login/route.ts`):
+  - 從 `profile` 關聯查詢顯示資料
+  - 扁平化返回資料結構
+- **Auth Me API** (`app/api/auth/me/route.ts`):
+  - 扁平化返回資料，將 profile 資料合併到頂層
+- **Profile API** (`app/api/profile/[userId]/route.ts`):
+  - `GET`: 取得 Profile（根據可見性過濾）
+  - `PATCH`: 更新 Profile（僅自己可更新）
+  - `DELETE`: 軟刪除 Profile（僅自己可刪除）
+- **可見性 API** (`app/api/profile/[userId]/visibility/route.ts`):
+  - `GET`: 取得可見性設定（僅自己可見）
+  - `PATCH`: 更新可見性設定（僅自己可更新）
+- **管理員 Profile API** (`app/api/admin/profiles/route.ts`):
+  - `GET`: 取得所有 Profile（支援分頁和包含已刪除）
+- **管理員 Profile 操作 API** (`app/api/admin/profiles/[userId]/route.ts`):
+  - `PATCH`: 更新任何 Profile
+- **管理員 Profile 恢復 API** (`app/api/admin/profiles/[userId]/restore/route.ts`):
+  - `POST`: 恢復軟刪除的 Profile
+
+**前端組件**:
+
+- **註冊表單** (`components/auth/register-form.tsx`):
+  - 移除 `name`, `nickname`, `gender`, `birthDate` 欄位
+  - 僅保留 `userId`, `email`, `password`, `confirmPassword`
+- **Profile 編輯表單** (`components/profile/edit-profile-form.tsx`):
+  - 完全重寫，使用 Tabs 分為「基本資訊」和「可見性設定」
+  - 包含所有新欄位：height, weight, description, record, train_start, stance, gym
+  - 整合 `ProfileVisibilitySettings` 組件
+- **可見性設定組件** (`components/profile/profile-visibility-settings.tsx`):
+  - 新建組件，允許用戶為每個欄位設定可見性
+  - 使用 Select 組件選擇 public/friends/private
+- **管理員 Profile 管理** (`components/admin/profile-management.tsx`):
+  - 新建組件，顯示所有 Profile 列表
+  - 支援查看、恢復軟刪除的 Profile
+  - 顯示 Profile 狀態（Active/Deleted/Banned）
+- **Admin Tabs** (`components/admin/admin-tabs.tsx`):
+  - 新增 Profile Management tab
+- **用戶資料顯示組件**:
+  - `components/posts/post-card-author.tsx`: 使用 `UserPublic` 類型
+  - `components/posts/post-profile-hovercard.tsx`: 使用 `UserPublic` 類型
+  - `components/profile/profile-card.tsx`: 使用 `UserPublic` 類型
+  - `components/profile/profile-hovercard.tsx`: 使用 `UserPublic` 類型
+- **Navbar** (`components/layout/navbar.tsx`):
+  - 安全訪問用戶資料，處理 profile 可能為 null 的情況
+
+**頁面更新**:
+
+- `app/settings/page.tsx`: 使用 `getUserProfile()` 獲取 `UserWithProfile`
+- `app/user/[userId]/edit/page.tsx`: 使用 `getUserProfile()` 獲取 `UserWithProfile`
+- `app/user/[userId]/page.tsx`: 從 `user.profile` 讀取顯示資料，顯示所有 Profile 欄位
+
+**多語言支援** (`lib/constants.ts`):
+
+- 新增可見性相關翻譯（四種語言）：
+  - `PROFILE_MANAGEMENT`, `VISIBILITY_SETTINGS`, `VISIBILITY_SETTINGS_DESCRIPTION`
+  - `BASIC_INFO`, `PUBLIC`, `FRIENDS_ONLY`, `PRIVATE`
+  - `HEIGHT`, `WEIGHT`, `DESCRIPTION`, `RECORD`, `TRAIN_START_YEAR`, `STANCE`, `GYM`
+  - `NO_PROFILES_FOUND`, `DELETED`, `ACTIVE`, `BANNED`, `CREATED_AT`, `SUCCESS_RESTORED`
+
+**修復問題**:
+
+- **登入 API 500 錯誤** (`app/api/auth/login/route.ts`):
+  - 修正查詢舊 User 欄位的問題，改為從 `profile` 關聯查詢
+- **Navbar 顯示問題** (`components/layout/navbar.tsx`, `app/api/auth/me/route.ts`):
+  - 更新 `/api/auth/me` 扁平化返回資料
+  - 添加安全訪問，處理 profile 為 null 的情況
+- **Category 路由 404** (`app/category/[slug]/page.tsx`):
+  - 實作完整的 Category 頁面，支援 slug 查詢
+  - 處理 "general" 預設值，顯示無分類的貼文
+  - 新增 `getCategoryBySlug()` 函數
+- **Post Form Select 錯誤** (`components/posts/post-form.tsx`):
+  - 修正 Select.Item 不能使用空字串作為 value 的問題
+  - 使用 "none" 作為特殊值，提交時轉換為 null
+
+**效能優化**:
+
+- Profile 查詢使用 `unstable_cache` 和 cache tags
+- 建立適當的資料庫索引（userId, deletedAt）
+- 使用 transaction 確保 User 和 Profile 創建的一致性
+- Post/Comment Service 使用 `transformUser()` 統一轉換邏輯，避免重複代碼
+
+**向後兼容性**:
+
+- 保留 `updateUserSchema` 作為 deprecated（向後兼容）
+- 保留 `EditProfileInput` 作為 deprecated
+- `AnonymousUser` 更新為扁平結構，符合 `UserPublic` 類型
+- Service 層統一轉換邏輯，前端組件無需大幅修改
+
+**主要修改文件**:
+
+1. `prisma/schema.prisma` - 簡化 User 模型，新增 Profile 模型
+2. `lib/types.ts` - 新增 Profile 相關類型，簡化 User 類型
+3. `lib/validations.ts` - 簡化 registerSchema，新增 Profile schema 和 select constants
+4. `lib/services/profiles.ts` - 新建 Profile Service（包含可見性邏輯）
+5. `lib/services/users.ts` - 更新所有查詢包含 profile
+6. `lib/services/posts.ts` - 新增 transformUser 函數
+7. `lib/services/comments.ts` - 新增 transformUser 函數
+8. `lib/services/categories.ts` - 新增 getCategoryBySlug 函數
+9. `lib/auth.ts` - 更新 getCurrentUser 使用 profile
+10. `app/api/auth/register/route.ts` - 簡化註冊流程，自動創建 Profile
+11. `app/api/auth/login/route.ts` - 修正查詢 profile 資料
+12. `app/api/auth/me/route.ts` - 扁平化返回資料
+13. `app/api/profile/[userId]/route.ts` - 新建 Profile CRUD API
+14. `app/api/profile/[userId]/visibility/route.ts` - 新建可見性 API
+15. `app/api/admin/profiles/route.ts` - 新建管理員 Profile 列表 API
+16. `app/api/admin/profiles/[userId]/route.ts` - 新建管理員 Profile 更新 API
+17. `app/api/admin/profiles/[userId]/restore/route.ts` - 新建恢復 API
+18. `components/auth/register-form.tsx` - 簡化註冊表單
+19. `components/profile/edit-profile-form.tsx` - 重寫 Profile 編輯表單
+20. `components/profile/profile-visibility-settings.tsx` - 新建可見性設定組件
+21. `components/admin/profile-management.tsx` - 新建管理員 Profile 管理組件
+22. `components/admin/admin-tabs.tsx` - 新增 Profile Management tab
+23. `components/layout/navbar.tsx` - 更新用戶資料顯示
+24. `components/posts/post-card-author.tsx` - 更新為使用 UserPublic
+25. `components/posts/post-profile-hovercard.tsx` - 更新為使用 UserPublic
+26. `components/profile/profile-card.tsx` - 更新為使用 UserPublic
+27. `components/profile/profile-hovercard.tsx` - 更新為使用 UserPublic
+28. `components/posts/post-form.tsx` - 修正 Select 組件錯誤
+29. `app/settings/page.tsx` - 更新為使用 UserWithProfile
+30. `app/user/[userId]/edit/page.tsx` - 更新為使用 UserWithProfile
+31. `app/user/[userId]/page.tsx` - 從 profile 讀取顯示資料
+32. `app/category/[slug]/page.tsx` - 實作完整 Category 頁面
+33. `lib/constants.ts` - 新增可見性相關翻譯
+
+---
+
 ## 2025-11-18
 
 ### refactor/post-soft-delete

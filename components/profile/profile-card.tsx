@@ -7,7 +7,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User } from "@/lib/types";
+import { UserPublic } from "@/lib/types";
 import { AnonymousUser } from "@/lib/constants";
 
 export default function ProfileCard({
@@ -18,7 +18,7 @@ export default function ProfileCard({
 }: {
   size?: "sm" | "lg";
   direction?: "vertical" | "horizontal";
-  user?: User;
+  user?: UserPublic;
   className?: string;
 }) {
   return (

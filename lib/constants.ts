@@ -48,13 +48,13 @@ export const APP_CONSTANTS = {
 export const TRANSLATIONS = {
   en: {
     // Application info
-    APP_NAME: "Boxing Buddies World",
-    APP_SHORT_NAME: "BBW",
+    APP_NAME: "Boxing Buddies Society",
+    APP_SHORT_NAME: "BBS",
     APP_DESCRIPTION:
       "A boxing community for boxing buddies to share their thoughts and experiences worldwide.",
 
     // Home page
-    HOME_WELCOME: "Welcome to BBW",
+    HOME_WELCOME: "Welcome to BBS",
     HOME_SUBTITLE: "Share your thoughts, connect with others",
     HOME_NO_POSTS: "No posts yet",
     HOME_CREATE_FIRST_POST: "Create the first post",
@@ -295,17 +295,39 @@ export const TRANSLATIONS = {
     MINUTES_AGO: "minutes ago",
     HOURS_AGO: "hours ago",
     DAYS_AGO: "days ago",
+    // Profile Visibility
+    PROFILE_MANAGEMENT: "Profile Management",
+    VISIBILITY_SETTINGS: "Visibility Settings",
+    VISIBILITY_SETTINGS_DESCRIPTION:
+      "Control who can see each field of your profile",
+    BASIC_INFO: "Basic Info",
+    PUBLIC: "Public",
+    FRIENDS_ONLY: "Friends Only",
+    PRIVATE: "Private",
+    HEIGHT: "Height",
+    WEIGHT: "Weight",
+    DESCRIPTION: "Description",
+    RECORD: "Record",
+    TRAIN_START_YEAR: "Training Start Year",
+    STANCE: "Stance",
+    GYM: "Gym",
+    NO_PROFILES_FOUND: "No profiles found",
+    DELETED: "Deleted",
+    ACTIVE: "Active",
+    BANNED: "Banned",
+    CREATED_AT: "Created At",
+    SUCCESS_RESTORED: "Restored successfully",
   },
 
   ja: {
     // Application info
-    APP_NAME: "ボクシング仲間の会",
-    APP_SHORT_NAME: "BBW",
+    APP_NAME: "BBS",
+    APP_SHORT_NAME: "BBS",
     APP_DESCRIPTION:
       "ボクシング仲間が世界中で考えや経験を共有するためのコミュニティ。",
 
     // Home page
-    HOME_WELCOME: "BBWへようこそ",
+    HOME_WELCOME: "BBSへようこそ",
     HOME_SUBTITLE: "あなたの考えをシェアし、他の人とつながりましょう",
     HOME_NO_POSTS: "まだ投稿がありません",
     HOME_CREATE_FIRST_POST: "最初の投稿を作成",
@@ -547,6 +569,27 @@ export const TRANSLATIONS = {
     MINUTES_AGO: "分前",
     HOURS_AGO: "時間前",
     DAYS_AGO: "天前",
+    // Profile Visibility
+    PROFILE_MANAGEMENT: "プロフィール管理",
+    VISIBILITY_SETTINGS: "公開設定",
+    VISIBILITY_SETTINGS_DESCRIPTION: "各フィールドの公開範囲を設定できます",
+    BASIC_INFO: "基本情報",
+    PUBLIC: "公開",
+    FRIENDS_ONLY: "友達のみ",
+    PRIVATE: "非公開",
+    HEIGHT: "身長",
+    WEIGHT: "体重",
+    DESCRIPTION: "自己紹介",
+    RECORD: "戦績",
+    TRAIN_START_YEAR: "トレーニング開始年",
+    STANCE: "スタンス",
+    GYM: "所属ジム",
+    NO_PROFILES_FOUND: "プロフィールが見つかりません",
+    DELETED: "削除済み",
+    ACTIVE: "アクティブ",
+    BANNED: "禁止",
+    CREATED_AT: "作成日",
+    SUCCESS_RESTORED: "復元しました",
   },
 
   "zh-CN": {
@@ -796,6 +839,27 @@ export const TRANSLATIONS = {
     MINUTES_AGO: "分钟前",
     HOURS_AGO: "小时前",
     DAYS_AGO: "天前",
+    // Profile Visibility
+    PROFILE_MANAGEMENT: "个人资料管理",
+    VISIBILITY_SETTINGS: "可见性设置",
+    VISIBILITY_SETTINGS_DESCRIPTION: "控制谁可以看到您个人资料的每个字段",
+    BASIC_INFO: "基本信息",
+    PUBLIC: "公开",
+    FRIENDS_ONLY: "仅好友",
+    PRIVATE: "仅自己",
+    HEIGHT: "身高",
+    WEIGHT: "体重",
+    DESCRIPTION: "自我介绍",
+    RECORD: "战绩",
+    TRAIN_START_YEAR: "训练开始年份",
+    STANCE: "站架",
+    GYM: "所属拳馆",
+    NO_PROFILES_FOUND: "未找到个人资料",
+    DELETED: "已删除",
+    ACTIVE: "活跃",
+    BANNED: "已封禁",
+    CREATED_AT: "创建时间",
+    SUCCESS_RESTORED: "恢复成功",
   },
 
   "zh-TW": {
@@ -1032,6 +1096,27 @@ export const TRANSLATIONS = {
     MINUTES_AGO: "分前",
     HOURS_AGO: "小時前",
     DAYS_AGO: "天前",
+    // Profile Visibility
+    PROFILE_MANAGEMENT: "個人資料管理",
+    VISIBILITY_SETTINGS: "可見性設定",
+    VISIBILITY_SETTINGS_DESCRIPTION: "控制誰可以看到您個人資料的每個欄位",
+    BASIC_INFO: "基本資訊",
+    PUBLIC: "公開",
+    FRIENDS_ONLY: "僅好友",
+    PRIVATE: "僅自己",
+    HEIGHT: "身高",
+    WEIGHT: "體重",
+    DESCRIPTION: "自我介紹",
+    RECORD: "戰績",
+    TRAIN_START_YEAR: "訓練開始年份",
+    STANCE: "站架",
+    GYM: "所屬拳館",
+    NO_PROFILES_FOUND: "未找到個人資料",
+    DELETED: "已刪除",
+    ACTIVE: "活躍",
+    BANNED: "已封禁",
+    CREATED_AT: "建立時間",
+    SUCCESS_RESTORED: "恢復成功",
   },
 } as const;
 
@@ -1043,18 +1128,12 @@ export const t = (
   return TRANSLATIONS[lang ?? "ja"][key] ?? key;
 };
 
-export const AnonymousUser: User = {
+// AnonymousUser は UserPublic 型として使用される（扁平構造）
+// AnonymousUser is used as UserPublic type (flat structure)
+export const AnonymousUser = {
   id: "",
   userId: "",
   name: t("ANONYMOUS"),
   nickname: t("ANONYMOUS"),
-  email: "",
-  gender: null,
-  birthDate: null,
   avatar: null,
-  isAdmin: false,
-  isBanned: false,
-  points: 0,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
+} as const;

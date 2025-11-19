@@ -1,7 +1,35 @@
 import { prisma } from "@/lib/db";
-import type { PostWithUser } from "@/lib/types";
+import type { PostWithUser, UserPublicExtended } from "@/lib/types";
 import { unstable_cache } from "next/cache";
 import { userSelectPublicExtended, categorySelect } from "@/lib/validations";
+
+/**
+ * 將嵌套的profile結構轉換為扁平結構
+ * Convert nested profile structure to flat structure
+ */
+function transformUser(user: any): UserPublicExtended {
+  if (!user.profile) {
+    // 如果沒有profile，使用userId作為預設值
+    // If no profile, use userId as default
+    return {
+      id: user.id,
+      userId: user.userId,
+      email: user.email,
+      name: user.userId,
+      nickname: null,
+      avatar: null,
+    };
+  }
+  
+  return {
+    id: user.id,
+    userId: user.userId,
+    email: user.email,
+    name: user.profile.name || user.userId,
+    nickname: user.profile.nickname || null,
+    avatar: user.profile.avatar || null,
+  };
+}
 
 export interface GetPostsOptions {
   userId?: string;
@@ -51,9 +79,11 @@ export async function getPosts(
       });
 
       // 削除されたカテゴリを持つPostのcategoryをnullに設定 / Set category to null for posts with deleted categories
+      // ユーザー情報をフラット構造に変換 / Transform user info to flat structure
       const postsWithValidCategories = posts.map((post) => ({
         ...post,
         category: post.category?.deletedAt ? null : post.category,
+        user: transformUser(post.user),
       }));
 
       return postsWithValidCategories as PostWithUser[];
@@ -110,9 +140,11 @@ export async function getHotPosts(
       });
 
       // 削除されたカテゴリを持つPostのcategoryをnullに設定 / Set category to null for posts with deleted categories
+      // ユーザー情報をフラット構造に変換 / Transform user info to flat structure
       const postsWithValidCategories = posts.map((post) => ({
         ...post,
         category: post.category?.deletedAt ? null : post.category,
+        user: transformUser(post.user),
       }));
 
       // 熱度スコアを計算してソート
@@ -187,15 +219,19 @@ export async function getPostById(id: string) {
     },
   });
 
-  // 削除されたカテゴリの場合はnullに設定 / Set category to null if deleted
-  if (post && post.category?.deletedAt) {
-    return {
-      ...post,
-      category: null,
-    };
-  }
+  if (!post) return null;
 
-  return post;
+  // 削除されたカテゴリの場合はnullに設定 / Set category to null if deleted
+  // ユーザー情報をフラット構造に変換 / Transform user info to flat structure
+  return {
+    ...post,
+    category: post.category?.deletedAt ? null : post.category,
+    user: transformUser(post.user),
+    comments: post.comments.map((comment: any) => ({
+      ...comment,
+      user: transformUser(comment.user),
+    })),
+  };
 }
 
 /**
@@ -235,7 +271,7 @@ export async function createPost(
     }
   }
 
-  return await prisma.post.create({
+  const post = await prisma.post.create({
     data: {
       title: data.title,
       content: data.content,
@@ -252,6 +288,12 @@ export async function createPost(
       },
     },
   });
+
+  return {
+    ...post,
+    category: post.category?.deletedAt ? null : post.category,
+    user: transformUser(post.user),
+  };
 }
 
 /**
@@ -275,7 +317,7 @@ export async function updatePost(
     }
   }
 
-  return await prisma.post.update({
+  const post = await prisma.post.update({
     where: { id },
     data: {
       ...(data.title !== undefined && { title: data.title }),
@@ -292,6 +334,12 @@ export async function updatePost(
       },
     },
   });
+
+  return {
+    ...post,
+    category: post.category?.deletedAt ? null : post.category,
+    user: transformUser(post.user),
+  };
 }
 
 /**
@@ -396,7 +444,11 @@ export async function getAllPostsAdmin(
   ]);
 
   return {
-    posts,
+    posts: posts.map((post) => ({
+      ...post,
+      category: post.category?.deletedAt ? null : post.category,
+      user: transformUser(post.user),
+    })),
     pagination: {
       page,
       limit,

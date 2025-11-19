@@ -14,16 +14,11 @@ datasource db {
 }
 
 model User {
-  // basic information
+  // basic information (login only)
   id        String   @id @default(uuid())
   userId    String   @unique
-  name      String
-  nickname  String?  
   email     String   @unique
   password  String
-  gender    String?
-  birthDate DateTime?
-  avatar    String?
   // role
   isAdmin   Boolean  @default(false)
   isBanned  Boolean  @default(false)
@@ -32,6 +27,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   // relationships
+  profile   Profile?
   posts     Post[]
   comments  Comment[]
   likedPosts PostLike[]
@@ -127,4 +123,35 @@ model CommentLike {
   @@unique([userId, commentId])
   @@index([userId])
   @@index([commentId])
+}
+
+model Profile {
+  // basic information
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  name      String
+  nickname  String?
+  gender    String?
+  birthDate DateTime?
+  avatar    String?
+  // additional fields
+  height    Int?
+  weight    Int?
+  description String?
+  record    String?
+  train_start Int?
+  stance    String?
+  gym       String?
+  // visibility settings (JSON format: { "name": "public", "nickname": "friends", ... })
+  visibility Json    @default("{}")
+  // soft delete
+  deletedAt DateTime?
+  // timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // relationships
+  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([deletedAt])
 }

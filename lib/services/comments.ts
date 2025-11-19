@@ -1,6 +1,34 @@
 import { prisma } from "@/lib/db";
-import type { CommentWithUser } from "@/lib/types";
+import type { CommentWithUser, UserPublicExtended } from "@/lib/types";
 import { userSelectPublicExtended } from "@/lib/validations";
+
+/**
+ * 將嵌套的profile結構轉換為扁平結構
+ * Convert nested profile structure to flat structure
+ */
+function transformUser(user: any): UserPublicExtended {
+  if (!user.profile) {
+    // 如果沒有profile，使用userId作為預設值
+    // If no profile, use userId as default
+    return {
+      id: user.id,
+      userId: user.userId,
+      email: user.email,
+      name: user.userId,
+      nickname: null,
+      avatar: null,
+    };
+  }
+  
+  return {
+    id: user.id,
+    userId: user.userId,
+    email: user.email,
+    name: user.profile.name || user.userId,
+    nickname: user.profile.nickname || null,
+    avatar: user.profile.avatar || null,
+  };
+}
 
 /**
  * Get comments for a post
@@ -24,7 +52,10 @@ export async function getCommentsByPostId(postId: string): Promise<CommentWithUs
     },
   });
 
-  return comments as CommentWithUser[];
+  return comments.map((comment) => ({
+    ...comment,
+    user: transformUser(comment.user),
+  })) as CommentWithUser[];
 }
 
 /**
@@ -44,7 +75,10 @@ export async function getCommentReplies(commentId: string): Promise<CommentWithU
     },
   });
 
-  return replies as CommentWithUser[];
+  return replies.map((reply) => ({
+    ...reply,
+    user: transformUser(reply.user),
+  })) as CommentWithUser[];
 }
 
 /**
@@ -54,7 +88,7 @@ export async function getCommentReplies(commentId: string): Promise<CommentWithU
  */
 export async function getCommentById(id: string) {
   "use cache";
-  return await prisma.comment.findUnique({
+  const comment = await prisma.comment.findUnique({
     where: { id },
     include: {
       user: {
@@ -62,13 +96,20 @@ export async function getCommentById(id: string) {
       },
     },
   });
+  
+  if (!comment) return null;
+  
+  return {
+    ...comment,
+    user: transformUser(comment.user),
+  };
 }
 
 /**
  * Create a new comment
  */
 export async function createComment(userId: string, data: { content: string; postId: string; parentId?: string }) {
-  return await prisma.comment.create({
+  const comment = await prisma.comment.create({
     data: {
       ...data,
       userId,
@@ -79,6 +120,11 @@ export async function createComment(userId: string, data: { content: string; pos
       },
     },
   });
+  
+  return {
+    ...comment,
+    user: transformUser(comment.user),
+  };
 }
 
 /**

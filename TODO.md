@@ -12,14 +12,6 @@
 
 ## Features
 
-### feat/top-page-timeline
-
-**狀態**: 已完成（詳細記錄見 CHANGELOG.md）
-
-**難度**: ★☆☆☆☆
-
-**描述**: 在首頁使用垂直 progress bar indicator，保留現有 timeline 的漸層顏色、寬度與類似的垂直設計。使用 motion 建立新的 progress bar 元件，思考不會導致版面變形又不影響效能和頁面讀取速度的方式
-
 ### feat/post-form-redesign
 
 **難度**: ★★★★☆
@@ -41,21 +33,6 @@
 
 - 更新 Prisma Schema
 - 更新相關 API
-
----
-
-### feat/profile-card-components
-
-**難度**: ★☆☆☆☆
-
-**描述**: 開發多種尺寸的個人資料卡片組件
-
-**前端任務**:
-
-- `profile-card-horizontal-sm`: 橫版小尺寸，hover 使用者名稱時顯示
-- `profile-card-horizontal-lg`: 橫版大尺寸，放在 mypage 頁頭
-- `profile-card-vertical-sm`: 直版小尺寸，功能未定
-- `profile-card-vertical-lg`: 直版大尺寸，放在桌機版 Nav sheet 中
 
 ---
 
@@ -106,16 +83,6 @@
 - 根據實際流量調整 `revalidate` 間隔時間（目前設定為 60 秒）
 - 確保 cache invalidation 邏輯正確運作
 - 環境變數設定：需要在 `.env.local` 或 `.env` 中設定 `REVALIDATE_SECRET`
-
----
-
-### refactor/unify-user-data-types
-
-**狀態**: 已完成（詳細記錄見 CHANGELOG.md）
-
-**難度**: ★★★☆☆
-
-**描述**: 統一使用者資料類型系統，將原本 8 種不同的使用者資料格式合併為 3 個核心類型，解決類型不一致問題並確保所有查詢返回最詳細的使用者資料（包含完整統計資訊）
 
 ---
 

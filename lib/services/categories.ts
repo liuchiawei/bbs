@@ -33,6 +33,24 @@ export async function getAllCategories(): Promise<Category[]> {
 }
 
 /**
+ * Get category by slug
+ * slugでカテゴリを取得
+ */
+export async function getCategoryBySlug(slug: string): Promise<Category | null> {
+  "use cache";
+  const category = await prisma.category.findUnique({
+    where: { slug },
+    select: categorySelect,
+  });
+
+  if (!category || category.deletedAt) {
+    return null;
+  }
+
+  return category as Category;
+}
+
+/**
  * Get all categories including soft-deleted ones (for admin)
  * 管理員用：削除されたカテゴリも含む
  * For admin: Include deleted categories
@@ -250,4 +268,3 @@ export async function softDeleteCategory(id: string): Promise<void> {
     },
   });
 }
-

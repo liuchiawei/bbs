@@ -169,7 +169,7 @@ export function Navbar() {
                     <Avatar className="size-40">
                       <AvatarImage src={user.avatar || undefined} />
                       <AvatarFallback>
-                        {user.name.charAt(0).toUpperCase()}
+                        {(user.name || user.userId || "U").charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </Link>
