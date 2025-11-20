@@ -145,9 +145,12 @@ export function CommentItem({
           <div className="flex items-center gap-2">
             <PostCardAuthor user={comment.user} />
             {bet && (
-              <Badge variant="secondary" className="flex items-center gap-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100 border-yellow-200 dark:border-yellow-800">
-                <Trophy className="w-3 h-3" />
-                Bet: {bet.target_winner_id} ({Number(bet.bet_amount)})
+              <Badge variant="secondary" className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-200/50 dark:border-yellow-800/50 shadow-sm">
+                <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                <span>
+                  Bet: <span className="font-bold">{bet.target_winner_id}</span>
+                  <span className="ml-1 opacity-75">({Number(bet.bet_amount)} pts)</span>
+                </span>
               </Badge>
             )}
           </div>

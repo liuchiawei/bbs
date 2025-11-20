@@ -15,37 +15,51 @@ datasource db {
 
 model User {
   // basic information (login only)
-  id        String   @id @default(uuid())
-  userId    String   @unique
-  email     String   @unique
-  password  String
+  id            String        @id @default(uuid())
+  userId        String        @unique
+  email         String        @unique
+  password      String
   // role
-  isAdmin   Boolean  @default(false)
-  isBanned  Boolean  @default(false)
+  isAdmin       Boolean       @default(false)
+  isBanned      Boolean       @default(false)
   // points system
-  points    Int      @default(1000)
-  virtual_score Decimal @default(1000) // Added for betting system
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  points        Int           @default(1000)
+  virtual_score Decimal       @default(1000) // Added for betting system
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
   // relationships
-  profile   Profile?
-  posts     Post[]
-  comments  Comment[]
-  likedPosts PostLike[]
+  profile       Profile?
+  posts         Post[]
+  comments      Comment[]
+  likedPosts    PostLike[]
   likedComments CommentLike[]
-  bets      BettingLog[]
+  bets          BettingLog[]
+  followedBy    Follows[]     @relation("following")
+  following     Follows[]     @relation("follower")
+}
+
+model Follows {
+  follower    User     @relation("follower", fields: [followerId], references: [userId])
+  followerId  String
+  following   User     @relation("following", fields: [followingId], references: [userId])
+  followingId String
+  createdAt   DateTime @default(now())
+
+  @@id([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
 }
 
 model Category {
   // basic information
-  id           String   @id @default(uuid())
-  name         String   @unique
-  slug         String?  @unique
+  id           String    @id @default(uuid())
+  name         String    @unique
+  slug         String?   @unique
   description  String?
-  displayOrder Int      @default(1) // 表示順序 / Display order
+  displayOrder Int       @default(1) // 表示順序 / Display order
   // timestamps
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
   deletedAt    DateTime? // ソフトデリート用のタイムスタンプ / Soft delete timestamp
   // relationships
   posts        Post[]
@@ -56,24 +70,24 @@ model Category {
 
 model Post {
   // basic information
-  id         String   @id @default(uuid())
+  id         String     @id @default(uuid())
   title      String
   content    String
   userId     String
   tags       String[]
-  categoryId String?  // カテゴリID（オプション） / Category ID (optional)
-  eventId    String?  // 関連するイベントID / Related Event ID
+  categoryId String? // カテゴリID（オプション） / Category ID (optional)
+  eventId    String? // 関連するイベントID / Related Event ID
   // statistics
-  views      Int      @default(0)
-  likes      Int      @default(0)
+  views      Int        @default(0)
+  likes      Int        @default(0)
   // timestamps
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
   deletedAt  DateTime? // ソフトデリート用のタイムスタンプ / Soft delete timestamp
   // relationships
-  user       User     @relation(fields: [userId], references: [userId])
-  category   Category? @relation(fields: [categoryId], references: [id])
-  event      Event?   @relation(fields: [eventId], references: [id])
+  user       User       @relation(fields: [userId], references: [userId])
+  category   Category?  @relation(fields: [categoryId], references: [id])
+  event      Event?     @relation(fields: [eventId], references: [id])
   comments   Comment[]
   likedBy    PostLike[]
 
@@ -83,22 +97,22 @@ model Post {
 
 model Comment {
   // basic information
-  id        String   @id @default(uuid())
+  id        String        @id @default(uuid())
   content   String
   userId    String
   postId    String
   parentId  String?
   // statistics
-  likes     Int      @default(0)
-  replies   Int      @default(0)
+  likes     Int           @default(0)
+  replies   Int           @default(0)
   // timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
   deletedAt DateTime? // ソフトデリート用のタイムスタンプ / Soft delete timestamp
   // relationships
-  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  likedBy CommentLike[]
+  user      User          @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  likedBy   CommentLike[]
 }
 
 model PostLike {
@@ -107,8 +121,8 @@ model PostLike {
   postId    String
   createdAt DateTime @default(now())
   // relationships
-  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
   @@index([userId])
@@ -121,8 +135,8 @@ model CommentLike {
   commentId String
   createdAt DateTime @default(now())
   // relationships
-  user    User    @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@unique([userId, commentId])
   @@index([userId])
@@ -131,47 +145,60 @@ model CommentLike {
 
 model Profile {
   // basic information
-  id        String   @id @default(uuid())
-  userId    String   @unique
-  name      String
-  nickname  String?
-  gender    String?
-  birthDate DateTime?
-  avatar    String?
+  id          String    @id @default(uuid())
+  userId      String    @unique
+  name        String
+  nickname    String?
+  gender      String?
+  birthDate   DateTime?
+  avatar      String?
   // additional fields
-  height    Int?
-  weight    Int?
+  height      Int?
+  weight      Int?
   description String?
-  record    String?
+  record      String?
   train_start Int?
-  stance    String?
-  gym       String?
+  stance      String?
+  gym         String?
   // visibility settings (JSON format: { "name": "public", "nickname": "friends", ... })
-  visibility Json    @default("{}")
+  visibility  Json      @default("{}")
   // soft delete
-  deletedAt DateTime?
+  deletedAt   DateTime?
   // timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   // relationships
-  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@index([userId])
   @@index([deletedAt])
 }
 
 model Event {
-  id               String      @id @default(uuid())
-  name             String
-  fight_date       DateTime
-  status           EventStatus @default(PENDING)
-  winner_id        String?
-  is_manual_override Boolean   @default(false)
-  createdAt        DateTime    @default(now())
-  updatedAt        DateTime    @updatedAt
+  id                 String      @id @default(uuid())
+  name               String
+  fight_date         DateTime
+  status             EventStatus @default(PENDING)
+  winner_id          String?
+  is_manual_override Boolean     @default(false)
+  // External API integration fields
+  external_id        String? // 外部APIのイベントID / External API event ID
+  external_source    String? // データソース（例: "thesportsdb"） / Data source (e.g. "thesportsdb")
+  external_data      Json? // 元のAPIデータスナップショット / Original API data snapshot
+  sport_type         String? // スポーツタイプ（"boxing", "ufc", "mma"） / Sport type
+  last_synced_at     DateTime? // 最後の同期時刻 / Last sync timestamp
+  sync_status        String      @default("pending") // 同期ステータス / Sync status
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
 
-  posts            Post[]
-  bets             BettingLog[]
+  posts Post[]
+  bets  BettingLog[]
+
+  @@unique([external_id, external_source]) // 外部イベントの一意制約 / Unique constraint for external events
+  @@index([external_id, external_source]) // 外部イベントの高速検索 / Fast lookup for external events
+  @@index([fight_date, status]) // 今週のイベントクエリの最適化 / Optimize weekly events query
+  @@index([last_synced_at]) // 増分同期クエリの最適化 / Optimize incremental sync query
+  @@index([sport_type, fight_date]) // イベント分析ページのクエリ最適化（将来の拡張） / Optimize event analysis page query (future expansion)
 }
 
 enum EventStatus {
@@ -183,18 +210,18 @@ enum EventStatus {
 }
 
 model BettingLog {
-  id               String    @id @default(uuid())
-  userId           String
-  eventId          String
-  bet_amount       Decimal
-  target_winner_id String
-  odds_snapshot    Decimal
-  final_payout     Decimal?
+  id                String    @id @default(uuid())
+  userId            String
+  eventId           String
+  bet_amount        Decimal
+  target_winner_id  String
+  odds_snapshot     Decimal
+  final_payout      Decimal?
   settlement_status BetStatus @default(PENDING)
-  createdAt        DateTime  @default(now())
+  createdAt         DateTime  @default(now())
 
-  user             User      @relation(fields: [userId], references: [userId])
-  event            Event     @relation(fields: [eventId], references: [id])
+  user  User  @relation(fields: [userId], references: [userId])
+  event Event @relation(fields: [eventId], references: [id])
 
   @@index([userId])
   @@index([eventId])

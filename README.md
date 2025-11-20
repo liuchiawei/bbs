@@ -120,6 +120,10 @@ BLOB_READ_WRITE_TOKEN="vercel_blob_rw_..."
 
 # ISR Revalidation (Optional - for manual cache invalidation)
 REVALIDATE_SECRET="your-revalidation-secret"
+
+# External API Integration (Optional - for event synchronization)
+THESPORTSDB_API_KEY="123"                      # TheSportsDB API v1 key (default: "123" for free tier)
+EVENTS_SYNC_SECRET="your-events-sync-secret"   # Secret for protecting event sync endpoint (optional)
 ```
 
 #### Getting Database Credentials (Neon)

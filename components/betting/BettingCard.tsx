@@ -37,13 +37,10 @@ export function BettingCard({ event, userPoints }: BettingCardProps) {
   const router = useRouter();
 
   // Parse fighters from event name (assuming "Fighter A vs Fighter B" format)
-  // This is a simple heuristic, ideally we'd have separate fields for fighters
   const fighters = event.name.split(" vs ").map(s => s.trim());
   const fighterA = fighters[0] || "Home";
   const fighterB = fighters[1] || "Away";
 
-  // Map fighter names to IDs (using name as ID for simplicity if no separate ID)
-  // In a real app, we'd have fighter IDs. Here we use the names as target_winner_id
   const outcomes = [
     { id: fighterA, name: fighterA },
     { id: fighterB, name: fighterB },
@@ -98,14 +95,19 @@ export function BettingCard({ event, userPoints }: BettingCardProps) {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Trophy className="w-5 h-5 text-yellow-500" />
-          Place Your Bet
+    <Card className="w-full max-w-md mx-auto border-2 border-dashed border-border bg-card/50 shadow-xl relative overflow-hidden">
+      {/* Receipt jagged edge effect could go here with CSS clip-path if desired */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-primary opacity-50" />
+      
+      <CardHeader className="text-center pb-2">
+        <CardTitle className="flex items-center justify-center gap-2 uppercase tracking-widest text-lg font-black">
+          <Trophy className="w-5 h-5 text-accent" />
+          Official Bet Slip
         </CardTitle>
-        <CardDescription>
-          Current Pool: {event.poolData?.totalPool.toLocaleString()} pts
+        <CardDescription className="font-mono text-xs">
+          EVENT ID: {event.id.slice(0, 8).toUpperCase()}
+          <br />
+          POOL: {event.poolData?.totalPool.toLocaleString()} PTS
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -115,48 +117,58 @@ export function BettingCard({ event, userPoints }: BettingCardProps) {
               <div
                 key={outcome.id}
                 onClick={() => setSelectedWinner(outcome.id)}
-                className={`cursor-pointer border-2 rounded-lg p-4 text-center transition-all ${
+                className={`cursor-pointer border-2 rounded-none p-4 text-center transition-all relative overflow-hidden group ${
                   selectedWinner === outcome.id
-                    ? "border-primary bg-primary/10"
-                    : "border-muted hover:border-primary/50"
+                    ? "border-primary bg-primary/5"
+                    : "border-muted hover:border-primary/30"
                 }`}
               >
-                <div className="font-bold text-lg">{outcome.name}</div>
-                <div className="text-sm text-muted-foreground">
-                  Odds: {getOdds(outcome.id)}x
+                {selectedWinner === outcome.id && (
+                  <div className="absolute top-0 right-0 w-3 h-3 bg-primary transform rotate-45 translate-x-1.5 -translate-y-1.5" />
+                )}
+                <div className="font-black text-lg uppercase italic">{outcome.name}</div>
+                <div className="text-sm font-mono text-muted-foreground mt-1">
+                  <span className="text-accent-foreground bg-accent px-1 rounded text-xs font-bold">
+                    {getOdds(outcome.id)}x
+                  </span>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="amount">Bet Amount (Points)</Label>
+          <div className="space-y-2 bg-muted/30 p-4 rounded-lg border border-border/50">
+            <Label htmlFor="amount" className="uppercase text-xs font-bold tracking-wider">Wager Amount (Points)</Label>
             <div className="relative">
               <Input
                 id="amount"
                 type="number"
-                placeholder="Min 10"
+                placeholder="MIN 10"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 min={10}
                 max={userPoints}
+                className="font-mono text-lg text-right pr-24 bg-background/50"
               />
-              <div className="absolute right-3 top-2.5 text-sm text-muted-foreground">
-                Balance: {userPoints.toLocaleString()}
+              <div className="absolute right-3 top-2.5 text-xs font-mono text-muted-foreground">
+                BAL: {userPoints.toLocaleString()}
               </div>
             </div>
           </div>
 
           {selectedWinner && amount && (
-            <div className="bg-muted p-3 rounded-md text-sm space-y-1">
-              <div className="flex justify-between">
-                <span>Potential Win:</span>
-                <span className="font-bold text-green-600">
-                  {(Number(amount) * Number(getOdds(selectedWinner))).toFixed(0)} pts
-                </span>
+            <div className="bg-primary/5 border border-primary/20 p-4 rounded-none text-sm space-y-2 relative">
+              <div className="absolute -left-1 top-1/2 w-2 h-4 bg-background rounded-r-full transform -translate-y-1/2" />
+              <div className="absolute -right-1 top-1/2 w-2 h-4 bg-background rounded-l-full transform -translate-y-1/2" />
+              
+              <div className="flex justify-between items-center border-b border-dashed border-primary/20 pb-2">
+                <span className="uppercase text-xs font-bold text-muted-foreground">Selection</span>
+                <span className="font-black uppercase">{outcomes.find(o => o.id === selectedWinner)?.name}</span>
               </div>
-              <div className="text-xs text-muted-foreground text-right">
-                *Odds are dynamic and final payout depends on pool at close.
+              <div className="flex justify-between items-center pt-1">
+                <span className="uppercase text-xs font-bold text-muted-foreground">Est. Payout</span>
+                <span className="font-black text-xl text-primary">
+                  {(Number(amount) * Number(getOdds(selectedWinner))).toFixed(0)} <span className="text-xs align-top">PTS</span>
+                </span>
               </div>
             </div>
           )}
@@ -164,19 +176,19 @@ export function BettingCard({ event, userPoints }: BettingCardProps) {
       </CardContent>
       <CardFooter>
         <Button 
-          className="w-full" 
+          className="w-full font-black uppercase tracking-widest text-lg h-12 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all" 
           onClick={handleBet} 
           disabled={isLoading || event.status !== "OPEN"}
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Placing Bet...
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              PROCESSING...
             </>
           ) : event.status !== "OPEN" ? (
-            "Betting Closed"
+            "BETTING CLOSED"
           ) : (
-            "Place Bet"
+            "CONFIRM WAGER"
           )}
         </Button>
       </CardFooter>

@@ -1,5 +1,168 @@
 # 開發日誌 / Development Log
 
+## 2025-01-XX
+
+### feat/api-data-ingest + data-abstraction
+
+**難度**: ★★★★☆
+
+**描述**: 實作賽事數據串接系統與數據抽象化層，透過 TheSportsDB API v2 自動同步本週格鬥賽事（拳擊、UFC、MMA），採用增量更新策略、快取優化與統一數據格式設計，確保高效能、低資料庫負擔與未來擴展性
+
+**資料庫架構** (`prisma/schema.prisma`):
+
+- **擴展 Event 模型**：
+  - `external_id`: String? - 外部 API 的賽事 ID
+  - `external_source`: String? - 數據來源（如 "thesportsdb"）
+  - `external_data`: Json? - 原始 API 數據快照（用於除錯與未來擴展）
+  - `sport_type`: String? - 賽事類型（"boxing", "ufc", "mma"）
+  - `last_synced_at`: DateTime? - 最後同步時間
+  - `sync_status`: String @default("pending") - 同步狀態
+  - 唯一約束：`@@unique([external_id, external_source])`
+  - 索引優化：
+    - `@@index([external_id, external_source])` - 快速查找外部賽事
+    - `@@index([fight_date, status])` - 優化本週賽事查詢
+    - `@@index([last_synced_at])` - 優化增量同步查詢
+    - `@@index([sport_type, fight_date])` - 優化賽事分析頁查詢（未來擴展）
+
+**數據抽象化層** (`lib/adapters/thesportsdb.ts`):
+
+- **TheSportsDBClient 類別**：
+  - API 客戶端封裝，支援 API Key 認證
+  - `getEventsByLeague(leagueId)`: 透過聯賽 ID 查詢賽事
+  - `getEventsByDateRange(startDate, endDate)`: 透過日期範圍查詢賽事（支援多聯賽並行查詢）
+  - `transformEvent()`: 將 TheSportsDB API 數據轉換為統一格式
+  - `determineSportType()`: 自動判定賽事類型（boxing/ufc/mma/other）
+- **統一數據格式** (`UnifiedEventData`):
+  - `external_id`, `name`, `fight_date`, `sport_type`
+  - `external_data`: 完整原始數據保留
+  - 可選欄位：`home_team`, `away_team`, `venue`, `league`, `country`, `city`, `status`
+- **Zod Schema 驗證**：
+  - `TheSportsDBEventSchema`: 驗證 API 回應格式
+  - `TheSportsDBResponseSchema`: 驗證 API 回應結構
+
+**類型定義擴展** (`lib/types.ts`):
+
+- 新增 `ExternalEventSource`: `"thesportsdb" | "espn" | "ufc" | "other"`
+- 新增 `SportType`: `"boxing" | "ufc" | "mma" | "other"`
+- 新增 `SyncStatus`: `"pending" | "syncing" | "completed" | "failed"`
+- 新增 `UnifiedEventData` 介面：統一的外部 API 數據格式
+- 擴展 `Event` 介面：新增所有外部 API 整合欄位
+
+**事件服務層** (`lib/services/events.ts`):
+
+- **`getWeeklyCombatEvents()`**:
+  - 查詢本週格鬥賽事（boxing, ufc, mma）
+  - 使用 `unstable_cache` 快取（tag: `"events"`, revalidate: 60 秒）
+  - 自動計算週的開始與結束時間
+- **`getCombatEvents(options)`**:
+  - 支援過濾：`sportType`, `status`
+  - 支援分頁：`limit`, `offset`
+  - 用於未來賽事分析頁
+- **`syncEventsFromExternalAPI(source)`**:
+  - 增量更新策略：只更新變更的賽事
+  - 使用 `findFirst` + `create`/`update` 避免重複
+  - 自動判定賽事狀態（PENDING/OPEN/SETTLED）
+  - 返回統計：`created`, `updated`, `errors`
+- **`determineEventStatus(fightDate)`**:
+  - 根據賽事日期自動判定狀態
+  - 過去賽事 → SETTLED
+  - 24 小時內 → OPEN
+  - 其他 → PENDING
+- **`getEventByExternalId(externalId, source)`**:
+  - 透過外部 ID 查詢賽事
+
+**同步 API** (`app/api/events/sync/route.ts`):
+
+- **POST `/api/events/sync`**:
+  - 觸發外部 API 同步
+  - 認證機制：
+    - Vercel Cron Jobs：檢查 `x-vercel-cron` header
+    - 手動觸發：檢查 `secret` 參數或 request body
+  - 支援指定數據來源（預設：thesportsdb）
+  - 同步完成後自動 `revalidateTag("events")` 快取失效
+  - 返回詳細統計資訊
+- **GET `/api/events/sync`**:
+  - 提供端點使用說明（監視用）
+
+**定時任務配置** (`vercel.json`):
+
+- 配置 Vercel Cron Jobs：
+  - 路徑：`/api/events/sync`
+  - 排程：每天 UTC 2:00 AM (`0 2 * * *`)
+  - 自動觸發同步，無需手動操作
+
+**前端整合** (`app/events/page.tsx`):
+
+- 更新賽事頁面使用新服務層
+- 使用 `getWeeklyCombatEvents()` 查詢本週賽事
+- 自動享受快取機制帶來的效能提升
+- 同步完成後自動顯示最新數據
+
+**環境變數配置** (`README.md`):
+
+- 新增 `THESPORTSDB_API_KEY`: TheSportsDB API v2 金鑰（需要支持者訂閱）
+- 新增 `EVENTS_SYNC_SECRET`: 保護同步端點的 secret token
+
+**效能優化策略**:
+
+1. **資料庫負擔最小化**：
+   - 增量更新：只更新變更的賽事
+   - 批量操作：逐個處理但使用單一連接
+   - 索引優化：關鍵欄位建立索引
+   - 查詢優化：使用日期範圍過濾，避免全表掃描
+
+2. **載入速度優化**：
+   - 使用 `unstable_cache` 快取查詢結果（60 秒 revalidate）
+   - 使用 cache tags 精確控制快取失效
+   - 前端使用 Server Components，減少客戶端 JavaScript
+
+3. **API 呼叫優化**：
+   - 並行請求多個聯賽數據（Promise.all）
+   - 錯誤處理：單一聯賽失敗不影響其他聯賽
+   - 設定合理的 timeout（10 秒）
+
+**歷史數據保留策略**:
+
+- 永不刪除賽事數據：所有同步的賽事永久保留
+- 透過 `status` 欄位標記賽事狀態
+- `external_data` JSON 欄位保留完整原始數據
+- 支援未來建立賽事分析頁面
+
+**未來擴展性**:
+
+1. **多 API 來源支援**：
+   - 適配器模式設計，可輕鬆新增 ESPN、UFC API 等
+   - 統一數據格式確保前端組件無需修改
+
+2. **數據豐富化**：
+   - `external_data` JSON 欄位保留原始數據，未來可擴展顯示更多資訊
+   - 支援選手資訊、賽事統計等擴展欄位
+
+3. **賽事分析頁準備**：
+   - 保留所有歷史賽事數據
+   - 透過 `sport_type`、`fight_date`、`status` 等欄位進行數據分析
+   - 索引優化支援未來分析查詢
+
+**主要修改文件**:
+
+1. `prisma/schema.prisma` - 擴展 Event 模型，新增外部 API 整合欄位與索引
+2. `lib/adapters/thesportsdb.ts` - 新建 TheSportsDB API 適配器
+3. `lib/types.ts` - 新增統一數據格式類型與擴展 Event 類型
+4. `lib/services/events.ts` - 新建事件服務層
+5. `app/api/events/sync/route.ts` - 新建同步 API endpoint
+6. `app/events/page.tsx` - 更新使用新服務層
+7. `vercel.json` - 新建 Cron Jobs 配置
+8. `README.md` - 更新環境變數說明
+
+**注意事項**:
+
+- TheSportsDB 免費方案每天 1000 次請求限制，每天同步一次可有效控制使用量
+- API 失敗時優雅降級，不影響現有功能，歷史數據仍可正常顯示
+- 使用 Zod schema 嚴格驗證外部 API 數據
+- 長期運行後歷史數據會持續增長，需監控資料庫大小
+
+---
+
 ## 2025-11-19
 
 ### feat/category-system
