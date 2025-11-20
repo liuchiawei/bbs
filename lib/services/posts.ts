@@ -3,6 +3,7 @@ import type { PostWithDetails, PostWithUser, UserPublicExtended } from "@/lib/ty
 import { unstable_cache } from "next/cache";
 import { userSelectPublicExtended, categorySelect } from "@/lib/validations";
 import { transformUser } from "@/lib/utils";
+import { generatePostId } from "@/lib/utils/id-generator";
 
 export interface GetPostsOptions {
   userId?: string;
@@ -244,8 +245,13 @@ export async function createPost(
     }
   }
 
+  // 新しいIDを生成
+  // Generate new ID
+  const id = await generatePostId();
+
   const post = await prisma.post.create({
     data: {
+      id,
       title: data.title,
       content: data.content,
       tags: data.tags,

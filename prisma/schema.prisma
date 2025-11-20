@@ -70,7 +70,7 @@ model Category {
 
 model Post {
   // basic information
-  id         String     @id @default(uuid())
+  id         String     @id
   title      String
   content    String
   userId     String
@@ -97,7 +97,7 @@ model Post {
 
 model Comment {
   // basic information
-  id        String        @id @default(uuid())
+  id        String        @id
   content   String
   userId    String
   postId    String
@@ -175,7 +175,7 @@ model Profile {
 }
 
 model Event {
-  id                 String      @id @default(uuid())
+  id                 String      @id
   name               String
   fight_date         DateTime
   status             EventStatus @default(PENDING)

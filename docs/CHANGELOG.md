@@ -1,5 +1,101 @@
 # 開發日誌 / Development Log
 
+## 2025-11-20
+
+### feat/timestamp-based-id-format
+
+**難度**: ★★★☆☆
+
+**描述**: 將 Post、Comment、Event 的 ID 格式從隨機 UUID 改為時間戳格式（年月日時分秒 + 隨機後綴），保留現有 UUID 記錄，僅新建立的記錄使用新格式
+
+**問題背景**:
+- 原本使用 UUID 作為主鍵，無法從 ID 看出建立時間
+- 需要更易讀的 ID 格式，方便識別記錄的建立時間
+- 要求保留現有資料，僅新記錄使用新格式
+
+**解決方案架構**:
+- 採用混合格式策略：現有 UUID 記錄保留，新記錄使用時間戳格式
+- 創建 ID 生成工具函數，確保唯一性
+- 移除 Schema 中的 `@default(uuid())`，改為手動生成
+
+**ID 格式設計** (`lib/utils/id-generator.ts`):
+- **格式**: `YYYYMMDDHHmmss` + 4位隨機數（共18位）
+- **範例**: `202511201234561234`
+- **唯一性保證**:
+  - 檢查資料庫中是否已存在相同 ID
+  - 若存在則重新生成（最多重試10次）
+  - 達到最大重試次數時添加額外隨機數
+- **函數**:
+  - `generatePostId()`: Post 用 ID 生成
+  - `generateCommentId()`: Comment 用 ID 生成
+  - `generateEventId()`: Event 用 ID 生成
+
+**資料庫架構變更** (`prisma/schema.prisma`):
+- **Post 模型**:
+  - 移除 `id String @id @default(uuid())`
+  - 改為 `id String @id`（允許手動指定 ID）
+- **Comment 模型**:
+  - 移除 `id String @id @default(uuid())`
+  - 改為 `id String @id`
+- **Event 模型**:
+  - 移除 `id String @id @default(uuid())`
+  - 改為 `id String @id`
+- **Migration**: 創建 `20251120192459_change_id_format` migration
+  - 僅移除 `@default(uuid())`，不修改現有資料
+  - 現有 UUID 記錄完全保留
+
+**服務層更新**:
+- **`lib/services/posts.ts`**:
+  - `createPost()`: 在創建前調用 `generatePostId()` 生成新 ID
+- **`lib/services/comments.ts`**:
+  - `createComment()`: 在創建前調用 `generateCommentId()` 生成新 ID
+- **`lib/services/events.ts`**:
+  - `syncEventsFromExternalAPI()`: 在創建 Event 前調用 `generateEventId()` 生成新 ID
+
+**API 路由更新**:
+- **`app/api/comments/route.ts`**:
+  - POST handler: 在 transaction 內生成 Comment ID
+- **`app/api/events/route.ts`**:
+  - POST handler: 在 transaction 內生成 Event ID
+
+**驗證邏輯更新** (`lib/validations.ts`):
+- **`createPostSchema`**:
+  - 移除 `eventId` 的 `.uuid()` 驗證
+  - 改為 `z.string().optional().nullable()`（允許 UUID 和新格式）
+- **`updatePostSchema`**:
+  - 移除 `eventId` 的 `.uuid()` 驗證
+  - 改為 `z.string().optional().nullable()`
+
+**技術考量**:
+- **混合格式支援**: 系統中同時存在 UUID（舊）和時間戳格式（新）的 ID
+- **向後兼容**: 所有查詢、更新、刪除功能正常運作（都是 String 類型）
+- **URL 路由**: 兩種格式都支援，路由參數解析不受影響
+- **外鍵關聯**: PostLike、CommentLike、BettingLog 等關聯表不受影響
+- **唯一性保證**: ID 生成函數包含重試機制，確保不會產生重複 ID
+
+**效能優化**:
+- ID 生成函數使用資料庫查詢檢查唯一性
+- 最多重試10次，避免無限循環
+- 使用索引優化查詢性能（id 欄位為主鍵，自動建立索引）
+
+**主要修改文件**:
+1. `lib/utils/id-generator.ts` - 新建 ID 生成工具函數
+2. `prisma/schema.prisma` - 移除 Post、Comment、Event 的 `@default(uuid())`
+3. `lib/services/posts.ts` - 更新 `createPost()` 函數
+4. `lib/services/comments.ts` - 更新 `createComment()` 函數
+5. `app/api/comments/route.ts` - 更新 POST handler
+6. `lib/services/events.ts` - 更新 `syncEventsFromExternalAPI()` 函數
+7. `app/api/events/route.ts` - 更新 POST handler
+8. `lib/validations.ts` - 移除 eventId 的 UUID 驗證
+9. `prisma/migrations/20251120192459_change_id_format/migration.sql` - 新建 migration
+
+**注意事項**:
+- 現有 UUID 記錄完全保留，不受影響
+- 新建立的 Post、Comment、Event 記錄將使用新的時間戳格式 ID
+- 系統支援混合格式，兩種格式可以並存
+- 所有查詢、更新、刪除功能都正常運作（因為都是 String 類型）
+- Migration 不會修改現有資料，僅改變 Prisma 的預設行為
+
 ## 2025-01-XX
 
 ### refactor/fighter-page-database-only
