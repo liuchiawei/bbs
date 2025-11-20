@@ -86,6 +86,152 @@
 
 ---
 
+### feat/multi-api-sources-support
+
+**難度**: ★★★★☆
+
+**描述**: 擴展外部 API 來源支援，實作適配器模式以支援多個 API 來源（ESPN、UFC API 等），統一數據格式確保前端組件無需修改
+
+**後端任務**:
+
+- 實作適配器模式設計，可輕鬆新增 ESPN、UFC API 等
+- 統一數據格式確保前端組件無需修改
+- 擴展 `ExternalEventSource` 類型支援更多來源
+- 為每個新的 API 來源建立適配器類別（類似 `TheSportsDBClient`）
+
+**注意事項**:
+
+- 參考 `feat/api-data-ingest` 的設計模式
+- 確保所有適配器返回統一的數據格式
+- 前端組件無需修改即可支援新 API 來源
+
+---
+
+### feat/event-data-enrichment
+
+**難度**: ★★★☆☆
+
+**描述**: 數據豐富化，利用 `external_data` JSON 欄位保留的原始數據，擴展顯示更多資訊（選手資訊、賽事統計等）
+
+**前端任務**:
+
+- 擴展賽事顯示組件，顯示更多從 `external_data` 提取的資訊
+- 實作選手資訊顯示（如果 API 提供）
+- 實作賽事統計顯示
+
+**後端任務**:
+
+- 擴展 `UnifiedEventData` 類型定義
+- 實作數據提取和轉換邏輯
+- 優化數據存儲結構
+
+**注意事項**:
+
+- 參考 `feat/api-data-ingest` 的數據結構設計
+- `external_data` JSON 欄位已保留完整原始數據
+- 支援選手資訊、賽事統計等擴展欄位
+
+---
+
+### feat/event-analytics-page
+
+**難度**: ★★★★☆
+
+**描述**: 建立賽事分析頁面，利用保留的歷史賽事數據進行數據分析和視覺化
+
+**前端任務**:
+
+- 建立賽事分析頁面路由
+- 實作數據視覺化組件（圖表、統計等）
+- 實作篩選和查詢功能
+
+**後端任務**:
+
+- 建立賽事分析 API
+- 實作數據聚合查詢（利用 `sport_type`、`fight_date`、`status` 等欄位）
+- 優化查詢效能（利用現有索引）
+
+**注意事項**:
+
+- 所有歷史賽事數據已保留
+- 索引已優化支援分析查詢（`sport_type`、`fight_date`、`status` 等）
+- 參考 `feat/api-data-ingest` 的數據結構設計
+
+---
+
+### feat/multi-api-sources-support
+
+**難度**: ★★★★☆
+
+**描述**: 擴展外部 API 來源支援，實作適配器模式以支援多個 API 來源（ESPN、UFC API 等），統一數據格式確保前端組件無需修改
+
+**後端任務**:
+
+- 實作適配器模式設計，可輕鬆新增 ESPN、UFC API 等
+- 統一數據格式確保前端組件無需修改
+- 擴展 `ExternalEventSource` 類型支援更多來源
+- 為每個新的 API 來源建立適配器類別（類似 `TheSportsDBClient`）
+
+**注意事項**:
+
+- 參考 `feat/api-data-ingest` 的設計模式（見 CHANGELOG.md）
+- 確保所有適配器返回統一的數據格式
+- 前端組件無需修改即可支援新 API 來源
+
+---
+
+### feat/event-data-enrichment
+
+**難度**: ★★★☆☆
+
+**描述**: 數據豐富化，利用 `external_data` JSON 欄位保留的原始數據，擴展顯示更多資訊（選手資訊、賽事統計等）
+
+**前端任務**:
+
+- 擴展賽事顯示組件，顯示更多從 `external_data` 提取的資訊
+- 實作選手資訊顯示（如果 API 提供）
+- 實作賽事統計顯示
+
+**後端任務**:
+
+- 擴展 `UnifiedEventData` 類型定義
+- 實作數據提取和轉換邏輯
+- 優化數據存儲結構
+
+**注意事項**:
+
+- 參考 `feat/api-data-ingest` 的數據結構設計（見 CHANGELOG.md）
+- `external_data` JSON 欄位已保留完整原始數據
+- 支援選手資訊、賽事統計等擴展欄位
+
+---
+
+### feat/event-analytics-page
+
+**難度**: ★★★★☆
+
+**描述**: 建立賽事分析頁面，利用保留的歷史賽事數據進行數據分析和視覺化
+
+**前端任務**:
+
+- 建立賽事分析頁面路由
+- 實作數據視覺化組件（圖表、統計等）
+- 實作篩選和查詢功能
+
+**後端任務**:
+
+- 建立賽事分析 API
+- 實作數據聚合查詢（利用 `sport_type`、`fight_date`、`status` 等欄位）
+- 優化查詢效能（利用現有索引）
+
+**注意事項**:
+
+- 所有歷史賽事數據已保留（參考 `feat/api-data-ingest`，見 CHANGELOG.md）
+- 索引已優化支援分析查詢（`sport_type`、`fight_date`、`status` 等）
+- 透過 `sport_type`、`fight_date`、`status` 等欄位進行數據分析
+
+---
+
 ### feat/recommendation-algorithm
 
 **難度**: ★★★★★

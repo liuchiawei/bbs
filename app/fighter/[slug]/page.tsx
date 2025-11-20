@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getFighterBySlug } from "@/lib/services/fighters";
 import { FighterProfileCard } from "@/components/fighters/fighter-profile-card";
 import { FighterEventHistory } from "@/components/fighters/fighter-event-history";
-import { toFighterPublic } from "@/lib/utils/fighter";
+import type { FighterPublic } from "@/lib/types";
 import type { Metadata } from "next";
 
 /**
@@ -18,6 +18,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
 
+  // 只從內部資料庫查詢，不使用外部 API
+  // Query only from internal database, do not use external API
   const fighter = await getFighterBySlug(slug);
 
   if (!fighter) {
@@ -59,29 +61,41 @@ export default async function FighterPage({
 }) {
   const { slug } = await params;
 
-  // Get fighter data (with caching)
-  // 取得選手數據（含快取）
+  // 只從內部資料庫查詢選手資料，不使用外部 API
+  // Query fighter data only from internal database, do not use external API
+  // 外部 API 同步應通過後台任務或 API 端點處理
+  // External API sync should be handled via background tasks or API endpoints
+  console.log(`[Fighter Page] Fetching fighter with slug: "${slug}"`);
   const fighter = await getFighterBySlug(slug);
 
   if (!fighter) {
+    // Fighter not found in database
+    // 資料庫找不到選手
+    console.log(
+      `[Fighter Page] Fighter not found for slug: "${slug}", returning 404`
+    );
     notFound();
   }
+
+  console.log(
+    `[Fighter Page] Successfully loaded fighter: ${fighter.name} (slug: ${fighter.slug})`
+  );
 
   // Transform events for component
   // 轉換賽事數據供組件使用
   const events = fighter.eventsAsFighter.map((fe) => ({
     id: fe.id,
-    result: fe.result,
-    method: fe.method,
-    round: fe.round,
-    time: fe.time,
-    weight_class: fe.weight_class,
+    result: fe.result ?? null,
+    method: fe.method ?? null,
+    round: fe.round ?? null,
+    time: fe.time ?? null,
+    weight_class: fe.weight_class ?? null,
     event: {
       id: fe.event.id,
       name: fe.event.name,
       fight_date: fe.event.fight_date,
       status: fe.event.status,
-      sport_type: fe.event.sport_type,
+      sport_type: fe.event.sport_type ?? null,
     },
     opponent: fe.opponent
       ? {
@@ -94,7 +108,25 @@ export default async function FighterPage({
 
   // Transform fighter data for component using utility function
   // 使用工具函數轉換選手數據供組件使用
-  const fighterData = toFighterPublic(fighter);
+  // Note: toFighterPublic expects Prisma Fighter type, but we have FighterWithEvents
+  // We need to extract the base fighter data
+  // 注意：toFighterPublic 期望 Prisma Fighter 類型，但我們有 FighterWithEvents
+  // 我們需要提取基礎 fighter 數據
+  const fighterData: FighterPublic = {
+    id: fighter.id,
+    name: fighter.name,
+    slug: fighter.slug,
+    nationality: fighter.nationality ?? null,
+    date_born: fighter.date_born ?? null,
+    height: fighter.height ?? null,
+    weight: fighter.weight ?? null,
+    position: fighter.position ?? null,
+    description: fighter.description ?? null,
+    thumb: fighter.thumb ?? null,
+    cutout: fighter.cutout ?? null,
+    sport_type: fighter.sport_type ?? null,
+    external_data: fighter.external_data ?? null,
+  };
 
   return (
     <div className="container mx-auto py-8 px-4">

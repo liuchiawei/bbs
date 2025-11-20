@@ -12,22 +12,35 @@ import {
   generateUniqueSlug,
   slugToPossibleNames,
 } from "@/lib/utils/slug";
-import type { SportType } from "@/lib/types";
+import type {
+  SportType,
+  Fighter,
+  FighterWithEvents,
+  FighterPublic,
+} from "@/lib/types";
+import {
+  toFighterPublic,
+  toFighterWithEvents,
+  convertJsonValue,
+} from "@/lib/utils/fighter";
 
 /**
  * Get fighter from database (cached)
  * 從資料庫取得選手（快取）
  *
  * This function only queries the database and uses cache.
- * On-demand sync logic is separated to avoid caching failures.
+ * Returns FighterWithEvents type from lib/types.
  *
  * 此函數僅查詢資料庫並使用快取。
- * on-demand 同步邏輯已分離，避免快取失敗結果。
+ * 返回 lib/types 中的 FighterWithEvents 類型。
  */
-async function _getFighterFromDB(slug: string) {
+async function _getFighterFromDB(
+  slug: string
+): Promise<FighterWithEvents | null> {
   return unstable_cache(
     async () => {
-      return await prisma.fighter.findUnique({
+      console.log(`[Fighter DB] Querying database for slug: "${slug}"`);
+      const fighter = await prisma.fighter.findUnique({
         where: { slug },
         include: {
           eventsAsFighter: {
@@ -43,10 +56,121 @@ async function _getFighterFromDB(slug: string) {
           },
         },
       });
+
+      if (fighter) {
+        console.log(
+          `[Fighter DB] Found fighter in database: ${fighter.name} (slug: ${fighter.slug})`
+        );
+        return toFighterWithEvents(fighter);
+      } else {
+        console.log(
+          `[Fighter DB] Fighter not found in database for slug: "${slug}"`
+        );
+        return null;
+      }
     },
     [`fighter-db-${slug}`],
     {
       tags: ["fighters", `fighter-${slug}`],
+      revalidate: 300, // 5分鐘 / 5 minutes
+    }
+  )();
+}
+
+/**
+ * Get fighters by slug (returns array)
+ * 根據 slug 取得選手陣列
+ *
+ * Supports:
+ * - Exact slug match (single result)
+ * - Partial slug match (multiple results)
+ * - Returns FighterWithEvents[] from lib/types
+ *
+ * 支援：
+ * - 精確 slug 匹配（單一結果）
+ * - 部分 slug 匹配（多個結果）
+ * - 返回 lib/types 中的 FighterWithEvents[] 類型
+ */
+export async function getFightersBySlug(
+  slug: string,
+  options?: {
+    exact?: boolean; // If true, only exact match; if false, partial match
+    limit?: number; // Maximum number of results
+  }
+): Promise<FighterWithEvents[]> {
+  const exact = options?.exact ?? true; // Default to exact match
+  const limit = options?.limit ?? 10; // Default limit
+
+  console.log(
+    `[Fighter Service] Fetching fighters by slug: "${slug}" (exact: ${exact}, limit: ${limit})`
+  );
+
+  return unstable_cache(
+    async () => {
+      let fighters;
+
+      if (exact) {
+        // Exact match: find unique fighter by slug
+        // 精確匹配：依 slug 查找唯一選手
+        const fighter = await prisma.fighter.findUnique({
+          where: { slug },
+          include: {
+            eventsAsFighter: {
+              include: {
+                event: true,
+                opponent: true,
+              },
+              orderBy: {
+                event: {
+                  fight_date: "desc",
+                },
+              },
+            },
+          },
+        });
+
+        fighters = fighter ? [fighter] : [];
+      } else {
+        // Partial match: find fighters where slug contains the input
+        // 部分匹配：查找 slug 包含輸入的選手
+        fighters = await prisma.fighter.findMany({
+          where: {
+            slug: {
+              contains: slug,
+              mode: "insensitive",
+            },
+          },
+          include: {
+            eventsAsFighter: {
+              include: {
+                event: true,
+                opponent: true,
+              },
+              orderBy: {
+                event: {
+                  fight_date: "desc",
+                },
+              },
+            },
+          },
+          take: limit,
+          orderBy: {
+            name: "asc",
+          },
+        });
+      }
+
+      console.log(
+        `[Fighter Service] Found ${fighters.length} fighter(s) for slug: "${slug}"`
+      );
+
+      // Convert Prisma results to FighterWithEvents type
+      // 將 Prisma 結果轉換為 FighterWithEvents 類型
+      return fighters.map((fighter) => toFighterWithEvents(fighter));
+    },
+    [`fighters-db-${slug}-${exact}-${limit}`],
+    {
+      tags: ["fighters", `fighter-slug-${slug}`],
       revalidate: 300, // 5分鐘 / 5 minutes
     }
   )();
@@ -60,10 +184,16 @@ async function _getFighterFromDB(slug: string) {
  * when not found in database. It does NOT use cache to ensure
  * failures don't prevent retries.
  *
+ * Returns FighterWithEvents | null from lib/types.
+ *
  * 當資料庫找不到選手時，此函數嘗試從 TheSportsDB API 同步。
  * 不使用快取，確保失敗不會阻止重試。
+ *
+ * 返回 lib/types 中的 FighterWithEvents | null。
  */
-async function _syncFighterOnDemand(slug: string) {
+async function _syncFighterOnDemand(
+  slug: string
+): Promise<FighterWithEvents | null> {
   console.log(
     `[Fighter Sync] Fighter not found for slug "${slug}", attempting on-demand sync...`
   );
@@ -219,11 +349,57 @@ async function _syncFighterOnDemand(slug: string) {
 
     // Step 2.4: Create fighter record
     // 步驟2.4: 建立選手記錄
+    // 優先使用請求的 slug（如果可用），確保返回的 fighter 與請求的 slug 匹配
+    // Prefer using requested slug (if available) to ensure returned fighter matches requested slug
     const existingSlugs = await prisma.fighter.findMany({
       select: { slug: true },
     });
     const slugList = existingSlugs.map((f) => f.slug);
-    const finalSlug = generateUniqueSlug(finalPlayerData.strPlayer, slugList);
+
+    // 檢查請求的 slug 是否可用
+    // Check if requested slug is available
+    let finalSlug: string;
+    const requestedSlugAvailable = !slugList.includes(slug);
+    const playerSlug = generateSlug(finalPlayerData.strPlayer);
+
+    if (requestedSlugAvailable && playerSlug === slug) {
+      // 請求的 slug 可用且與 player 名字生成的 slug 匹配，優先使用
+      // Requested slug is available and matches player name slug, use it
+      finalSlug = slug;
+      console.log(
+        `[Fighter Sync] Using requested slug "${slug}" (matches player name slug)`
+      );
+    } else if (requestedSlugAvailable && playerSlug !== slug) {
+      // 請求的 slug 可用但與 player 名字生成的 slug 不匹配
+      // 檢查基礎 slug 是否匹配（忽略數字後綴）
+      // Requested slug is available but doesn't match player name slug
+      // Check if base slug matches (ignoring number suffix)
+      const baseRequestedSlug = slug.replace(/-\d+$/, "");
+      const basePlayerSlug = playerSlug.replace(/-\d+$/, "");
+
+      if (baseRequestedSlug === basePlayerSlug) {
+        // 基礎 slug 匹配，使用請求的 slug
+        // Base slug matches, use requested slug
+        finalSlug = slug;
+        console.log(
+          `[Fighter Sync] Using requested slug "${slug}" (base slug matches: "${baseRequestedSlug}")`
+        );
+      } else {
+        // 基礎 slug 也不匹配，使用生成的 slug
+        // Base slug doesn't match either, use generated slug
+        finalSlug = generateUniqueSlug(finalPlayerData.strPlayer, slugList);
+        console.log(
+          `[Fighter Sync] Requested slug "${slug}" doesn't match player "${finalPlayerData.strPlayer}" (slug: "${playerSlug}"), using generated slug: "${finalSlug}"`
+        );
+      }
+    } else {
+      // 請求的 slug 不可用（已存在），使用生成的唯一 slug
+      // Requested slug is not available (already exists), use generated unique slug
+      finalSlug = generateUniqueSlug(finalPlayerData.strPlayer, slugList);
+      console.log(
+        `[Fighter Sync] Requested slug "${slug}" is already taken, using generated unique slug: "${finalSlug}"`
+      );
+    }
 
     const fighter = await prisma.fighter.create({
       data: {
@@ -254,7 +430,33 @@ async function _syncFighterOnDemand(slug: string) {
     // 清除快取並重新查詢資料庫以獲取完整數據（含關聯）
     // Clear cache and re-query database to get complete data (with relations)
     revalidateTag(`fighter-${slug}`, "max");
-    return await _getFighterFromDB(finalSlug);
+    if (finalSlug !== slug) {
+      // 如果最終 slug 與請求的不同，也清除最終 slug 的快取
+      // If final slug differs from requested, also clear cache for final slug
+      revalidateTag(`fighter-${finalSlug}`, "max");
+      console.warn(
+        `[Fighter Sync] Warning: Created fighter with slug "${finalSlug}" but requested slug was "${slug}". This may cause 404 for the requested slug.`
+      );
+    }
+
+    // 使用創建的 fighter 的實際 slug 查詢
+    // Query using the actual slug of created fighter
+    const createdFighter = await _getFighterFromDB(finalSlug);
+
+    // 如果最終 slug 與請求的不同，返回 null（因為 slug 不匹配）
+    // 這樣用戶訪問原始 slug 時會看到 404
+    // 但 fighter 已經創建，用戶可以通過最終 slug 訪問
+    // If final slug differs from requested, return null (because slug doesn't match)
+    // User accessing original slug will see 404
+    // But fighter is created, user can access via final slug
+    if (finalSlug !== slug) {
+      console.log(
+        `[Fighter Sync] Slug mismatch: created "${finalSlug}" but requested "${slug}". Returning null because slug doesn't match. Fighter is created and can be accessed via /fighter/${finalSlug}.`
+      );
+      return null;
+    }
+
+    return createdFighter;
   } catch (error) {
     console.error(
       `[Fighter Sync] Error during on-demand sync for slug "${slug}":`,
@@ -267,44 +469,41 @@ async function _syncFighterOnDemand(slug: string) {
 }
 
 /**
- * Get fighter by slug with on-demand sync fallback
- * 依 slug 取得選手（含 on-demand 同步 fallback）
+ * Get fighter by slug (single result, from database only)
+ * 依 slug 取得選手（單一結果，僅從資料庫）
  *
- * If fighter is not found in database and trySync is true (default),
- * attempts to sync from TheSportsDB API by guessing the name from slug.
+ * Returns FighterWithEvents | null from lib/types.
+ * Does NOT use external API sync - only queries database.
  *
- * 如果資料庫找不到選手且 trySync 為 true（預設），
- * 嘗試從 slug 推測名字並從 TheSportsDB API 同步
+ * 返回 lib/types 中的 FighterWithEvents | null。
+ * 不使用外部 API 同步 - 僅查詢資料庫。
  *
  * Architecture:
- * - Step 1: Query database (cached)
- * - Step 2: If not found, attempt on-demand sync (not cached)
+ * - Query database (cached)
  *
  * 架構：
- * - 步驟1: 查詢資料庫（快取）
- * - 步驟2: 如果找不到，嘗試 on-demand 同步（不快取）
+ * - 查詢資料庫（快取）
  */
 export async function getFighterBySlug(
-  slug: string,
-  options?: { trySync?: boolean }
-) {
-  const trySync = options?.trySync !== false; // Default to true
+  slug: string
+): Promise<FighterWithEvents | null> {
+  console.log(`[Fighter Service] Fetching fighter by slug: "${slug}"`);
 
-  // Step 1: Try to find in database (cached)
-  // 步驟1: 嘗試從資料庫查找（快取）
-  let fighter = await _getFighterFromDB(slug);
+  // Query database only (cached)
+  // 僅查詢資料庫（快取）
+  const fighter = await _getFighterFromDB(slug);
 
   if (fighter) {
+    console.log(
+      `[Fighter Service] Fighter found in database, returning cached result`
+    );
     return fighter;
   }
 
-  // Step 2: If not found and trySync is enabled, attempt on-demand sync (not cached)
-  // 步驟2: 如果找不到且啟用 trySync，嘗試 on-demand 同步（不快取）
-  if (!trySync) {
-    return null;
-  }
-
-  return await _syncFighterOnDemand(slug);
+  console.log(
+    `[Fighter Service] Fighter not found in database, returning null`
+  );
+  return null;
 }
 
 /**
@@ -463,9 +662,14 @@ export async function syncFighterFromAPI(fighterId: string): Promise<boolean> {
 /**
  * Get fighter events
  * 取得選手的賽事
+ *
+ * Returns FighterEventWithDetails[] from lib/types.
+ * 返回 lib/types 中的 FighterEventWithDetails[] 類型。
  */
-export async function getFighterEvents(fighterId: string) {
-  return prisma.fighterEvent.findMany({
+export async function getFighterEvents(
+  fighterId: string
+): Promise<FighterWithEvents["eventsAsFighter"]> {
+  const events = await prisma.fighterEvent.findMany({
     where: { fighter_id: fighterId },
     include: {
       event: true,
@@ -477,6 +681,45 @@ export async function getFighterEvents(fighterId: string) {
       },
     },
   });
+
+  // Convert to FighterEventWithDetails type
+  // 轉換為 FighterEventWithDetails 類型
+  return events.map((fe) => ({
+    id: fe.id,
+    fighter_id: fe.fighter_id,
+    event_id: fe.event_id,
+    opponent_id: fe.opponent_id,
+    result: fe.result,
+    method: fe.method,
+    round: fe.round,
+    time: fe.time,
+    weight_class: fe.weight_class,
+    createdAt: fe.createdAt,
+    updatedAt: fe.updatedAt,
+    event: fe.event as FighterWithEvents["eventsAsFighter"][0]["event"],
+    opponent: fe.opponent
+      ? {
+          id: fe.opponent.id,
+          slug: fe.opponent.slug,
+          name: fe.opponent.name,
+          external_id: fe.opponent.external_id,
+          external_source: fe.opponent.external_source,
+          external_data: convertJsonValue(fe.opponent.external_data),
+          sport_type: fe.opponent.sport_type as FighterWithEvents["sport_type"],
+          nationality: fe.opponent.nationality,
+          date_born: fe.opponent.date_born,
+          height: fe.opponent.height,
+          weight: fe.opponent.weight,
+          position: fe.opponent.position,
+          description: fe.opponent.description,
+          thumb: fe.opponent.thumb,
+          cutout: fe.opponent.cutout,
+          last_synced_at: fe.opponent.last_synced_at,
+          createdAt: fe.opponent.createdAt,
+          updatedAt: fe.opponent.updatedAt,
+        }
+      : null,
+  }));
 }
 
 /**

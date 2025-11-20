@@ -1,5 +1,68 @@
 # 開發日誌 / Development Log
 
+## 2025-01-XX
+
+### refactor/fighter-page-database-only
+
+**難度**: ★★★☆☆
+
+**描述**: 重構 fighter/[slug] 頁面，移除外部 API 調用，改為僅從內部資料庫查詢選手資料。同時統一類型定義，使用 lib/types 中的 FighterPublic 和 FighterWithEvents 類型。
+
+**主要變更** (`app/fighter/[slug]/page.tsx`):
+
+- **移除外部 API 同步**:
+  - `generateMetadata` 和 `FighterPage` 不再調用外部 API
+  - 明確標註只從內部資料庫查詢
+  - 外部 API 同步應通過後台任務或 API 端點處理
+
+- **統一類型定義**:
+  - 使用 `FighterPublic` 類型（來自 `lib/types`）替代內聯類型定義
+  - 直接從 `FighterWithEvents` 提取數據，手動構建 `FighterPublic` 對象
+  - 確保類型安全，修復 `undefined` 類型不匹配問題
+
+- **數據轉換優化**:
+  - 使用 `?? null` 運算符處理 `undefined` 值，確保類型兼容
+  - 明確處理 `eventsAsFighter` 中的可選字段（result, method, round, time, weight_class）
+  - 確保 `event.sport_type` 正確處理 `undefined` 情況
+
+- **調試日誌增強**:
+  - 添加詳細的日誌輸出，記錄查詢過程
+  - 記錄 fighter 查找成功/失敗的狀態
+  - 方便排查 404 問題
+
+**服務層變更** (`lib/services/fighters.ts`):
+
+- **`getFighterBySlug` 函數簡化**:
+  - 移除 `options` 參數，不再支援 `trySync` 選項
+  - 僅查詢資料庫，不進行外部 API 同步
+  - 返回類型明確為 `FighterWithEvents | null`
+
+- **類型統一**:
+  - 所有函數使用 `lib/types` 中定義的類型
+  - `_getFighterFromDB` 返回 `FighterWithEvents | null`
+  - 使用 `toFighterWithEvents` 工具函數進行類型轉換
+
+**工具函數** (`lib/utils/fighter.ts`):
+
+- **新增 `toFighterWithEvents` 函數**:
+  - 將 Prisma Fighter（含關聯）轉換為 `FighterWithEvents` 類型
+  - 處理 `external_data` 的 JsonValue 轉換
+  - 正確映射 `eventsAsFighter` 和 `opponent` 關聯
+
+**優勢**:
+
+1. **性能提升**: 僅查詢資料庫，無外部 API 延遲
+2. **穩定性**: 不依賴外部 API 可用性
+3. **類型安全**: 使用統一的類型定義，減少類型錯誤
+4. **可維護性**: 清晰的數據流，易於理解和維護
+5. **可預測性**: 行為更可預測，無異步外部調用
+
+**注意事項**:
+
+- 外部 API 同步需要通過其他方式處理（後台任務、API 端點等）
+- 確保資料庫中有對應的 fighter 記錄，否則會返回 404
+- 快取策略保持不變（5分鐘快取）
+
 ## 2025-11-20
 
 ### feat/fighter-pages
