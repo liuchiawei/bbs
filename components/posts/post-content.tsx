@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { BettingLog } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +35,7 @@ interface PostContentProps {
       name: string;
       slug?: string | null;
     } | null;
+    eventId?: string | null;
     user: {
       id: string;
       userId: string;
@@ -64,9 +66,10 @@ interface PostContentProps {
   };
   currentUserId?: string;
   postId: string;
+  userBets?: Record<string, BettingLog>;
 }
 
-export function PostContent({ post, currentUserId, postId }: PostContentProps) {
+export function PostContent({ post, currentUserId, postId, userBets }: PostContentProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
 
@@ -141,6 +144,7 @@ export function PostContent({ post, currentUserId, postId }: PostContentProps) {
           initialContent={post.content}
           initialTags={post.tags}
           initialCategoryId={post.category?.id || null}
+          initialEventId={post.eventId || null}
           onCancel={() => setIsEditing(false)}
         />
       ) : (
@@ -241,6 +245,7 @@ export function PostContent({ post, currentUserId, postId }: PostContentProps) {
                         }}
                         postId={post.id}
                         currentUserId={currentUserId}
+                        bet={userBets?.[comment.userId]}
                       />
                     ))
                   )}

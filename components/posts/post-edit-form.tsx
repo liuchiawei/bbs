@@ -24,7 +24,7 @@ import {
 import { Edit, X, Save } from "lucide-react";
 import { toast } from "sonner";
 import { t } from "@/lib/constants";
-import type { Category } from "@/lib/types";
+import type { Category, Event } from "@/lib/types";
 
 // フォーム用のスキーマ（tagsは文字列として扱う）
 const postFormSchema = z.object({
@@ -41,6 +41,7 @@ interface PostEditFormProps {
   initialContent: string;
   initialTags: string[];
   initialCategoryId?: string | null;
+  initialEventId?: string | null;
   onCancel: () => void;
 }
 
@@ -50,13 +51,18 @@ export function PostEditForm({
   initialContent,
   initialTags,
   initialCategoryId,
+  initialEventId,
   onCancel,
 }: PostEditFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>(
     initialCategoryId || ""
+  );
+  const [selectedEventId, setSelectedEventId] = useState<string>(
+    initialEventId || ""
   );
 
   // カテゴリリストを取得 / Fetch categories
@@ -74,6 +80,19 @@ export function PostEditForm({
     };
 
     fetchCategories();
+
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch("/api/events?status=OPEN");
+        if (response.ok) {
+          const data = await response.json();
+          setEvents(data.events || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch events:", error);
+      }
+    };
+    fetchEvents();
   }, []);
 
   const {
@@ -110,6 +129,7 @@ export function PostEditForm({
           content: data.content,
           tags: tags,
           categoryId: selectedCategoryId || null,
+          eventId: selectedEventId || null,
         }),
       });
 
@@ -139,6 +159,7 @@ export function PostEditForm({
       tags: initialTags.join(", "),
     });
     setSelectedCategoryId(initialCategoryId || "");
+    setSelectedEventId(initialEventId || "");
     onCancel();
   };
 
@@ -205,6 +226,26 @@ export function PostEditForm({
               {categories.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="event">Event (Optional)</Label>
+          <Select
+            value={selectedEventId}
+            onValueChange={setSelectedEventId}
+          >
+            <SelectTrigger id="event">
+              <SelectValue placeholder="Select an event" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">No Event</SelectItem>
+              {events.map((event) => (
+                <SelectItem key={event.id} value={event.id}>
+                  {event.name} ({new Date(event.fight_date).toLocaleDateString()})
                 </SelectItem>
               ))}
             </SelectContent>

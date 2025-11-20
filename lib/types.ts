@@ -92,6 +92,7 @@ export interface User {
   isAdmin?: boolean;
   isBanned?: boolean;
   points?: number;
+  virtual_score?: number;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   profile?: Profile | null;
@@ -124,6 +125,8 @@ export interface UserStats {
   comments: number;
   likedPosts: number;
   likedComments: number;
+  followers: number;
+  following: number;
 }
 
 // 完整使用者資料 + 統計
@@ -138,6 +141,8 @@ export interface UserWithCounts extends User {
     comments: number;
     likedPosts?: number;
     likedComments?: number;
+    followers?: number;
+    following?: number;
   };
 }
 
@@ -172,6 +177,7 @@ export interface Post {
   userId: string;
   tags: string[];
   categoryId?: string | null;
+  eventId?: string | null; // 関連するイベントID / Related Event ID
   views: number;
   likes: number;
   createdAt: Date | string;
@@ -319,3 +325,141 @@ export interface AdminPostListItem {
     comments: number;
   };
 }
+
+// Betting Types
+export interface BettingLog {
+  id: string;
+  userId: string;
+  eventId: string;
+  bet_amount: number | string; // Decimal handling
+  target_winner_id: string;
+  odds_snapshot: number | string;
+  settlement_status: "PENDING" | "WON" | "LOST" | "VOID";
+  createdAt: Date | string;
+}
+
+// External Event Source Types
+// 外部イベントソースタイプ
+export type ExternalEventSource = "thesportsdb" | "espn" | "ufc" | "other";
+
+// Sport Type
+// スポーツタイプ
+export type SportType = "boxing" | "ufc" | "mma" | "other";
+
+// Unified Event Data (from external APIs)
+// 統一されたイベントデータ（外部APIから）
+export interface UnifiedEventData {
+  external_id: string;
+  name: string;
+  fight_date: Date;
+  sport_type: SportType;
+  external_data: Record<string, unknown>;
+  home_team?: string;
+  away_team?: string;
+  venue?: string;
+  league?: string;
+  country?: string;
+  city?: string;
+  status?: string;
+}
+
+// Sync Status
+// 同期ステータス
+export type SyncStatus = "pending" | "syncing" | "completed" | "failed";
+
+export interface Event {
+  id: string;
+  name: string;
+  fight_date: Date | string;
+  status: "PENDING" | "OPEN" | "CLOSED" | "SETTLED" | "CANCELLED";
+  winner_id?: string | null;
+  is_manual_override: boolean;
+  // External API integration fields
+  external_id?: string | null;
+  external_source?: ExternalEventSource | null;
+  external_data?: Record<string, unknown> | null;
+  sport_type?: SportType | null;
+  last_synced_at?: Date | string | null;
+  sync_status?: SyncStatus | string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+export interface UserBettingStats {
+  totalBets: number;
+  wins: number;
+  losses: number;
+  pending: number;
+  voided: number;
+  totalWagered: number;
+  totalPayout: number;
+  netProfit: number;
+  roi: number; // Return on Investment %
+  winRate: number; // Win %
+}
+
+// Fighter Types
+// 選手類型
+export interface Fighter {
+  id: string;
+  slug: string;
+  name: string;
+  external_id?: string | null;
+  external_source?: string | null;
+  external_data?: Record<string, unknown> | null;
+  sport_type?: SportType | null;
+  nationality?: string | null;
+  date_born?: Date | string | null;
+  height?: string | null;
+  weight?: string | null;
+  position?: string | null;
+  description?: string | null;
+  thumb?: string | null;
+  cutout?: string | null;
+  last_synced_at?: Date | string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+// Fighter for public display (used in components)
+// 用於公開顯示的選手類型（用於組件）
+export interface FighterPublic {
+  id: string;
+  name: string;
+  slug: string;
+  nationality?: string | null;
+  date_born?: Date | string | null;
+  height?: string | null;
+  weight?: string | null;
+  position?: string | null;
+  description?: string | null;
+  thumb?: string | null;
+  cutout?: string | null;
+  sport_type?: SportType | null;
+  external_data?: Record<string, unknown> | null;
+}
+
+// Fighter with events (from database with relations)
+// 包含賽事的選手（從資料庫帶關聯）
+export interface FighterWithEvents extends Fighter {
+  eventsAsFighter: FighterEventWithDetails[];
+}
+
+// FighterEvent with event and opponent details
+// 包含賽事和對手詳情的 FighterEvent
+export interface FighterEventWithDetails {
+  id: string;
+  fighter_id: string;
+  event_id: string;
+  opponent_id?: string | null;
+  result?: string | null;
+  method?: string | null;
+  round?: number | null;
+  time?: string | null;
+  weight_class?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  event: Event;
+  opponent?: Fighter | null;
+}
+

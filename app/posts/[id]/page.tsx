@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { prisma } from "@/lib/db";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { PostContent } from "@/components/posts/post-content";
 import { getPostById, incrementPostViews } from "@/lib/services/posts";
@@ -26,6 +27,34 @@ export default async function PostPage({
     // エラーを無視（ビュー数の増加は重要ではない）
     // Ignore errors (view increment is not critical)
   });
+
+  // Fetch betting tags if post is linked to an event
+  let userBets: Record<string, any> = {};
+  if (post.eventId) {
+    // Get unique user IDs from comments
+    const commentUserIds = Array.from(new Set(post.comments.map(c => c.userId)));
+    
+    if (commentUserIds.length > 0) {
+      const bets = await prisma.bettingLog.findMany({
+        where: {
+          eventId: post.eventId,
+          userId: { in: commentUserIds },
+          settlement_status: { not: "VOID" },
+        },
+      });
+
+      // Create map of userId -> bet
+      bets.forEach(bet => {
+        // Convert Decimal to number/string for serialization
+        userBets[bet.userId] = {
+          ...bet,
+          bet_amount: Number(bet.bet_amount),
+          odds_snapshot: Number(bet.odds_snapshot),
+          final_payout: bet.final_payout ? Number(bet.final_payout) : null,
+        };
+      });
+    }
+  }
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-4xl">
@@ -74,6 +103,7 @@ export default async function PostPage({
             }}
             currentUserId={user?.id}
             postId={post.id}
+            userBets={userBets}
           />
         </CardHeader>
       </Card>
