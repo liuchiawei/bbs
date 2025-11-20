@@ -17,6 +17,7 @@ import type {
   SportType,
 } from "@/lib/types";
 import { TheSportsDBClient } from "@/lib/adapters/thesportsdb";
+import { generateEventId } from "@/lib/utils/id-generator";
 
 /**
  * Get weekly combat events (boxing, UFC, MMA)
@@ -263,8 +264,13 @@ export async function syncEventsFromExternalAPI(
         } else {
           // 新規イベントを作成
           // Create new event
+          // 新しいIDを生成
+          // Generate new ID
+          const id = await generateEventId();
+
           const newEvent = await prisma.event.create({
             data: {
+              id,
               name: unifiedEvent.name,
               fight_date: unifiedEvent.fight_date,
               status: determineEventStatus(unifiedEvent.fight_date),

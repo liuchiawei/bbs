@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import { createCommentSchema, commentIncludeBasic } from "@/lib/validations";
 import { z } from "zod";
+import { generateCommentId } from "@/lib/utils/id-generator";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,8 +18,13 @@ export async function POST(request: NextRequest) {
 
     // Use transaction to ensure atomicity
     const comment = await prisma.$transaction(async (tx) => {
+      // 新しいIDを生成
+      // Generate new ID
+      const id = await generateCommentId();
+
       const newComment = await tx.comment.create({
         data: {
+          id,
           content: validatedData.content,
           postId: validatedData.postId,
           userId: session.userId,

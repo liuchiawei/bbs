@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { z } from "zod";
+import { generateEventId } from "@/lib/utils/id-generator";
 
 // Schema for creating an event
 const createEventSchema = z.object({
@@ -58,8 +59,13 @@ export async function POST(request: NextRequest) {
 
     // Create event and audit log in a transaction
     const event = await prisma.$transaction(async (tx) => {
+      // 新しいIDを生成
+      // Generate new ID
+      const id = await generateEventId();
+
       const newEvent = await tx.event.create({
         data: {
+          id,
           name: validatedData.name,
           fight_date: validatedData.fight_date,
           status: validatedData.status || "PENDING",
