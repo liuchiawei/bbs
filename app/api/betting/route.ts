@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { z } from "zod";
-import { Decimal } from "@prisma/client/runtime/library";
+import { Decimal } from "decimal.js";
 
 const placeBetSchema = z.object({
   eventId: z.string(),
@@ -15,10 +15,7 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
@@ -27,7 +24,7 @@ export async function POST(request: NextRequest) {
     // Transaction: Check balance, deduct points, create bet log
     const bet = await prisma.$transaction(async (tx) => {
       // 1. Get User with latest balance (lock row?)
-      // Prisma doesn't support explicit locking easily without raw query, 
+      // Prisma doesn't support explicit locking easily without raw query,
       // but atomic update handles the deduction safely.
       // We check balance first.
       const currentUser = await tx.user.findUnique({
@@ -48,7 +45,8 @@ export async function POST(request: NextRequest) {
       });
 
       if (!event) throw new Error("Event not found");
-      if (event.status !== "OPEN") throw new Error("Betting is closed for this event");
+      if (event.status !== "OPEN")
+        throw new Error("Betting is closed for this event");
 
       // 3. Deduct Points
       await tx.user.update({
@@ -90,16 +88,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (error.message === "Betting is closed for this event") {
-      return NextResponse.json(
-        { error: "Betting is closed" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Betting is closed" }, { status: 400 });
     }
 
     console.error("Error placing bet:", error);
-    return NextResponse.json(
-      { error: "Failed to place bet" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to place bet" }, { status: 500 });
   }
 }
