@@ -119,11 +119,15 @@ export default async function FighterPage({
     nationality: fighter.nationality ?? null,
     date_born: fighter.date_born ?? null,
     height: fighter.height ?? null,
-    weight: fighter.weight ?? null,
+    weight:
+      fighter.weight ??
+      fighter.eventsAsFighter.find((f) => f.fighter_id === fighter.id)?.weight_class ??
+      (fighter.external_data as any)?.strWeight ??
+      null,
     position: fighter.position ?? null,
     description: fighter.description ?? null,
-    thumb: fighter.thumb ?? null,
-    cutout: fighter.cutout ?? null,
+    thumb: fighter.thumb ?? (fighter.external_data as any)?.strThumb ?? null,
+    cutout: fighter.cutout ?? (fighter.external_data as any)?.strCutout ?? null,
     sport_type: fighter.sport_type ?? null,
     external_data: fighter.external_data ?? null,
   };
@@ -135,7 +139,6 @@ export default async function FighterPage({
         <div className="mb-8">
           <FighterProfileCard fighter={fighterData} />
         </div>
-
         {/* Fight History */}
         <FighterEventHistory events={events} />
       </div>

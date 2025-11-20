@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Calendar, Clock, Building2, Globe } from "lucide-react";
@@ -44,18 +45,20 @@ export function EventDetailCard({ event }: EventDetailCardProps) {
   });
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="py-0 overflow-hidden">
       {/* Event Poster/Thumbnail */}
       {(strPoster || strThumb) && (
         <div className="relative w-full h-64 md:h-80 bg-muted">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={strPoster || strThumb || ""}
             alt={event.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-top select-none pointer-events-none"
+            width={1000}
+            height={1000}
           />
           {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
         </div>
       )}
 
@@ -127,20 +130,18 @@ export function EventDetailCard({ event }: EventDetailCardProps) {
             {(strCity || strCountry) && (
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                <span>
-                  {[strCity, strCountry].filter(Boolean).join(", ")}
-                </span>
+                <span>{[strCity, strCountry].filter(Boolean).join(", ")}</span>
               </div>
             )}
           </div>
         )}
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pb-6">
         {/* Description */}
         {strDescriptionEN && (
           <div>
-            <h3 className="font-semibold mb-2">About This Event</h3>
+            <h3 className="font-semibold">About This Event</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               {strDescriptionEN}
             </p>
@@ -150,4 +151,3 @@ export function EventDetailCard({ event }: EventDetailCardProps) {
     </Card>
   );
 }
-

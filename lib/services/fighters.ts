@@ -61,7 +61,25 @@ async function _getFighterFromDB(
         console.log(
           `[Fighter DB] Found fighter in database: ${fighter.name} (slug: ${fighter.slug})`
         );
-        return toFighterWithEvents(fighter);
+        // Debug: Log external_data type and value
+        // 調試：記錄 external_data 類型和值
+        console.log(
+          `[Fighter DB] external_data type: ${typeof fighter.external_data}, isArray: ${Array.isArray(
+            fighter.external_data
+          )}, value:`,
+          fighter.external_data
+        );
+        const convertedFighter = toFighterWithEvents(fighter);
+        // Debug: Log converted external_data
+        // 調試：記錄轉換後的 external_data
+        if (convertedFighter.external_data) {
+          console.log(
+            `[Fighter DB] Converted external_data keys: ${Object.keys(
+              convertedFighter.external_data
+            ).join(", ")}`
+          );
+        }
+        return convertedFighter;
       } else {
         console.log(
           `[Fighter DB] Fighter not found in database for slug: "${slug}"`
@@ -351,6 +369,23 @@ async function _syncFighterOnDemand(
     // 步驟2.4: 建立選手記錄
     // 優先使用請求的 slug（如果可用），確保返回的 fighter 與請求的 slug 匹配
     // Prefer using requested slug (if available) to ensure returned fighter matches requested slug
+
+    // Ensure finalPlayerData is a single object, not an array
+    // 確保 finalPlayerData 是單個對象，而不是數組
+    let playerData: any = finalPlayerData;
+    if (Array.isArray(finalPlayerData)) {
+      console.warn(
+        `[Fighter Sync] finalPlayerData is an array with ${finalPlayerData.length} elements, using first element`
+      );
+      playerData = finalPlayerData[0] || null;
+      if (!playerData) {
+        console.error(
+          `[Fighter Sync] Cannot create fighter: finalPlayerData array is empty`
+        );
+        return null;
+      }
+    }
+
     const existingSlugs = await prisma.fighter.findMany({
       select: { slug: true },
     });
@@ -360,7 +395,7 @@ async function _syncFighterOnDemand(
     // Check if requested slug is available
     let finalSlug: string;
     const requestedSlugAvailable = !slugList.includes(slug);
-    const playerSlug = generateSlug(finalPlayerData.strPlayer);
+    const playerSlug = generateSlug(playerData.strPlayer);
 
     if (requestedSlugAvailable && playerSlug === slug) {
       // 請求的 slug 可用且與 player 名字生成的 slug 匹配，優先使用
@@ -387,38 +422,52 @@ async function _syncFighterOnDemand(
       } else {
         // 基礎 slug 也不匹配，使用生成的 slug
         // Base slug doesn't match either, use generated slug
-        finalSlug = generateUniqueSlug(finalPlayerData.strPlayer, slugList);
+        finalSlug = generateUniqueSlug(playerData.strPlayer, slugList);
         console.log(
-          `[Fighter Sync] Requested slug "${slug}" doesn't match player "${finalPlayerData.strPlayer}" (slug: "${playerSlug}"), using generated slug: "${finalSlug}"`
+          `[Fighter Sync] Requested slug "${slug}" doesn't match player "${playerData.strPlayer}" (slug: "${playerSlug}"), using generated slug: "${finalSlug}"`
         );
       }
     } else {
       // 請求的 slug 不可用（已存在），使用生成的唯一 slug
       // Requested slug is not available (already exists), use generated unique slug
-      finalSlug = generateUniqueSlug(finalPlayerData.strPlayer, slugList);
+      finalSlug = generateUniqueSlug(playerData.strPlayer, slugList);
       console.log(
         `[Fighter Sync] Requested slug "${slug}" is already taken, using generated unique slug: "${finalSlug}"`
+      );
+    }
+
+    // Ensure external_data is a proper JSON object (not array)
+    // 確保 external_data 是正確的 JSON 對象（不是數組）
+    const externalDataToSave = Array.isArray(playerData)
+      ? playerData[0] || null
+      : playerData;
+
+    // Log external_data structure before saving
+    // 記錄保存前的 external_data 結構
+    if (externalDataToSave) {
+      console.log(
+        `[Fighter Sync] Saving external_data with keys: ${Object.keys(
+          externalDataToSave
+        ).join(", ")}`
       );
     }
 
     const fighter = await prisma.fighter.create({
       data: {
         slug: finalSlug,
-        name: finalPlayerData.strPlayer,
-        external_id: finalPlayerData.idPlayer || null,
+        name: playerData.strPlayer,
+        external_id: playerData.idPlayer || null,
         external_source: "thesportsdb",
-        external_data: finalPlayerData,
-        sport_type: determineSportTypeFromAPI(finalPlayerData),
-        nationality: finalPlayerData.strNationality || null,
-        date_born: finalPlayerData.dateBorn
-          ? new Date(finalPlayerData.dateBorn)
-          : null,
-        height: finalPlayerData.strHeight || null,
-        weight: finalPlayerData.strWeight || null,
-        position: finalPlayerData.strPosition || null,
-        description: finalPlayerData.strDescriptionEN || null,
-        thumb: finalPlayerData.strThumb || null,
-        cutout: finalPlayerData.strCutout || null,
+        external_data: externalDataToSave, // Single JSON object with all fields preserved
+        sport_type: determineSportTypeFromAPI(playerData),
+        nationality: playerData.strNationality || null,
+        date_born: playerData.dateBorn ? new Date(playerData.dateBorn) : null,
+        height: playerData.strHeight || null,
+        weight: playerData.strWeight || null,
+        position: playerData.strPosition || null,
+        description: playerData.strDescriptionEN || null,
+        thumb: playerData.strThumb || null,
+        cutout: playerData.strCutout || null,
         last_synced_at: new Date(),
       },
     });
@@ -550,16 +599,20 @@ export async function getOrCreateFighterByName(
   try {
     const searchResults = await client.searchPlayerByName(normalizedName);
 
+    // Ensure searchResults is an array
+    // 確保 searchResults 是數組
+    const results = Array.isArray(searchResults) ? searchResults : [];
+
     // Try to find exact match first
     // 先嘗試精確匹配
-    apiPlayer = searchResults.find(
+    apiPlayer = results.find(
       (p) => p.strPlayer?.toLowerCase() === normalizedName.toLowerCase()
     );
 
     // If no exact match, use first result
     // 如果沒有精確匹配，使用第一個結果
-    if (!apiPlayer && searchResults.length > 0) {
-      apiPlayer = searchResults[0];
+    if (!apiPlayer && results.length > 0) {
+      apiPlayer = results[0];
     }
   } catch (error) {
     console.error(`Error searching for fighter "${normalizedName}":`, error);
