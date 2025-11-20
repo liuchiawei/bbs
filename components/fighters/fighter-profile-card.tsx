@@ -1,6 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Calendar,
@@ -59,14 +65,10 @@ export function FighterProfileCard({ fighter }: FighterProfileCardProps) {
     <Card className="overflow-hidden">
       {/* Fighter Image */}
       {(fighter.cutout || fighter.thumb) && (
-        <div className="relative w-full h-64 md:h-80 bg-muted flex items-center justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={fighter.cutout || fighter.thumb || ""}
-            alt={fighter.name}
-            className="max-w-full max-h-full object-contain"
-          />
-        </div>
+        <div
+          className="relative w-full h-64 md:h-80 bg-muted flex items-center justify-center bg-cover bg-top"
+          style={{ backgroundImage: `url(${fighter.thumb})` }}
+        />
       )}
 
       <CardHeader>
@@ -74,10 +76,10 @@ export function FighterProfileCard({ fighter }: FighterProfileCardProps) {
           <div className="flex items-start gap-4 flex-1">
             {/* Fighter Avatar */}
             <FighterAvatar
-              thumb={fighter.thumb}
+              thumb={fighter.cutout || fighter.thumb}
               name={fighter.name}
               size="lg"
-              className="shrink-0"
+              className="shrink-0 bg-primary"
             />
 
             <div className="flex-1">
@@ -90,12 +92,12 @@ export function FighterProfileCard({ fighter }: FighterProfileCardProps) {
                       sportTypeColors.other
                     } border capitalize`}
                   >
-                    {fighter.sport_type}
+                    {fighter.sport_type || "Unknown"}
                   </Badge>
                 )}
                 {fighter.position && (
                   <Badge variant="outline" className="text-xs">
-                    {fighter.position}
+                    {fighter.position || "Unknown"}
                   </Badge>
                 )}
               </div>
@@ -103,18 +105,19 @@ export function FighterProfileCard({ fighter }: FighterProfileCardProps) {
               <CardTitle className="text-2xl md:text-3xl mb-4">
                 {fighter.name}
               </CardTitle>
+              <CardDescription className="text-sm text-muted-foreground">
+                {fighter.weight || "Unknown"}
+              </CardDescription>
             </div>
           </div>
         </div>
 
         {/* Basic Info */}
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-          {fighter.nationality && (
-            <div className="flex items-center gap-2">
-              <Globe className="w-4 h-4" />
-              <span>{fighter.nationality}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <Globe className="w-4 h-4" />
+            <span>{fighter.nationality || "Unknown"}</span>
+          </div>
           {formattedBirthDate && (
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
@@ -132,18 +135,14 @@ export function FighterProfileCard({ fighter }: FighterProfileCardProps) {
         {/* Physical Stats */}
         {(fighter.height || fighter.weight) && (
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mt-2">
-            {fighter.height && (
-              <div className="flex items-center gap-2">
-                <Ruler className="w-4 h-4" />
-                <span>{fighter.height}</span>
-              </div>
-            )}
-            {fighter.weight && (
-              <div className="flex items-center gap-2">
-                <Weight className="w-4 h-4" />
-                <span>{fighter.weight}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <Ruler className="w-4 h-4" />
+              <span>{fighter.height || "Unknown"}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Weight className="w-4 h-4" />
+              <span>{fighter.weight || "Unknown"}</span>
+            </div>
           </div>
         )}
       </CardHeader>
@@ -154,7 +153,7 @@ export function FighterProfileCard({ fighter }: FighterProfileCardProps) {
           <div>
             <h3 className="font-semibold mb-2">About</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {fighter.description}
+              {fighter.description || "No description available"}
             </p>
           </div>
         )}
