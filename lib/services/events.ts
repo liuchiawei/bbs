@@ -6,6 +6,9 @@
 
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
+import { getOrCreateFighterByName } from "./fighters";
+import { linkFightToEvent } from "./fighter-events";
+import { parseFightCard } from "@/lib/utils/fight-card-parser";
 import type {
   Event,
   UnifiedEventData,
@@ -222,6 +225,8 @@ export async function syncEventsFromExternalAPI(
           },
         });
 
+        let eventId: string;
+
         if (existing) {
           // 既存イベントを更新
           // Update existing event
@@ -237,11 +242,12 @@ export async function syncEventsFromExternalAPI(
               sync_status: "completed",
             },
           });
+          eventId = existing.id;
           updated++;
         } else {
           // 新規イベントを作成
           // Create new event
-          await prisma.event.create({
+          const newEvent = await prisma.event.create({
             data: {
               name: unifiedEvent.name,
               fight_date: unifiedEvent.fight_date,
@@ -254,7 +260,63 @@ export async function syncEventsFromExternalAPI(
               sync_status: "completed",
             },
           });
+          eventId = newEvent.id;
           created++;
+        }
+
+        // 對戰卡を解析して選手をリンク
+        // Parse fight card and link fighters
+        try {
+          const strResult = unifiedEvent.external_data?.strResult as
+            | string
+            | undefined;
+          if (strResult) {
+            const fights = parseFightCard(strResult);
+
+            for (const fight of fights) {
+              try {
+                // 選手を取得または作成
+                // Get or create fighters
+                const fighter1 = await getOrCreateFighterByName(
+                  fight.fighter1,
+                  unifiedEvent.sport_type
+                );
+                const fighter2 = await getOrCreateFighterByName(
+                  fight.fighter2,
+                  unifiedEvent.sport_type
+                );
+
+                if (fighter1 && fighter2) {
+                  // 選手をイベントにリンク
+                  // Link fighters to event
+                  await linkFightToEvent(fighter1.id, fighter2.id, eventId, {
+                    weightClass: fight.weightClass,
+                    method: fight.method || null,
+                    round: fight.round ? parseInt(fight.round) : null,
+                    time: fight.time || null,
+                    // 結果はまだ不明（未来のイベント）
+                    // Result is unknown (future event)
+                    fighter1Result: null,
+                    fighter2Result: null,
+                  });
+                }
+              } catch (error) {
+                console.error(
+                  `Error linking fighters for fight "${fight.fighter1} vs ${fight.fighter2}":`,
+                  error
+                );
+                // Continue with next fight even if this one fails
+                // 即使這個對戰失敗，繼續處理下一個
+              }
+            }
+          }
+        } catch (error) {
+          console.error(
+            `Error parsing fight card for event ${eventId}:`,
+            error
+          );
+          // Don't fail the entire sync if fight card parsing fails
+          // 如果對戰卡解析失敗，不要讓整個同步失敗
         }
       } catch (error) {
         console.error(

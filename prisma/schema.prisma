@@ -193,6 +193,7 @@ model Event {
 
   posts Post[]
   bets  BettingLog[]
+  fighterEvents FighterEvent[]
 
   @@unique([external_id, external_source]) // 外部イベントの一意制約 / Unique constraint for external events
   @@index([external_id, external_source]) // 外部イベントの高速検索 / Fast lookup for external events
@@ -240,4 +241,56 @@ model AuditLog {
   action_type String
   description String
   createdAt   DateTime @default(now())
+}
+
+model Fighter {
+  id               String    @id @default(uuid())
+  slug             String    @unique // URL-friendly slug (e.g., "conor-mcgregor")
+  name             String    // Full name
+  external_id      String?   // TheSportsDB API idPlayer
+  external_source  String?   @default("thesportsdb") // Data source
+  external_data    Json?     // Complete API response cache
+  sport_type       String?   // boxing/ufc/mma
+  nationality      String?
+  date_born        DateTime?
+  height           String?   // Height (e.g., "5 ft 9 in")
+  weight           String?   // Weight (e.g., "155 lbs")
+  position         String?   // Weight class/position
+  description      String?   // Biography/description
+  thumb            String?   // Profile thumbnail URL
+  cutout           String?   // Cutout image URL
+  last_synced_at   DateTime? // Last sync timestamp
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  // Relationships
+  eventsAsFighter  FighterEvent[] @relation("Fighter")
+  eventsAsOpponent FighterEvent[] @relation("Opponent")
+
+  @@index([external_id, external_source]) // Fast lookup for external fighters
+  @@index([sport_type]) // Filter by sport type
+  @@index([slug]) // Fast slug lookup
+}
+
+model FighterEvent {
+  id           String    @id @default(uuid())
+  fighter_id   String    // FK to Fighter
+  event_id     String    // FK to Event
+  opponent_id  String?   // FK to Fighter (opponent)
+  result       String?   // Win/Loss/Draw/NC (No Contest)
+  method       String?   // KO/TKO/Decision/Submission/etc.
+  round        Int?      // Round number
+  time         String?   // Time in round
+  weight_class String?   // Weight class for this fight
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  fighter  Fighter @relation("Fighter", fields: [fighter_id], references: [id], onDelete: Cascade)
+  opponent Fighter? @relation("Opponent", fields: [opponent_id], references: [id], onDelete: SetNull)
+  event    Event   @relation(fields: [event_id], references: [id], onDelete: Cascade)
+
+  @@unique([fighter_id, event_id]) // One fighter can only appear once per event
+  @@index([fighter_id]) // Fast lookup by fighter
+  @@index([event_id]) // Fast lookup by event
+  @@index([opponent_id]) // Fast lookup by opponent
 }

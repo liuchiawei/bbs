@@ -1,5 +1,206 @@
 # 開發日誌 / Development Log
 
+## 2025-11-20
+
+### feat/fighter-pages
+
+**難度**: ★★★★☆
+
+**描述**: 實作選手頁面功能，包括資料庫模型、API 適配器、服務層、前端組件和路由，支援從賽事頁面點擊選手名字連結到選手頁，顯示選手基本資料和歷史賽事成績
+
+**資料庫架構** (`prisma/schema.prisma`):
+
+- **新增 Fighter 模型**：
+  - `id`: UUID (主鍵)
+  - `slug`: String @unique - URL 友好的 slug（如 "conor-mcgregor"）
+  - `name`: String - 選手全名
+  - `external_id`: String? - TheSportsDB API 的 idPlayer
+  - `external_source`: String? @default("thesportsdb") - 數據來源
+  - `external_data`: Json? - 完整 API 回應快取
+  - `sport_type`: String? - 運動類型（boxing/ufc/mma）
+  - `nationality`: String? - 國籍
+  - `date_born`: DateTime? - 生日
+  - `height`: String? - 身高
+  - `weight`: String? - 體重
+  - `position`: String? - 量級
+  - `description`: String? - 描述
+  - `thumb`: String? - 頭像 URL
+  - `cutout`: String? - 去背圖 URL
+  - `last_synced_at`: DateTime? - 最後同步時間
+  - 索引：
+    - `@@unique([slug])` - slug 唯一性
+    - `@@index([external_id, external_source])` - 快速查找外部選手
+    - `@@index([sport_type])` - 依運動類型篩選
+
+- **新增 FighterEvent 關聯表**：
+  - `id`: UUID (主鍵)
+  - `fighter_id`: String (FK to Fighter)
+  - `event_id`: String (FK to Event)
+  - `opponent_id`: String? (FK to Fighter, 對手)
+  - `result`: String? - 結果（Win/Loss/Draw/NC）
+  - `method`: String? - 方法（KO/TKO/Decision 等）
+  - `round`: Int? - 回合數
+  - `time`: String? - 時間
+  - `weight_class`: String? - 量級
+  - 索引：
+    - `@@unique([fighter_id, event_id])` - 一個選手在一個賽事中只能出現一次
+    - `@@index([fighter_id])` - 快速查找選手的賽事
+    - `@@index([event_id])` - 快速查找賽事的選手
+    - `@@index([opponent_id])` - 快速查找對手
+
+**API 適配器擴展** (`lib/adapters/thesportsdb.ts`):
+
+- **新增 TheSportsDBPlayerSchema** (Zod schema)：
+  - 定義選手數據結構，包含所有 TheSportsDB API 欄位
+- **新增方法**：
+  - `getPlayerById(idPlayer: string)`: 透過選手 ID 查詢選手詳細資料
+  - `searchPlayerByName(name: string)`: 依名字搜尋選手
+  - `getPlayerEvents(idPlayer: string)`: 查詢選手歷史賽事（預留接口）
+- **使用端點**：
+  - `lookupplayer.php?id={idPlayer}` - 選手詳細資料
+  - `searchplayers.php?p={name}` - 搜尋選手
+
+**服務層** (`lib/services/fighters.ts`, `lib/services/fighter-events.ts`):
+
+- **選手服務**：
+  - `getFighterBySlug(slug: string)`: 依 slug 查詢選手（含快取）
+  - `getOrCreateFighterByName(name: string, sportType?)`: 依名字取得或建立選手
+    - 先查資料庫
+    - 不存在則查詢 API
+    - 建立 Fighter 記錄並生成 slug
+  - `syncFighterFromAPI(fighterId: string)`: 從 API 同步選手資料
+  - `getFighterEvents(fighterId: string)`: 取得選手的歷史賽事
+- **選手賽事關聯服務**：
+  - `linkFighterToEvent()`: 建立選手-賽事關聯
+  - `linkFightToEvent()`: 將兩位選手都連結到賽事
+  - `getFighterEventHistory()`: 取得選手完整賽事歷史
+
+**工具函數** (`lib/utils/slug.ts`, `lib/utils/fight-card-parser.ts`):
+
+- **Slug 生成**：
+  - `generateSlug(name: string)`: 生成 URL 友好的 slug
+  - `generateUniqueSlug(name: string, existingSlugs: string[])`: 生成唯一 slug（衝突時添加數字後綴）
+  - `normalizeFighterName(name: string)`: 標準化選手名字
+- **對戰卡解析**：
+  - `parseFightCard(fightCardText: string)`: 解析對戰卡文字為結構化數據
+
+**前端組件**:
+
+- **FighterLink** (`components/fighters/fighter-link.tsx`):
+  - 可重用組件，用於顯示可點擊的選手名字
+  - 處理 slug 生成失敗的情況（顯示純文字）
+- **FighterProfileCard** (`components/fighters/fighter-profile-card.tsx`):
+  - 顯示選手基本資料：頭像、姓名、國籍、生日、身高體重、量級、描述
+  - 顯示社交媒體連結（Facebook, Twitter, Instagram, YouTube）
+- **FighterEventHistory** (`components/fighters/fighter-event-history.tsx`):
+  - 顯示歷史賽事列表
+  - 每項顯示：賽事名稱（連結）、日期、對手（連結）、結果、方法、回合、時間、量級
+- **更新 EventFightCard** (`components/events/event-fight-card.tsx`):
+  - 將選手名字改為可點擊連結（使用 FighterLink 組件）
+
+**頁面路由** (`app/fighter/[slug]/`):
+
+- **page.tsx**: 選手詳細頁面
+  - Server Component，使用 `unstable_cache` 快取
+  - 顯示 FighterProfileCard 和 FighterEventHistory
+  - 動態 metadata 生成
+  - 404 處理
+- **loading.tsx**: 載入狀態（Skeleton UI）
+- **error.tsx**: 錯誤邊界組件
+
+**資料同步整合** (`lib/services/events.ts`):
+
+- 在事件同步時自動解析對戰卡
+- 建立 Fighter 記錄（如果不存在）
+- 建立 FighterEvent 關聯
+- 錯誤處理：對戰卡解析失敗不影響事件同步
+
+**性能優化**:
+
+- 使用 Next.js 16 的 `unstable_cache` 快取選手數據（5分鐘）
+- 使用 `revalidateTag` 清除快取
+- 資料庫索引優化查詢性能
+
+**注意事項**:
+
+- Slug 唯一性：使用 `generateUniqueSlug` 確保 slug 唯一
+- API 限制：TheSportsDB V1 API 有請求限制，需要適當快取
+- 錯誤處理：API 查詢失敗時優雅降級
+- 預備方案：如果無法從 EventFightCard 提取，提供從 strResult 解析的備用方案
+
+### feat/fighter-on-demand-sync
+
+**難度**: ★★★☆☆
+
+**描述**: 實作選手資料的 on-demand 同步機制，當透過 slug 查詢不到選手時，自動從 slug 推測名字並從 TheSportsDB API 搜尋，找到匹配的選手後自動建立資料庫記錄。這是最小代碼改動、最高效、最優雅的解決方案。
+
+**問題背景**:
+
+- 資料庫初始狀態沒有 fighter 資料
+- 用戶訪問 `/fighter/conor-mcgregor` 時會 404
+- 需要一個機制在查詢不到時自動同步
+
+**解決方案**:
+
+採用服務層 fallback 機制，在 `getFighterBySlug` 中加入 on-demand 同步邏輯，對上層透明，無需修改頁面代碼。
+
+**工具函數擴展** (`lib/utils/slug.ts`):
+
+- **新增 `slugToPossibleNames(slug: string)`**:
+  - 從 slug 推測可能的名字列表
+  - 處理基本格式：`conor-mcgregor` → `Conor McGregor`
+  - 處理數字後綴：`conor-mcgregor-2` → `Conor McGregor`
+  - 處理 "Mc" 前綴：`conor-mcgregor` → `Conor McGregor` 和 `Conor McGregor`（Mc 大寫變體）
+  - 返回多個候選名字以提高匹配率
+
+**服務層增強** (`lib/services/fighters.ts`):
+
+- **修改 `getFighterBySlug(slug: string, options?: { trySync?: boolean })`**:
+  - 新增 `options` 參數，支援 `trySync`（預設為 `true`）
+  - 實作 on-demand 同步 fallback：
+    1. 先查詢資料庫
+    2. 找不到且 `trySync` 為 `true` 時，從 slug 推測名字
+    3. 搜尋 TheSportsDB API
+    4. 檢查 slug 匹配（支援精確匹配和基礎 slug 匹配，忽略數字後綴）
+    5. 找到匹配後建立資料庫記錄
+    6. 返回完整的選手資料（含關聯的賽事）
+  - 錯誤處理：API 搜尋失敗時返回 `null`，不影響頁面運作
+  - 詳細日誌記錄同步過程
+
+**快取策略**:
+
+- 使用 `unstable_cache` 快取結果（300 秒）
+- 找不到時也會快取，避免重複 API 呼叫
+- 錯誤處理：API 失敗時返回 `null`，不影響頁面運作
+
+**功能特點**:
+
+1. **代碼改動最小**：只修改了兩個文件（`lib/utils/slug.ts` 和 `lib/services/fighters.ts`）
+2. **對上層透明**：頁面代碼無需改動，`getFighterBySlug` 自動處理同步
+3. **高效**：只在真正找不到時才呼叫 API
+4. **優雅**：邏輯集中在服務層，易於維護
+5. **資料庫操作少**：只在找到匹配選手時才寫入
+
+**使用流程**:
+
+當用戶訪問 `/fighter/conor-mcgregor` 時：
+1. 系統先查詢資料庫
+2. 如果找不到，自動從 slug 推測名字並搜尋 API
+3. 找到匹配後自動建立記錄
+4. 返回選手資料並顯示頁面
+
+**錯誤處理**:
+
+- API 搜尋失敗時繼續處理下一個候選名字
+- 所有錯誤都被捕獲並記錄，不會中斷流程
+- 找不到匹配時返回 `null`，頁面顯示 404
+
+**性能考量**:
+
+- API 請求只在真正需要時才執行
+- 使用快取避免重複 API 呼叫
+- 支援多個候選名字，提高匹配成功率
+
 ## 2025-01-XX
 
 ### feat/api-data-ingest + data-abstraction

@@ -19,13 +19,13 @@ export async function POST(request: NextRequest) {
     // Secret認証（Cron Jobからのリクエストを保護）
     // Secret authentication (protect requests from Cron Jobs)
     const providedSecret = process.env.EVENTS_SYNC_SECRET;
-    
+
     // Vercel Cron Jobs は特定のヘッダーを送信する
     // Vercel Cron Jobs sends specific headers
     const cronHeader = request.headers.get("x-vercel-cron");
     const { searchParams } = new URL(request.url);
     const secret = searchParams.get("secret");
-    
+
     // リクエストボディを一度だけ読み取る
     // Read request body only once
     let body: any = {};
@@ -45,8 +45,10 @@ export async function POST(request: NextRequest) {
     if (providedSecret) {
       const isVercelCron = cronHeader === "1";
       const isValidRequest =
-        isVercelCron || secret === providedSecret || bodySecret === providedSecret;
-      
+        isVercelCron ||
+        secret === providedSecret ||
+        bodySecret === providedSecret;
+
       if (!isValidRequest) {
         return NextResponse.json(
           { error: "Invalid secret token" },
@@ -64,15 +66,21 @@ export async function POST(request: NextRequest) {
     // V1 API: API key is optional (uses free key "123" by default)
     const apiKey = process.env.THESPORTSDB_API_KEY || "123";
 
-    console.log(`[Sync] Starting event synchronization from ${source} (V1 API)`);
-    console.log(`[Sync] API Key used: ${apiKey} (${process.env.THESPORTSDB_API_KEY ? "from env" : "default free key"})`);
+    console.log(
+      `[Sync] Starting event synchronization from ${source} (V1 API)`
+    );
+    console.log(
+      `[Sync] API Key used: ${apiKey} (${
+        process.env.THESPORTSDB_API_KEY ? "from env" : "default free key"
+      })`
+    );
 
     // 同期を実行
     // Execute synchronization
     const result = await syncEventsFromExternalAPI(source);
 
     console.log(`[Sync] Synchronization completed:`, result);
-    
+
     // 診斷資訊を追加
     // Add diagnostic information
     const diagnosticInfo: any = {
@@ -82,13 +90,14 @@ export async function POST(request: NextRequest) {
 
     // キャッシュを無効化して最新データを取得できるようにする
     // Invalidate cache to fetch latest data
-    revalidateTag("events");
+    revalidateTag("events", "max");
 
     return NextResponse.json({
       success: true,
-      message: result.created + result.updated === 0 
-        ? "Sync completed but no events were created or updated. Check server logs for details."
-        : "Events synchronized successfully",
+      message:
+        result.created + result.updated === 0
+          ? "Sync completed but no events were created or updated. Check server logs for details."
+          : "Events synchronized successfully",
       result: {
         created: result.created,
         updated: result.updated,
@@ -106,8 +115,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error:
-          error instanceof Error ? error.message : "Failed to sync events",
+        error: error instanceof Error ? error.message : "Failed to sync events",
       },
       { status: 500 }
     );
@@ -126,4 +134,3 @@ export async function GET() {
     note: "This endpoint syncs events from external APIs (TheSportsDB)",
   });
 }
-

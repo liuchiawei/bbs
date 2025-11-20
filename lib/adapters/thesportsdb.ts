@@ -71,6 +71,43 @@ const TheSportsDBResponseSchema = z.object({
   error: z.string().optional(),
 });
 
+// TheSportsDB API v1 Player Schema
+// TheSportsDB API v1 選手スキーマ
+const TheSportsDBPlayerSchema = z.object({
+  idPlayer: z.string(),
+  strPlayer: z.string(),
+  strNationality: z.string().nullable().optional(),
+  dateBorn: z.string().nullable().optional(),
+  strTeam: z.string().nullable().optional(),
+  strSport: z.string().nullable().optional(),
+  strDescriptionEN: z.string().nullable().optional(),
+  strThumb: z.string().nullable().optional(),
+  strCutout: z.string().nullable().optional(),
+  strRender: z.string().nullable().optional(),
+  strBanner: z.string().nullable().optional(),
+  strFanart1: z.string().nullable().optional(),
+  strFanart2: z.string().nullable().optional(),
+  strFanart3: z.string().nullable().optional(),
+  strFanart4: z.string().nullable().optional(),
+  strGender: z.string().nullable().optional(),
+  strPosition: z.string().nullable().optional(), // Weight class
+  strFacebook: z.string().nullable().optional(),
+  strTwitter: z.string().nullable().optional(),
+  strInstagram: z.string().nullable().optional(),
+  strYoutube: z.string().nullable().optional(),
+  strHeight: z.string().nullable().optional(),
+  strWeight: z.string().nullable().optional(),
+  strWebsite: z.string().nullable().optional(),
+  strBirthLocation: z.string().nullable().optional(),
+});
+
+const TheSportsDBPlayerResponseSchema = z.object({
+  players: z.array(TheSportsDBPlayerSchema).optional(),
+  player: TheSportsDBPlayerSchema.optional(),
+  message: z.string().optional(),
+  error: z.string().optional(),
+});
+
 // 統一されたイベントデータフォーマット
 // Unified event data format
 export interface UnifiedEventData {
@@ -469,6 +506,115 @@ export class TheSportsDBClient {
     }
 
     return "other";
+  }
+
+  /**
+   * 選手IDで選手情報を取得
+   * Get player information by player ID
+   * Uses lookupplayer.php endpoint
+   */
+  async getPlayerById(
+    idPlayer: string
+  ): Promise<z.infer<typeof TheSportsDBPlayerSchema> | null> {
+    try {
+      console.log(`[TheSportsDB V1] Fetching player with ID: ${idPlayer}`);
+
+      const data = await this.request<
+        z.infer<typeof TheSportsDBPlayerResponseSchema>
+      >(`lookupplayer.php?id=${idPlayer}`);
+
+      if (data.message && data.message.toLowerCase().includes("error")) {
+        console.warn(
+          `API returned error message for player ${idPlayer}: ${data.message}`
+        );
+        return null;
+      }
+
+      if (data.error) {
+        console.warn(
+          `API returned error for player ${idPlayer}: ${data.error}`
+        );
+        return null;
+      }
+
+      const player =
+        data.player ||
+        (data.players && data.players.length > 0 ? data.players[0] : null);
+
+      if (!player) {
+        console.log(`No player found with ID: ${idPlayer}`);
+        return null;
+      }
+
+      console.log(`Successfully fetched player: ${player.strPlayer}`);
+      return player;
+    } catch (error) {
+      console.error(`Error fetching player ${idPlayer}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * 選手名で選手を検索
+   * Search players by name
+   * Uses searchplayers.php endpoint
+   */
+  async searchPlayerByName(
+    name: string
+  ): Promise<z.infer<typeof TheSportsDBPlayerSchema>[]> {
+    try {
+      console.log(`[TheSportsDB V1] Searching players with name: ${name}`);
+
+      // request メソッドが自動的に baseUrl と apiKey を追加するため、endpoint のみを渡す
+      // request method automatically adds baseUrl and apiKey, so only pass the endpoint
+      const data = await this.request<
+        z.infer<typeof TheSportsDBPlayerResponseSchema>
+      >(`searchplayers.php?p=${encodeURIComponent(name)}`);
+
+      if (data.message && data.message.toLowerCase().includes("error")) {
+        console.warn(
+          `API returned error message for search "${name}": ${data.message}`
+        );
+        return [];
+      }
+
+      if (data.error) {
+        console.warn(`API returned error for search "${name}": ${data.error}`);
+        return [];
+      }
+
+      const players = data.players || (data.player ? [data.player] : []);
+
+      if (!players || players.length === 0) {
+        console.log(`No players found with name: ${name}`);
+        return [];
+      }
+
+      console.log(`Found ${players.length} player(s) with name: ${name}`);
+      return players;
+    } catch (error) {
+      console.error(`Error searching players with name "${name}":`, error);
+      return [];
+    }
+  }
+
+  /**
+   * 選手の過去のイベントを取得
+   * Get player's past events
+   * Note: TheSportsDB V1 API doesn't have a direct endpoint for player events
+   * This would need to be implemented by searching events and filtering by player name
+   * For now, this is a placeholder that can be extended
+   */
+  async getPlayerEvents(
+    idPlayer: string
+  ): Promise<z.infer<typeof TheSportsDBEventSchema>[]> {
+    // Note: TheSportsDB V1 API doesn't provide a direct endpoint for player events
+    // This would require searching through events and matching player names
+    // For now, return empty array - can be extended later with event search
+    console.warn(
+      `[TheSportsDB V1] getPlayerEvents is not fully implemented yet for player ${idPlayer}`
+    );
+    return [];
   }
 }
 

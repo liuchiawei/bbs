@@ -397,3 +397,68 @@ export interface UserBettingStats {
   winRate: number; // Win %
 }
 
+// Fighter Types
+// 選手類型
+export interface Fighter {
+  id: string;
+  slug: string;
+  name: string;
+  external_id?: string | null;
+  external_source?: string | null;
+  external_data?: Record<string, unknown> | null;
+  sport_type?: SportType | null;
+  nationality?: string | null;
+  date_born?: Date | string | null;
+  height?: string | null;
+  weight?: string | null;
+  position?: string | null;
+  description?: string | null;
+  thumb?: string | null;
+  cutout?: string | null;
+  last_synced_at?: Date | string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+}
+
+// Fighter for public display (used in components)
+// 用於公開顯示的選手類型（用於組件）
+export interface FighterPublic {
+  id: string;
+  name: string;
+  slug: string;
+  nationality?: string | null;
+  date_born?: Date | string | null;
+  height?: string | null;
+  weight?: string | null;
+  position?: string | null;
+  description?: string | null;
+  thumb?: string | null;
+  cutout?: string | null;
+  sport_type?: SportType | null;
+  external_data?: Record<string, unknown> | null;
+}
+
+// Fighter with events (from database with relations)
+// 包含賽事的選手（從資料庫帶關聯）
+export interface FighterWithEvents extends Fighter {
+  eventsAsFighter: FighterEventWithDetails[];
+}
+
+// FighterEvent with event and opponent details
+// 包含賽事和對手詳情的 FighterEvent
+export interface FighterEventWithDetails {
+  id: string;
+  fighter_id: string;
+  event_id: string;
+  opponent_id?: string | null;
+  result?: string | null;
+  method?: string | null;
+  round?: number | null;
+  time?: string | null;
+  weight_class?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  event: Event;
+  opponent?: Fighter | null;
+}
+

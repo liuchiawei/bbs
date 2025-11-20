@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Trophy, Users } from "lucide-react";
+import { FighterLink } from "@/components/fighters/fighter-link";
 
 /**
  * Fight Card Component
@@ -139,11 +140,11 @@ export function EventFightCard({
             </div>
             <div className="flex items-center justify-between py-2">
               <div className="flex-1 text-center">
-                <p className="font-semibold text-sm">{fight.fighter1}</p>
+                <FighterLink name={fight.fighter1} className="text-sm" />
               </div>
               <div className="px-4 text-muted-foreground font-bold">VS</div>
               <div className="flex-1 text-center">
-                <p className="font-semibold text-sm">{fight.fighter2}</p>
+                <FighterLink name={fight.fighter2} className="text-sm" />
               </div>
             </div>
             {fight.method && (
