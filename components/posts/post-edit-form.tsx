@@ -128,7 +128,6 @@ export function PostEditForm({
           title: data.title,
           content: data.content,
           tags: tags,
-          tags: tags,
           categoryId: selectedCategoryId || null,
           eventId: selectedEventId || null,
         }),

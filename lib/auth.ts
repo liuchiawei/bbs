@@ -95,6 +95,7 @@ export async function getCurrentUser() {
 
   return {
     ...user,
+    virtual_score: Number(user.virtual_score), // Convert Decimal to number
     name: user.profile?.name || user.userId,
     nickname: user.profile?.nickname || null,
     avatar: user.profile?.avatar || null,

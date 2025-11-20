@@ -18,6 +18,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { EventDetailCard } from "@/components/events/event-detail-card";
 import { EventFightCard } from "@/components/events/event-fight-card";
+import type { Event, ExternalEventSource } from "@/lib/types";
 
 /**
  * Event Detail Page
@@ -33,7 +34,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  
+
   const event = await prisma.event.findUnique({
     where: { id },
     select: {
@@ -52,10 +53,14 @@ export async function generateMetadata({
 
   return {
     title: `${event.name} | Combat Sports Events`,
-    description: `${event.sport_type?.toUpperCase()} event on ${new Date(event.fight_date).toLocaleDateString()}. Status: ${event.status}`,
+    description: `${event.sport_type?.toUpperCase()} event on ${new Date(
+      event.fight_date
+    ).toLocaleDateString()}. Status: ${event.status}`,
     openGraph: {
       title: event.name,
-      description: `Combat sports event on ${new Date(event.fight_date).toLocaleDateString()}`,
+      description: `Combat sports event on ${new Date(
+        event.fight_date
+      ).toLocaleDateString()}`,
       type: "website",
     },
   };
@@ -149,7 +154,9 @@ export default async function EventDetailPage({
             {event.sport_type && (
               <Badge
                 variant="outline"
-                className={`${sportTypeColors[event.sport_type] || sportTypeColors.other} border capitalize`}
+                className={`${
+                  sportTypeColors[event.sport_type] || sportTypeColors.other
+                } border capitalize`}
               >
                 {event.sport_type}
               </Badge>
@@ -176,19 +183,28 @@ export default async function EventDetailPage({
 
         {/* Event Detail Card with Rich Data */}
         <div className="mb-8">
-          <EventDetailCard event={event} />
+          <EventDetailCard
+            event={
+              {
+                ...event,
+                external_source:
+                  (event.external_source as ExternalEventSource) || null,
+              } as Event & { external_data?: Record<string, unknown> | null }
+            }
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="md:col-span-2 space-y-6">
             {/* Fight Card */}
-            {externalData?.strResult && (
+            {externalData?.strResult &&
+            typeof externalData.strResult === "string" ? (
               <EventFightCard
-                fightCardText={String(externalData.strResult)}
+                fightCardText={externalData.strResult}
                 eventName={event.name}
               />
-            )}
+            ) : null}
 
             {/* Event Stats */}
             <Card>

@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { BettingLog } from "@/lib/types";
-import { formatDistanceToNow } from "date-fns";
+// import { formatDistanceToNow } from "date-fns";
 
 interface BettingHistoryListProps {
   bets: (BettingLog & { eventName?: string })[];
@@ -64,7 +64,9 @@ export function BettingHistoryList({ bets }: BettingHistoryListProps) {
                 </Badge>
               </TableCell>
               <TableCell className="text-right text-muted-foreground">
-                {formatDistanceToNow(new Date(bet.createdAt), { addSuffix: true })}
+                {/* TODO: formatDistanceToNow is not working, use toLocaleString instead */}
+                {/* {formatDistanceToNow(new Date(bet.createdAt), { addSuffix: true })} */}
+                {new Date(bet.createdAt).toLocaleString()}
               </TableCell>
             </TableRow>
           ))}

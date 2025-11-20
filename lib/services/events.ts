@@ -6,6 +6,7 @@
 
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { getOrCreateFighterByName } from "./fighters";
 import { linkFightToEvent } from "./fighter-events";
 import { parseFightCard } from "@/lib/utils/fight-card-parser";
@@ -71,13 +72,15 @@ export async function getWeeklyCombatEvents(): Promise<Event[]> {
  * すべての格闘技イベントを取得（オプションフィルタ付き）
  * Uses unstable_cache for optimal performance (Next.js 16)
  */
-export async function getCombatEvents(options: {
-  sportType?: SportType | "all";
-  status?: Event["status"] | "all";
-  limit?: number;
-  offset?: number;
-  dateRange?: "week" | "month" | "all";
-} = {}): Promise<Event[]> {
+export async function getCombatEvents(
+  options: {
+    sportType?: SportType | "all";
+    status?: Event["status"] | "all";
+    limit?: number;
+    offset?: number;
+    dateRange?: "week" | "month" | "all";
+  } = {}
+): Promise<Event[]> {
   const {
     sportType = "all",
     status = "all",
@@ -126,7 +129,15 @@ export async function getCombatEvents(options: {
       } else if (dateRange === "month") {
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        const endOfMonth = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+          999
+        );
 
         where.fight_date = {
           gte: startOfMonth,
@@ -175,7 +186,7 @@ export async function syncEventsFromExternalAPI(
   // V1 API: API key はオプション（デフォルトで無料キー "123" を使用）
   // V1 API: API key is optional (uses free key "123" by default)
   const apiKey = process.env.THESPORTSDB_API_KEY || "123";
-  
+
   const client = new TheSportsDBClient({ apiKey });
 
   // より広い日付範囲を計算（今日から未来3ヶ月）
@@ -194,7 +205,9 @@ export async function syncEventsFromExternalAPI(
 
   try {
     console.log(
-      `[Sync] Fetching events from ${startDate.toISOString().split("T")[0]} to ${endDate.toISOString().split("T")[0]}`
+      `[Sync] Fetching events from ${
+        startDate.toISOString().split("T")[0]
+      } to ${endDate.toISOString().split("T")[0]}`
     );
 
     // 日付範囲でイベントを取得
@@ -205,9 +218,11 @@ export async function syncEventsFromExternalAPI(
     );
 
     console.log(`[Sync] Fetched ${unifiedEvents.length} events from API`);
-    
+
     if (unifiedEvents.length === 0) {
-      console.warn(`[Sync] WARNING: No events fetched from API. This could mean:`);
+      console.warn(
+        `[Sync] WARNING: No events fetched from API. This could mean:`
+      );
       console.warn(`  1. API returned no events`);
       console.warn(`  2. All events were filtered out by date range`);
       console.warn(`  3. All events failed to transform`);
@@ -236,7 +251,8 @@ export async function syncEventsFromExternalAPI(
               name: unifiedEvent.name,
               fight_date: unifiedEvent.fight_date,
               status: determineEventStatus(unifiedEvent.fight_date),
-              external_data: unifiedEvent.external_data,
+              external_data:
+                unifiedEvent.external_data as Prisma.InputJsonValue,
               sport_type: unifiedEvent.sport_type,
               last_synced_at: new Date(),
               sync_status: "completed",
@@ -254,7 +270,8 @@ export async function syncEventsFromExternalAPI(
               status: determineEventStatus(unifiedEvent.fight_date),
               external_id: unifiedEvent.external_id,
               external_source: source,
-              external_data: unifiedEvent.external_data,
+              external_data:
+                unifiedEvent.external_data as Prisma.InputJsonValue,
               sport_type: unifiedEvent.sport_type,
               last_synced_at: new Date(),
               sync_status: "completed",
@@ -377,4 +394,3 @@ export async function getEventByExternalId(
 
   return event as Event | null;
 }
-

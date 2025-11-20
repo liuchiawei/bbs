@@ -1,6 +1,6 @@
 # BBS - Boxing Buddies Society
 
-[English](README.md) | [繁體中文](README.zh-TW.md) | [日本語](README.ja.md)
+[English](README.md) | [繁體中文](docs/README.zh-TW.md) | [日本語](docs/README.ja.md)
 
 A production-ready, modern bulletin board system built with Next.js 16, featuring complete authentication, admin dashboard, multilingual support (4 languages), advanced ISR optimization, and beautiful UI/UX.
 

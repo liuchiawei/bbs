@@ -5,7 +5,9 @@ import { calculatePoolOdds, settleEvent } from "@/lib/betting-system";
 import { z } from "zod";
 
 const updateEventSchema = z.object({
-  status: z.enum(["PENDING", "OPEN", "CLOSED", "SETTLED", "CANCELLED"]).optional(),
+  status: z
+    .enum(["PENDING", "OPEN", "CLOSED", "SETTLED", "CANCELLED"])
+    .optional(),
   winner_id: z.string().optional(),
 });
 
@@ -64,7 +66,11 @@ export async function PUT(
 
     // Check if we are settling the event
     if (validatedData.status === "SETTLED" && validatedData.winner_id) {
-      const result = await settleEvent(id, validatedData.winner_id, user.userId);
+      const result = await settleEvent(
+        id,
+        validatedData.winner_id,
+        user.userId
+      );
       return NextResponse.json(result);
     }
 

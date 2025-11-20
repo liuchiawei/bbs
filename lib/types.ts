@@ -177,6 +177,7 @@ export interface Post {
   userId: string;
   tags: string[];
   categoryId?: string | null;
+  eventId?: string | null; // 関連するイベントID / Related Event ID
   views: number;
   likes: number;
   createdAt: Date | string;
