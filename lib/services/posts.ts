@@ -230,7 +230,7 @@ export async function getPostsCount(
  */
 export async function createPost(
   userId: string,
-  data: { title: string; content: string; tags: string[]; categoryId?: string | null }
+  data: { title: string; content: string; tags: string[]; categoryId?: string | null; eventId?: string | null }
 ) {
   // カテゴリが指定されている場合、存在し未削除であることを確認
   // If category is specified, verify it exists and is not deleted
@@ -250,6 +250,7 @@ export async function createPost(
       content: data.content,
       tags: data.tags,
       categoryId: data.categoryId || null,
+      eventId: data.eventId || null,
       userId,
     },
     include: {
@@ -274,7 +275,7 @@ export async function createPost(
  */
 export async function updatePost(
   id: string,
-  data: { title?: string; content?: string; tags?: string[]; categoryId?: string | null }
+  data: { title?: string; content?: string; tags?: string[]; categoryId?: string | null; eventId?: string | null }
 ) {
   // カテゴリが指定されている場合、存在し未削除であることを確認
   // If category is specified, verify it exists and is not deleted
@@ -297,6 +298,7 @@ export async function updatePost(
       ...(data.content !== undefined && { content: data.content }),
       ...(data.tags !== undefined && { tags: data.tags }),
       ...(data.categoryId !== undefined && { categoryId: data.categoryId || null }),
+      ...(data.eventId !== undefined && { eventId: data.eventId || null }),
     },
     include: {
       user: {

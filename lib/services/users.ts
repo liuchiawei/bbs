@@ -1,6 +1,21 @@
 import { prisma } from "@/lib/db";
-import type { User, UserWithCounts, UserWithStats, UserProfilePage, UserWithProfile, PostWithUser, CommentWithUser, CommentWithUserAndPost } from "@/lib/types";
-import { userSelectFull, userSelectWithStats, userSelectPublicExtended, profileSelectPublic, categorySelect } from "@/lib/validations";
+import type {
+  User,
+  UserWithCounts,
+  UserWithStats,
+  UserProfilePage,
+  UserWithProfile,
+  PostWithUser,
+  CommentWithUser,
+  CommentWithUserAndPost,
+} from "@/lib/types";
+import {
+  userSelectFull,
+  userSelectWithStats,
+  userSelectPublicExtended,
+  profileSelectPublic,
+  categorySelect,
+} from "@/lib/validations";
 import { transformUser } from "@/lib/utils";
 
 /**
@@ -45,17 +60,19 @@ export async function getUserWithCounts(
  * Get a user's profile data (for settings/edit pages)
  * Cache を使用してパフォーマンスを最適化
  */
-export async function getUserProfile(userId: string): Promise<UserWithProfile | null> {
+export async function getUserProfile(
+  userId: string
+): Promise<UserWithProfile | null> {
   "use cache";
   const user = await prisma.user.findUnique({
     where: { userId },
     select: userSelectFull,
   });
-  
+
   if (!user || !user.profile) {
     return null;
   }
-  
+
   return user as UserWithProfile;
 }
 
@@ -79,7 +96,7 @@ export async function updateUserProfile(
   if (data.points !== undefined) {
     updateData.points = data.points;
   }
-  
+
   return await prisma.user.update({
     where: { userId },
     data: updateData,
@@ -91,7 +108,10 @@ export async function updateUserProfile(
  * Get a user's full profile page data (optimized single query)
  * Includes user info, counts, and recent posts
  */
-export async function getUserProfilePage(userId: string, recentPostsLimit = 6): Promise<UserProfilePage | null> {
+export async function getUserProfilePage(
+  userId: string,
+  recentPostsLimit = 6
+): Promise<UserProfilePage | null> {
   "use cache";
   const result = await prisma.user.findUnique({
     where: { userId },
@@ -134,22 +154,35 @@ export async function getUserProfilePage(userId: string, recentPostsLimit = 6): 
           comments: true,
           likedPosts: true,
           likedComments: true,
+          followedBy: true, // followers count
+          following: true, // following count
         },
       },
     },
   });
-  
+
   if (!result || !result.profile) {
     return null;
   }
-  
-  return result as UserProfilePage;
+
+  // Transform _count to match UserStats interface
+  // Prisma returns 'followedBy' but UserStats expects 'followers'
+  // Prisma 返回 'followedBy' 但 UserStats 期望 'followers'
+  return {
+    ...result,
+    _count: {
+      ...result._count,
+      followers: result._count.followedBy,
+    },
+  } as UserProfilePage;
 }
 
 /**
  * Get user's liked posts
  */
-export async function getUserLikedPosts(userId: string): Promise<PostWithUser[]> {
+export async function getUserLikedPosts(
+  userId: string
+): Promise<PostWithUser[]> {
   "use cache";
   const likes = await prisma.postLike.findMany({
     where: { userId },
@@ -184,14 +217,16 @@ export async function getUserLikedPosts(userId: string): Promise<PostWithUser[]>
       _count: like.post._count,
     };
   });
-  
+
   return transformedPosts as PostWithUser[];
 }
 
 /**
  * Get user's liked comments
  */
-export async function getUserLikedComments(userId: string): Promise<CommentWithUserAndPost[]> {
+export async function getUserLikedComments(
+  userId: string
+): Promise<CommentWithUserAndPost[]> {
   "use cache";
   const likes = await prisma.commentLike.findMany({
     where: { userId },

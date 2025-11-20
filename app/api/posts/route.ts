@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
       content: validatedData.content,
       tags: validatedData.tags || [],
       categoryId: validatedData.categoryId,
+      eventId: validatedData.eventId,
     });
 
     // データベース操作完了後、キャッシュを無効化して最新データを取得できるようにする

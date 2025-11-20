@@ -127,7 +127,7 @@ export function Navbar() {
         duration: 0.3,
         ease: "easeInOut",
       }}
-      className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-2 md:px-4 bg-background shadow-sm"
+      className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between p-2 md:px-4 bg-background/80 backdrop-blur-md border-b border-border/50 shadow-sm"
     >
       <Button variant="ghost" asChild>
         <Link href="/search">
@@ -136,7 +136,7 @@ export function Navbar() {
       </Button>
       <Link
         href="/"
-        className="text-2xl font-bold hover:text-primary transition-colors"
+        className="text-2xl font-black tracking-tighter text-primary hover:text-primary/80 transition-colors uppercase italic"
       >
         {t("APP_NAME")}
       </Link>

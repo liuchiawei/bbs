@@ -266,6 +266,7 @@ export const createPostSchema = z.object({
   content: z.string().min(1, t("ALERT_CONTENT_REQUIRED")),
   tags: tagsSchema.optional().default([]),
   categoryId: z.string().uuid().optional().nullable(),
+  eventId: z.string().uuid().optional().nullable(),
 });
 
 export const updatePostSchema = z.object({
@@ -273,6 +274,7 @@ export const updatePostSchema = z.object({
   content: z.string().min(1, t("ALERT_CONTENT_REQUIRED")).optional(),
   tags: tagsSchema.optional(),
   categoryId: z.string().uuid().optional().nullable(),
+  eventId: z.string().uuid().optional().nullable(),
 });
 
 // Category Schemas

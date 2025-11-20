@@ -14,7 +14,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { PostCard } from "@/components/posts/post-card";
 import { Settings } from "lucide-react";
-import type { PostWithUser, UserProfilePage } from "@/lib/types";
+import { prisma } from "@/lib/db";
+import { BettingStatsCard } from "@/components/profile/betting-stats-card";
+import { BettingHistoryList } from "@/components/profile/betting-history-list";
+import { FollowButton } from "@/components/profile/follow-button";
+import type { PostWithUser, UserProfilePage, UserBettingStats, BettingLog } from "@/lib/types";
 import { t } from "@/lib/constants";
 
 export default async function UserPage({
@@ -37,6 +41,104 @@ export default async function UserPage({
 
   const isOwnProfile = session?.userId === user.userId;
 
+  // Fetch follower counts
+  const [followersCount, followingCount, isFollowing] = await Promise.all([
+    prisma.follows.count({ where: { followingId: user.userId } }),
+    prisma.follows.count({ where: { followerId: user.userId } }),
+    session ? prisma.follows.findUnique({
+      where: {
+        followerId_followingId: {
+          followerId: session.userId,
+          followingId: user.userId,
+        },
+      },
+    }) : Promise.resolve(null),
+  ]);
+
+  // Fetch betting logs
+  const bettingLogs = await prisma.bettingLog.findMany({
+    where: { userId: user.userId },
+    orderBy: { createdAt: "desc" },
+  });
+
+  // Fetch event names for logs
+  const eventIds = [...new Set(bettingLogs.map(log => log.eventId))];
+  const events = await prisma.event.findMany({
+    where: { id: { in: eventIds } },
+    select: { id: true, name: true },
+  });
+  const eventMap = new Map(events.map(e => [e.id, e.name]));
+
+  // Calculate stats
+  const stats: UserBettingStats = {
+    totalBets: bettingLogs.length,
+    wins: 0,
+    losses: 0,
+    pending: 0,
+    voided: 0,
+    totalWagered: 0,
+    totalPayout: 0,
+    netProfit: 0,
+    roi: 0,
+    winRate: 0,
+  };
+
+  bettingLogs.forEach(log => {
+    const amount = Number(log.bet_amount);
+    stats.totalWagered += amount;
+
+    if (log.settlement_status === "WON") {
+      stats.wins++;
+      const payout = amount * Number(log.odds_snapshot);
+      stats.totalPayout += payout;
+    } else if (log.settlement_status === "LOST") {
+      stats.losses++;
+    } else if (log.settlement_status === "PENDING") {
+      stats.pending++;
+    } else if (log.settlement_status === "VOID") {
+      stats.voided++;
+      stats.totalPayout += amount; // Refund
+    }
+  });
+
+  stats.netProfit = stats.totalPayout - stats.totalWagered;
+  
+  // ROI calculation (only for settled bets: WON/LOST)
+  const settledWagered = bettingLogs
+    .filter(l => l.settlement_status === "WON" || l.settlement_status === "LOST")
+    .reduce((acc, l) => acc + Number(l.bet_amount), 0);
+    
+  if (settledWagered > 0) {
+    const settledProfit = stats.totalPayout - stats.totalWagered; // Simplified for now, assumes pending/void handled correctly or ignored
+    // Actually, netProfit includes pending wagers as negative if we just subtract totalWagered.
+    // Correct ROI = (Net Profit on Settled Bets / Total Wagered on Settled Bets) * 100
+    
+    const profitOnSettled = bettingLogs
+      .filter(l => l.settlement_status === "WON" || l.settlement_status === "LOST")
+      .reduce((acc, l) => {
+        if (l.settlement_status === "WON") {
+          return acc + (Number(l.bet_amount) * Number(l.odds_snapshot)) - Number(l.bet_amount);
+        } else {
+          return acc - Number(l.bet_amount);
+        }
+      }, 0);
+      
+    stats.roi = (profitOnSettled / settledWagered) * 100;
+  }
+
+  const settledBetsCount = stats.wins + stats.losses;
+  if (settledBetsCount > 0) {
+    stats.winRate = (stats.wins / settledBetsCount) * 100;
+  }
+
+  // Prepare logs with event names for display
+  const logsWithNames = bettingLogs.map(log => ({
+    ...log,
+    eventName: eventMap.get(log.eventId) || "Unknown Event",
+    bet_amount: Number(log.bet_amount), // Ensure number for display
+    odds_snapshot: Number(log.odds_snapshot),
+  }));
+
   return (
     <>
       <Card className="mb-8">
@@ -57,6 +159,17 @@ export default async function UserPage({
                 {user.isAdmin && <Badge variant="destructive">Admin</Badge>}
               </div>
               <p className="text-muted-foreground">@{user.userId}</p>
+              <div className="flex items-center gap-4 mt-2">
+                <div className="flex items-center gap-1">
+                  <span className="font-bold">{followersCount}</span>
+                  <span className="text-sm text-muted-foreground">Followers</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="font-bold">{followingCount}</span>
+                  <span className="text-sm text-muted-foreground">Following</span>
+                </div>
+              </div>
+
               <div className="flex items-center gap-4">
                 <p className="text-sm text-muted-foreground">
                   {t("JOINED")}{" "}
@@ -67,6 +180,10 @@ export default async function UserPage({
                 </Badge>
               </div>
             </div>
+            
+            {!isOwnProfile && session && (
+              <FollowButton targetUserId={user.userId} initialIsFollowing={!!isFollowing} />
+            )}
           </div>
         </CardHeader>
 
@@ -97,9 +214,10 @@ export default async function UserPage({
       </Card>
 
       <Tabs defaultValue="posts" className="w-full">
-        <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+        <TabsList className="grid w-full max-w-md mx-auto grid-cols-3">
           <TabsTrigger value="about">{t("ABOUT")}</TabsTrigger>
           <TabsTrigger value="posts">{t("POSTS")}</TabsTrigger>
+          <TabsTrigger value="betting">Betting</TabsTrigger>
         </TabsList>
 
         <TabsContent value="about" className="mt-8">
@@ -212,6 +330,23 @@ export default async function UserPage({
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="betting" className="space-y-8 mt-8">
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <span className="bg-primary/10 p-2 rounded-full text-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trophy"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+              </span>
+              Performance Stats
+            </h2>
+            <BettingStatsCard stats={stats} />
+          </div>
+
+          <div className="space-y-4">
+            <h2 className="text-xl font-bold">Betting History</h2>
+            <BettingHistoryList bets={logsWithNames} />
+          </div>
         </TabsContent>
       </Tabs>
     </>

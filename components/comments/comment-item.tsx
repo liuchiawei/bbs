@@ -15,8 +15,10 @@ import { Heart, MessageCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "motion/react";
 import { CommentForm } from "./comment-form";
-import type { CommentWithUser } from "@/lib/types";
+import type { CommentWithUser, BettingLog } from "@/lib/types";
 import { t } from "@/lib/constants";
+import { Badge } from "@/components/ui/badge";
+import { Trophy } from "lucide-react";
 
 interface CommentItemProps {
   comment: CommentWithUser;
@@ -26,6 +28,7 @@ interface CommentItemProps {
   level?: number;
   rootCommentId?: string;
   onReplyAdded?: () => void;
+  bet?: BettingLog | null;
 }
 
 export function CommentItem({
@@ -36,6 +39,7 @@ export function CommentItem({
   level = 0,
   rootCommentId,
   onReplyAdded,
+  bet,
 }: CommentItemProps) {
   const router = useRouter();
   const [likes, setLikes] = useState(comment.likes);
@@ -138,7 +142,18 @@ export function CommentItem({
     >
       <div className="flex gap-3 p-4 rounded-lg hover:bg-muted/50 transition-colors">
         <div className="flex-1 space-y-2">
-          <PostCardAuthor user={comment.user} />
+          <div className="flex items-center gap-2">
+            <PostCardAuthor user={comment.user} />
+            {bet && (
+              <Badge variant="secondary" className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-200/50 dark:border-yellow-800/50 shadow-sm">
+                <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                <span>
+                  Bet: <span className="font-bold">{bet.target_winner_id}</span>
+                  <span className="ml-1 opacity-75">({Number(bet.bet_amount)} pts)</span>
+                </span>
+              </Badge>
+            )}
+          </div>
           <span className="text-sm text-muted-foreground">
             {new Date(comment.createdAt).toLocaleDateString()}
             {new Date(comment.createdAt).toLocaleTimeString()}
