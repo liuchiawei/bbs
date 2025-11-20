@@ -1,5 +1,258 @@
 # 開發日誌 / Development Log
 
+## 2025-11-20
+
+### refactor/prisma-7-upgrade
+
+**難度**: ★★★★☆
+
+**描述**: 將 Prisma 從 6.19.0 升級到 7.0.0，採用 adapter 模式連接資料庫，符合 Prisma 7.0 最新規範
+
+**問題背景**:
+- Prisma 7.0 移除了 `schema.prisma` 中 `datasource` 的 `url` 屬性
+- 需要使用 adapter 模式來連接資料庫
+- 需要確保所有 PrismaClient 實例化都使用新的 adapter 配置
+
+**解決方案架構**:
+- 安裝 `@prisma/adapter-pg` 和 `pg` 套件
+- 更新 `schema.prisma` 移除 `url` 屬性
+- 更新所有 PrismaClient 實例化使用 adapter
+- 確保向後兼容性和功能正常運作
+
+**套件升級** (`package.json`):
+- `@prisma/client`: 6.19.0 → 7.0.0
+- `prisma`: 6.19.0 → 7.0.0
+- 新增 `@prisma/adapter-pg`: 7.0.0
+- 新增 `pg`: 8.16.3
+- 新增 `decimal.js`: 10.6.0（Prisma Decimal 的底層實作）
+- 新增 `@types/pg`: 8.15.6（PostgreSQL 類型定義）
+
+**Schema 更新** (`prisma/schema.prisma`):
+- **datasource db**:
+  - 移除 `url = env("DATABASE_URL")` 屬性（Prisma 7.0 不再支援）
+  - 保留 `provider = "postgresql"`
+- **generator client**:
+  - 保持 `provider = "prisma-client-js"` 不變
+  - 無需額外的 previewFeatures 配置
+
+**PrismaClient 實例化更新**:
+
+- **`lib/db.ts`**:
+  - 導入 `PrismaPg` adapter 和 `Pool` from `pg`
+  - 創建 PostgreSQL connection pool
+  - 使用 adapter 實例化 PrismaClient
+  - 保留現有的 log 配置和 global singleton 模式
+
+- **`prisma/seed.ts`**:
+  - 更新為使用 adapter 模式
+  - 創建 connection pool 和 adapter
+  - 確保 seed 腳本與主應用使用相同的連接方式
+
+**配置標準寫法**:
+
+- **schema.prisma 標準配置**:
+  ```prisma
+  generator client {
+    provider = "prisma-client-js"
+  }
+
+  datasource db {
+    provider = "postgresql"
+    // url 屬性已移除，改為在 PrismaClient 中使用 adapter
+  }
+  ```
+
+- **PrismaClient 實例化標準寫法**:
+  ```typescript
+  import { PrismaClient } from "@prisma/client";
+  import { PrismaPg } from "@prisma/adapter-pg";
+  import { Pool } from "pg";
+
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+  });
+
+  const adapter = new PrismaPg(pool);
+
+  const prisma = new PrismaClient({
+    adapter,
+    log: [...],
+  });
+  ```
+
+**Decimal 類型變更**:
+
+- **問題**: Prisma 7.0 移除了 `@prisma/client/runtime/library` 路徑，導致 `Decimal` 導入失敗
+  - 錯誤訊息: `Module not found: Can't resolve '@prisma/client/runtime/library'`
+  - 影響檔案: `lib/betting-system.ts`, `app/api/betting/route.ts`
+
+- **Prisma Decimal 的性質與作用**:
+  - **任意精度十進位數值類型**: 用於精確處理金融、貨幣、投注等需要高精度的場景
+  - **避免浮點數誤差**: JavaScript `number` 類型使用 IEEE 754 雙精度浮點數，會產生精度誤差（如 `0.1 + 0.2 = 0.30000000000000004`）
+  - **資料庫映射**: 對應 PostgreSQL 的 `DECIMAL`/`NUMERIC` 類型
+  - **在 Betting System 中的關鍵角色**:
+    - 投注金額計算：確保金額比較與運算的精確性
+    - 獎金池計算：累加所有投注金額，精確扣除 10% 手續費
+    - 賠率計算：`淨獎金池 / 該選項總投注額`
+    - 派彩分配：按比例精確分配給獲勝者
+    - 餘額更新：精確更新用戶虛擬分數
+    - **為什麼必須用 Decimal？**: 避免累積誤差導致金額錯誤，確保派彩計算公平，符合金融級精度要求
+
+- **Prisma 7.0 移除 Decimal 的原因**:
+  - **模組化與輕量化**: 將 `Decimal` 從 `@prisma/client/runtime/library` 移除，減少 Prisma Client 的依賴與體積
+  - **使用底層實作**: Prisma 的 `Decimal` 實際上是基於 `decimal.js` 的包裝，直接使用 `decimal.js` 更直接、可控
+  - **簡化導入路徑**: 舊路徑 `@prisma/client/runtime/library` 過於複雜，統一使用 `decimal.js` 更清晰
+  - **與 Adapter 模式一致**: Prisma 7.0 引入 adapter 模式，將部分功能外置，保持核心簡潔
+
+- **解決方案**:
+  - 安裝 `decimal.js` 套件（Prisma Decimal 的底層實作，API 完全兼容）
+  - 安裝 `@types/pg` 類型定義（Prisma 7.0 使用 adapter 需要 PostgreSQL 類型支援）
+  - 更新導入語句：將 `import { Decimal } from "@prisma/client/runtime/library"` 改為 `import { Decimal } from "decimal.js"`
+
+- **decimal.js 說明**:
+  - JavaScript 的任意精度十進位算術庫
+  - 與 Prisma Decimal API 完全兼容（`.add()`, `.sub()`, `.mul()`, `.div()`, `.gt()`, `.lt()` 等方法）
+  - 提供 `.toNumber()`, `.toFixed()` 等轉換方法
+
+- **@types/pg 說明**:
+  - PostgreSQL 客戶端 `pg` 的 TypeScript 類型定義
+  - Prisma 7.0 使用 `@prisma/adapter-pg` 連接 PostgreSQL，需要 `pg` 套件
+  - TypeScript 需要類型定義才能正確編譯 `Pool` 等類型
+
+**驗證與測試**:
+- Schema 驗證通過 (`prisma validate`)
+- Prisma Client 成功重新生成 (`prisma generate`)
+- 所有 PrismaClient 實例化已更新
+- Decimal 導入問題已解決，構建成功
+- 備份檔案已建立（`package.json.backup`, `prisma/schema.prisma.backup`）
+
+**注意事項**:
+- **migrate 命令限制**: `prisma migrate status` 命令需要 `prisma.config.ts` 來配置 datasource URL，但根據要求不使用 `prisma.config.ts`，因此 migrate 相關命令可能需要額外配置
+- **環境變數**: `DATABASE_URL` 環境變數仍然需要設定，但現在用於創建 connection pool，而非直接在 schema 中引用
+- **連接池管理**: 使用 `pg` 的 `Pool` 來管理資料庫連接，提供更好的連接管理和效能
+
+**技術考量**:
+- **向後兼容性**: 所有現有的 Prisma 查詢和操作保持不變，僅改變連接方式
+- **效能優化**: 使用 connection pool 可以更好地管理資料庫連接，提升效能
+- **類型安全**: Prisma 7.0 保持完整的類型安全特性
+- **錯誤處理**: adapter 模式提供更好的錯誤處理和連接管理
+
+**主要修改文件**:
+1. `package.json` - 升級 Prisma 版本，新增 adapter、decimal.js、@types/pg 套件
+2. `prisma/schema.prisma` - 移除 datasource url 屬性
+3. `lib/db.ts` - 更新 PrismaClient 實例化使用 adapter
+4. `prisma/seed.ts` - 更新 seed 腳本使用 adapter
+5. `lib/betting-system.ts` - 更新 Decimal 導入路徑（`@prisma/client/runtime/library` → `decimal.js`）
+6. `app/api/betting/route.ts` - 更新 Decimal 導入路徑（`@prisma/client/runtime/library` → `decimal.js`）
+
+**升級步驟總結**:
+1. ✅ 檢查 Node.js 版本（v24.1.0，符合要求）
+2. ✅ 備份現有配置檔案
+3. ✅ 升級 Prisma 套件到 7.0.0
+4. ✅ 安裝 PostgreSQL adapter 套件（`@prisma/adapter-pg`, `pg`, `@types/pg`）
+5. ✅ 安裝 `decimal.js` 套件（替代 Prisma Decimal）
+6. ✅ 更新 schema.prisma 配置
+7. ✅ 更新所有 PrismaClient 實例化使用 adapter
+8. ✅ 更新所有 Decimal 導入路徑（`decimal.js`）
+9. ✅ 重新生成 Prisma Client
+10. ✅ 驗證配置正確性，構建成功
+
+## 2025-11-20
+
+### feat/timestamp-based-id-format
+
+**難度**: ★★★☆☆
+
+**描述**: 將 Post、Comment、Event 的 ID 格式從隨機 UUID 改為時間戳格式（年月日時分秒 + 隨機後綴），保留現有 UUID 記錄，僅新建立的記錄使用新格式
+
+**問題背景**:
+- 原本使用 UUID 作為主鍵，無法從 ID 看出建立時間
+- 需要更易讀的 ID 格式，方便識別記錄的建立時間
+- 要求保留現有資料，僅新記錄使用新格式
+
+**解決方案架構**:
+- 採用混合格式策略：現有 UUID 記錄保留，新記錄使用時間戳格式
+- 創建 ID 生成工具函數，確保唯一性
+- 移除 Schema 中的 `@default(uuid())`，改為手動生成
+
+**ID 格式設計** (`lib/utils/id-generator.ts`):
+- **格式**: `YYYYMMDDHHmmss` + 4位隨機數（共18位）
+- **範例**: `202511201234561234`
+- **唯一性保證**:
+  - 檢查資料庫中是否已存在相同 ID
+  - 若存在則重新生成（最多重試10次）
+  - 達到最大重試次數時添加額外隨機數
+- **函數**:
+  - `generatePostId()`: Post 用 ID 生成
+  - `generateCommentId()`: Comment 用 ID 生成
+  - `generateEventId()`: Event 用 ID 生成
+
+**資料庫架構變更** (`prisma/schema.prisma`):
+- **Post 模型**:
+  - 移除 `id String @id @default(uuid())`
+  - 改為 `id String @id`（允許手動指定 ID）
+- **Comment 模型**:
+  - 移除 `id String @id @default(uuid())`
+  - 改為 `id String @id`
+- **Event 模型**:
+  - 移除 `id String @id @default(uuid())`
+  - 改為 `id String @id`
+- **Migration**: 創建 `20251120192459_change_id_format` migration
+  - 僅移除 `@default(uuid())`，不修改現有資料
+  - 現有 UUID 記錄完全保留
+
+**服務層更新**:
+- **`lib/services/posts.ts`**:
+  - `createPost()`: 在創建前調用 `generatePostId()` 生成新 ID
+- **`lib/services/comments.ts`**:
+  - `createComment()`: 在創建前調用 `generateCommentId()` 生成新 ID
+- **`lib/services/events.ts`**:
+  - `syncEventsFromExternalAPI()`: 在創建 Event 前調用 `generateEventId()` 生成新 ID
+
+**API 路由更新**:
+- **`app/api/comments/route.ts`**:
+  - POST handler: 在 transaction 內生成 Comment ID
+- **`app/api/events/route.ts`**:
+  - POST handler: 在 transaction 內生成 Event ID
+
+**驗證邏輯更新** (`lib/validations.ts`):
+- **`createPostSchema`**:
+  - 移除 `eventId` 的 `.uuid()` 驗證
+  - 改為 `z.string().optional().nullable()`（允許 UUID 和新格式）
+- **`updatePostSchema`**:
+  - 移除 `eventId` 的 `.uuid()` 驗證
+  - 改為 `z.string().optional().nullable()`
+
+**技術考量**:
+- **混合格式支援**: 系統中同時存在 UUID（舊）和時間戳格式（新）的 ID
+- **向後兼容**: 所有查詢、更新、刪除功能正常運作（都是 String 類型）
+- **URL 路由**: 兩種格式都支援，路由參數解析不受影響
+- **外鍵關聯**: PostLike、CommentLike、BettingLog 等關聯表不受影響
+- **唯一性保證**: ID 生成函數包含重試機制，確保不會產生重複 ID
+
+**效能優化**:
+- ID 生成函數使用資料庫查詢檢查唯一性
+- 最多重試10次，避免無限循環
+- 使用索引優化查詢性能（id 欄位為主鍵，自動建立索引）
+
+**主要修改文件**:
+1. `lib/utils/id-generator.ts` - 新建 ID 生成工具函數
+2. `prisma/schema.prisma` - 移除 Post、Comment、Event 的 `@default(uuid())`
+3. `lib/services/posts.ts` - 更新 `createPost()` 函數
+4. `lib/services/comments.ts` - 更新 `createComment()` 函數
+5. `app/api/comments/route.ts` - 更新 POST handler
+6. `lib/services/events.ts` - 更新 `syncEventsFromExternalAPI()` 函數
+7. `app/api/events/route.ts` - 更新 POST handler
+8. `lib/validations.ts` - 移除 eventId 的 UUID 驗證
+9. `prisma/migrations/20251120192459_change_id_format/migration.sql` - 新建 migration
+
+**注意事項**:
+- 現有 UUID 記錄完全保留，不受影響
+- 新建立的 Post、Comment、Event 記錄將使用新的時間戳格式 ID
+- 系統支援混合格式，兩種格式可以並存
+- 所有查詢、更新、刪除功能都正常運作（因為都是 String 類型）
+- Migration 不會修改現有資料，僅改變 Prisma 的預設行為
+
 ## 2025-01-XX
 
 ### refactor/fighter-page-database-only

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import type { CommentWithUser } from "@/lib/types";
 import { userSelectPublicExtended } from "@/lib/validations";
 import { transformUser } from "@/lib/utils";
+import { generateCommentId } from "@/lib/utils/id-generator";
 
 /**
  * Get comments for a post
@@ -89,8 +90,13 @@ export async function createComment(
   userId: string,
   data: { content: string; postId: string; parentId?: string }
 ) {
+  // 新しいIDを生成
+  // Generate new ID
+  const id = await generateCommentId();
+
   const comment = await prisma.comment.create({
     data: {
+      id,
       ...data,
       userId,
     },
