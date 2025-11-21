@@ -127,10 +127,10 @@ export function UserManagement() {
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={user.avatar || undefined} />
                         <AvatarFallback>
-                          {user.name.charAt(0).toUpperCase()}
+                          {(user.name?.charAt(0) || user.userId?.charAt(0) || 'U').toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="font-medium">{user.name}</span>
+                      <span className="font-medium">{user.name || user.userId}</span>
                     </div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
