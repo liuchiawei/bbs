@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { z } from "zod";
 import { createEventWithFights, getEventWithFights } from "@/lib/services/events";
 import { revalidateTag, unstable_cache } from "next/cache";
+import { Prisma } from "@prisma/client";
 
 // Schema for creating an event with fights
 // 創建賽事及對戰的驗證 schema
@@ -220,6 +221,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
+    // Zod 驗證錯誤處理
+    // Zod validation error handling
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation failed", details: error.flatten().fieldErrors },
@@ -227,7 +230,91 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.error("Error creating event:", error);
+    // Prisma 錯誤處理（資料庫約束錯誤）
+    // Prisma error handling (database constraint errors)
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      let errorMessage = "Database error occurred";
+      let statusCode = 500;
+
+      switch (error.code) {
+        case "P2002":
+          // 唯一約束違反
+          // Unique constraint violation
+          const target = (error.meta?.target as string[]) || [];
+          if (target.includes("event_id") && target.includes("fight_order")) {
+            errorMessage = "Duplicate fight order in event";
+          } else {
+            errorMessage = `Duplicate entry: ${target.join(", ")}`;
+          }
+          statusCode = 409; // Conflict
+          break;
+        case "P2003":
+          // 外鍵約束違反
+          // Foreign key constraint violation
+          errorMessage = "Fighter not found or invalid reference";
+          statusCode = 400;
+          break;
+        case "P2025":
+          // 記錄不存在
+          // Record not found
+          errorMessage = error.meta?.cause as string || "Record not found";
+          statusCode = 404;
+          break;
+        default:
+          // 其他 Prisma 錯誤
+          // Other Prisma errors
+          errorMessage = `Database error: ${error.code}`;
+          console.error("Prisma error:", error);
+      }
+
+      // 開發環境返回詳細錯誤信息，生產環境返回通用錯誤
+      // Development: detailed error, Production: generic error
+      const isDevelopment = process.env.NODE_ENV === "development";
+      return NextResponse.json(
+        {
+          error: errorMessage,
+          ...(isDevelopment && {
+            code: error.code,
+            meta: error.meta,
+          }),
+        },
+        { status: statusCode }
+      );
+    }
+
+    // 業務邏輯錯誤處理（Service 層拋出的錯誤）
+    // Business logic error handling (errors thrown from Service layer)
+    if (error instanceof Error) {
+      const isDevelopment = process.env.NODE_ENV === "development";
+      console.error("Error creating event:", error);
+      
+      // 檢查是否為已知的業務邏輯錯誤
+      // Check if it's a known business logic error
+      if (error.message.includes("Fighter(s) not found") || 
+          error.message.includes("Duplicate fight_order")) {
+        return NextResponse.json(
+          {
+            error: error.message,
+            ...(isDevelopment && { stack: error.stack }),
+          },
+          { status: 400 }
+        );
+      }
+
+      // 其他錯誤：開發環境返回詳細信息，生產環境返回通用錯誤
+      // Other errors: detailed in development, generic in production
+      return NextResponse.json(
+        {
+          error: isDevelopment ? error.message : "Failed to create event",
+          ...(isDevelopment && { stack: error.stack }),
+        },
+        { status: 500 }
+      );
+    }
+
+    // 未知錯誤
+    // Unknown error
+    console.error("Unknown error creating event:", error);
     return NextResponse.json(
       { error: "Failed to create event" },
       { status: 500 }

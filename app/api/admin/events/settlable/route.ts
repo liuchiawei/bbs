@@ -58,7 +58,13 @@ export async function GET(request: NextRequest) {
                 fight_order: 1, // 只獲取第一個對戰（主賽）
               },
               take: 1, // 只取一個
-              include: {
+              orderBy: {
+                fight_order: "asc", // 確保順序
+              },
+              select: {
+                id: true,
+                fighter_id: true,
+                opponent_id: true,
                 fighter: {
                   select: {
                     id: true,

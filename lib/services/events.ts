@@ -64,6 +64,37 @@ export async function createEventWithFights(
   const eventId = await generateEventId();
 
   return await prisma.$transaction(async (tx) => {
+    // 效能優化：批量驗證所有 Fighter ID（避免 N+1 查詢）
+    // Performance optimization: Batch validate all Fighter IDs (avoid N+1 queries)
+    const fighterIds = [...new Set(fights.flatMap((f) => [f.fighterId, f.opponentId]))];
+    const existingFighters = await tx.fighter.findMany({
+      where: { id: { in: fighterIds } },
+      select: { id: true },
+    });
+    const existingIds = new Set(existingFighters.map((f) => f.id));
+
+    // 驗證所有 Fighter 都存在
+    // Validate all Fighters exist
+    const missingFighters = fighterIds.filter((id) => !existingIds.has(id));
+    if (missingFighters.length > 0) {
+      throw new Error(
+        `Fighter(s) not found: ${missingFighters.join(", ")}`
+      );
+    }
+
+    // 預先驗證 fight_order 唯一性（避免資料庫約束錯誤）
+    // Pre-validate fight_order uniqueness (avoid database constraint errors)
+    const fightOrders = fights.map((f) => f.fightOrder);
+    const uniqueOrders = new Set(fightOrders);
+    if (fightOrders.length !== uniqueOrders.size) {
+      const duplicates = fightOrders.filter(
+        (order, index) => fightOrders.indexOf(order) !== index
+      );
+      throw new Error(
+        `Duplicate fight_order values: ${[...new Set(duplicates)].join(", ")}`
+      );
+    }
+
     // 創建Event
     // Create Event
     const event = await tx.event.create({
@@ -87,8 +118,8 @@ export async function createEventWithFights(
       },
     });
 
-    // 批量創建FighterEvent記錄
-    // Batch create FighterEvent records
+    // 批量創建FighterEvent記錄（並行操作）
+    // Batch create FighterEvent records (parallel operations)
     const fighterEvents = await Promise.all(
       fights.map((fight) =>
         tx.fighterEvent.create({
@@ -338,7 +369,7 @@ export async function getCombatEvents(
  * @returns Updated event ID
  *
  * Merge rules:
- * - Preserve: fighter_1_id, fighter_2_id, winner_id, is_manual_override, status (if manually set)
+ * - Preserve: status (if manually set), manual event details (promoter, organization, venue, etc.)
  * - Update: external_id, external_source, external_data, last_synced_at
  * - Smart update: name (if external is more complete), sport_type (if empty), fight_date (if external is more precise)
  */
@@ -397,8 +428,8 @@ async function mergeEventData(
   if (preserveManualFields) {
     // Do not overwrite manual fields - they are already set correctly
     // 不覆蓋手動欄位 - 它們已經正確設定
-    // fighter_1_id, fighter_2_id, winner_id, is_manual_override are preserved automatically
-    // fighter_1_id, fighter_2_id, winner_id, is_manual_override 會自動保留
+    // Manual event details (promoter, organization, venue, location, description, poster_url) are preserved automatically
+    // 手動賽事詳情（promoter, organization, venue, location, description, poster_url）會自動保留
   }
 
   // Update event

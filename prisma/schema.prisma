@@ -174,32 +174,32 @@ model Profile {
 }
 
 model Event {
-  id                 String      @id
-  name               String      // 賽事名稱（如 "UFC 300", "Fury vs Usyk"）
-  fight_date         DateTime    // 賽事日期時間
-  status             EventStatus @default(PENDING) // 賽事狀態
-  sport_type         String?     // 運動類型（boxing, ufc, mma, muay-thai, kickboxing）
-  promoter           String?     // 推廣單位（TopRank, Matchroom, UFC, PFL等）
-  organization       String?     // 聯盟品牌（UFC, WBC, IBF等）
-  venue              String?     // 場地名稱
-  location           String?     // 地點（城市、國家）
-  description        String?     @db.Text // 賽事簡介
-  poster_url         String?     // 海報圖片URL
-  
+  id           String      @id
+  name         String // 賽事名稱（如 "UFC 300", "Fury vs Usyk"）
+  fight_date   DateTime // 賽事日期時間
+  status       EventStatus @default(PENDING) // 賽事狀態
+  sport_type   String? // 運動類型（boxing, ufc, mma, muay-thai, kickboxing）
+  promoter     String? // 推廣單位（TopRank, Matchroom, UFC, PFL等）
+  organization String? // 聯盟品牌（UFC, WBC, IBF等）
+  venue        String? // 場地名稱
+  location     String? // 地點（城市、國家）
+  description  String?     @db.Text // 賽事簡介
+  poster_url   String? // 海報圖片URL
+
   // External API integration fields (保持不變)
-  external_id        String?     // 外部APIのイベントID / External API event ID
-  external_source    String?     // データソース（例: "thesportsdb"） / Data source (e.g. "thesportsdb")
-  external_data      Json?       // 元のAPIデータスナップショット / Original API data snapshot
-  last_synced_at     DateTime?   // 最後の同期時刻 / Last sync timestamp
-  sync_status        String      @default("pending") // 同期ステータス / Sync status
-  
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
+  external_id     String? // 外部APIのイベントID / External API event ID
+  external_source String? // データソース（例: "thesportsdb"） / Data source (e.g. "thesportsdb")
+  external_data   Json? // 元のAPIデータスナップショット / Original API data snapshot
+  last_synced_at  DateTime? // 最後の同期時刻 / Last sync timestamp
+  sync_status     String    @default("pending") // 同期ステータス / Sync status
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relationships
-  posts              Post[]
-  bets                BettingLog[]    // 保留用於查詢，實際關聯到FighterEvent
-  fighterEvents       FighterEvent[]   // 對戰組合列表
+  posts         Post[]
+  bets          BettingLog[] // 保留用於查詢，實際關聯到FighterEvent
+  fighterEvents FighterEvent[] // 對戰組合列表
 
   @@unique([external_id, external_source]) // 外部イベントの一意制約 / Unique constraint for external events
   @@index([external_id, external_source]) // 外部イベントの高速検索 / Fast lookup for external events
@@ -219,20 +219,20 @@ enum EventStatus {
 
 model BettingLog {
   id                String    @id @default(uuid()) // 主鍵
-  userId            String    // 用戶ID
-  eventId           String    // 賽事ID（保留用於快速查詢和統計）
-  fighterEventId    String    // 對戰ID（關聯到具體對戰，必填）
-  bet_amount        Decimal   // 投注總金額
-  target_winner_id  String    // 投注目標勝者ID（fighter_id或opponent_id）
-  odds_snapshot     Decimal   // 投注時的即時賠率快照（用於未來爭議或審計）
+  userId            String // 用戶ID
+  eventId           String // 賽事ID（保留用於快速查詢和統計）
+  fighterEventId    String // 對戰ID（關聯到具體對戰，必填）
+  bet_amount        Decimal // 投注總金額
+  target_winner_id  String // 投注目標勝者ID（fighter_id或opponent_id）
+  odds_snapshot     Decimal // 投注時的即時賠率快照（用於未來爭議或審計）
   is_winning_bet    Boolean   @default(false) // 是否中獎投注
-  final_payout      Decimal?  // 最終支付金額
+  final_payout      Decimal? // 最終支付金額
   settlement_status BetStatus @default(PENDING) // 結算狀態
   createdAt         DateTime  @default(now()) // 創建時間
 
-  user          User          @relation(fields: [userId], references: [userId])
-  event         Event         @relation(fields: [eventId], references: [id])
-  fighterEvent  FighterEvent  @relation(fields: [fighterEventId], references: [id])
+  user         User         @relation(fields: [userId], references: [userId])
+  event        Event        @relation(fields: [eventId], references: [id])
+  fighterEvent FighterEvent @relation(fields: [fighterEventId], references: [id])
 
   @@index([userId]) // 用戶投注查詢 / User betting queries
   @@index([eventId]) // 賽事投注查詢 / Event betting queries
@@ -257,24 +257,24 @@ model AuditLog {
 }
 
 model Fighter {
-  id               String    @id @default(uuid())
-  slug             String    @unique // URL-friendly slug (e.g., "conor-mcgregor")
-  name             String    // Full name
-  external_id      String?   // TheSportsDB API idPlayer
-  external_source  String?   @default("thesportsdb") // Data source
-  external_data    Json?     // Complete API response cache
-  sport_type       String?   // boxing/ufc/mma
-  nationality      String?
-  date_born        DateTime?
-  height           String?   // Height (e.g., "5 ft 9 in")
-  weight           String?   // Weight (e.g., "155 lbs")
-  position         String?   // Weight class/position
-  description      String?   // Biography/description
-  thumb            String?   // Profile thumbnail URL
-  cutout           String?   // Cutout image URL
-  last_synced_at   DateTime? // Last sync timestamp
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  id              String    @id @default(uuid())
+  slug            String    @unique // URL-friendly slug (e.g., "conor-mcgregor")
+  name            String // Full name
+  external_id     String? // TheSportsDB API idPlayer
+  external_source String?   @default("thesportsdb") // Data source
+  external_data   Json? // Complete API response cache
+  sport_type      String? // boxing/ufc/mma
+  nationality     String?
+  date_born       DateTime?
+  height          String? // Height (e.g., "5 ft 9 in")
+  weight          String? // Weight (e.g., "155 lbs")
+  position        String? // Weight class/position
+  description     String? // Biography/description
+  thumb           String? // Profile thumbnail URL
+  cutout          String? // Cutout image URL
+  last_synced_at  DateTime? // Last sync timestamp
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   // Relationships
   eventsAsFighter  FighterEvent[] @relation("Fighter")
@@ -286,35 +286,35 @@ model Fighter {
 }
 
 model FighterEvent {
-  id                 String      @id @default(uuid())
-  event_id           String      // FK to Event
-  fighter_id         String      // FK to Fighter (選手1)
-  opponent_id        String?     // FK to Fighter (選手2，可選用於單人賽事)
-  
+  id          String  @id @default(uuid())
+  event_id    String // FK to Event
+  fighter_id  String // FK to Fighter (選手1)
+  opponent_id String? // FK to Fighter (選手2，可選用於單人賽事)
+
   // 對戰分類與順序
-  fight_type         FightType   @default(MAIN) // MAIN, CO_MAIN, PRELIMS, EARLY_PRELIMS
-  fight_order        Int         // 對戰順序（1=第一場，數字越小越重要）
-  weight_class       String?     // 量級（如 "Heavyweight", "155 lbs"）
-  
+  fight_type   FightType @default(MAIN) // MAIN, CO_MAIN, PRELIMS, EARLY_PRELIMS
+  fight_order  Int // 對戰順序（1=第一場，數字越小越重要）
+  weight_class String? // 量級（如 "Heavyweight", "155 lbs"）
+
   // 對戰結果
-  result             String?     // Win/Loss/Draw/NC (從fighter角度)
-  method             String?     // KO/TKO/Decision/Submission等
-  round              Int?        // 回合數
-  time               String?     // 時間（如 "2:34"）
-  
+  result String? // Win/Loss/Draw/NC (從fighter角度)
+  method String? // KO/TKO/Decision/Submission等
+  round  Int? // 回合數
+  time   String? // 時間（如 "2:34"）
+
   // 投注相關
-  is_bettable        Boolean     @default(true) // 是否開放投注
-  status             FightStatus @default(PENDING) // 對戰狀態
-  
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @updatedAt
-  
-  event              Event       @relation(fields: [event_id], references: [id], onDelete: Cascade)
-  fighter            Fighter     @relation("Fighter", fields: [fighter_id], references: [id])
-  opponent           Fighter?    @relation("Opponent", fields: [opponent_id], references: [id], onDelete: SetNull)
-  
-  bets               BettingLog[] // 投注關聯到對戰
-  
+  is_bettable Boolean     @default(true) // 是否開放投注
+  status      FightStatus @default(PENDING) // 對戰狀態
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  event    Event    @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  fighter  Fighter  @relation("Fighter", fields: [fighter_id], references: [id])
+  opponent Fighter? @relation("Opponent", fields: [opponent_id], references: [id], onDelete: SetNull)
+
+  bets BettingLog[] // 投注關聯到對戰
+
   @@unique([event_id, fight_order]) // 同一賽事中對戰順序唯一 / Unique fight order per event
   @@index([event_id]) // 快速查找賽事的對戰 / Fast lookup by event
   @@index([fighter_id]) // 快速查找選手的對戰 / Fast lookup by fighter
@@ -324,15 +324,15 @@ model FighterEvent {
 }
 
 enum FightType {
-  MAIN           // 主賽
-  CO_MAIN        // 副賽
-  PRELIMS        // 預賽
-  EARLY_PRELIMS  // 早期預賽
+  MAIN // 主賽
+  CO_MAIN // 副賽
+  PRELIMS // 預賽
+  EARLY_PRELIMS // 早期預賽
 }
 
 enum FightStatus {
-  PENDING        // 待定
-  CONFIRMED      // 確認
-  CANCELLED      // 取消
-  COMPLETED      // 完成
+  PENDING // 待定
+  CONFIRMED // 確認
+  CANCELLED // 取消
+  COMPLETED // 完成
 }

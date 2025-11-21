@@ -415,13 +415,18 @@ export interface Event {
   name: string;
   fight_date: Date | string;
   status: "PENDING" | "OPEN" | "CLOSED" | "SETTLED" | "CANCELLED";
-  winner_id?: string | null;
-  is_manual_override: boolean;
+  // Event details (新增字段)
+  sport_type?: SportType | null;
+  promoter?: string | null;
+  organization?: string | null;
+  venue?: string | null;
+  location?: string | null;
+  description?: string | null;
+  poster_url?: string | null;
   // External API integration fields
   external_id?: string | null;
   external_source?: ExternalEventSource | null;
   external_data?: Record<string, unknown> | null;
-  sport_type?: SportType | null;
   last_synced_at?: Date | string | null;
   sync_status?: SyncStatus | string;
   createdAt: Date | string;

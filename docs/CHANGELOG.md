@@ -2,6 +2,159 @@
 
 ## 2025-01-21
 
+### fix/event-creation-error-and-type-sync
+
+**難度**: ★★★★☆
+
+**描述**: 修復 Event 創建錯誤與類型不匹配問題，優化效能並完善錯誤處理機制
+
+**問題分析**:
+
+1. **類型定義不匹配**: `lib/types.ts` 中的 `Event` 接口與 Prisma schema 不一致，包含已移除的字段
+2. **錯誤處理不完善**: Prisma 錯誤沒有被正確捕獲和處理
+3. **效能問題**: Fighter ID 驗證可能導致 N+1 查詢問題
+4. **Prisma Client 未同步**: 重新生成 Prisma Client 以同步 schema 變更
+
+**修復內容**:
+
+1. **更新類型定義** (`lib/types.ts`):
+   - 移除已不存在的字段：`winner_id`, `is_manual_override`
+   - 添加新字段：`promoter`, `organization`, `venue`, `location`, `description`, `poster_url`
+   - 確保與 Prisma schema 完全一致
+
+2. **優化 Service 層** (`lib/services/events.ts`):
+   - **批量驗證 Fighter ID**: 一次性查詢所有需要的 Fighter，避免 N+1 查詢
+   - **預先驗證 `fight_order` 唯一性**: 在 transaction 內驗證，避免資料庫約束錯誤
+   - **詳細錯誤處理**: 提供清晰的錯誤信息
+   - 更新註釋，移除對已不存在字段的引用
+
+3. **改進 API 錯誤處理** (`app/api/events/route.ts`):
+   - **Prisma 錯誤代碼映射**:
+     - `P2002`: 唯一約束違反 → "Duplicate fight order in event"
+     - `P2003`: 外鍵約束違反 → "Fighter not found"
+     - `P2025`: 記錄不存在 → 具體錯誤
+   - **安全性**: 開發環境返回詳細錯誤，生產環境返回通用錯誤
+   - **結構化錯誤處理**: 區分 Zod、Prisma 和業務邏輯錯誤
+
+4. **改進前端錯誤處理** (`components/admin/event-create-form.tsx`):
+   - 顯示詳細錯誤信息：包括驗證錯誤的 `details` 字段
+   - 處理驗證錯誤：顯示具體字段錯誤
+   - 開發環境日誌：記錄完整錯誤信息到控制台
+
+5. **修復 Prisma 查詢語法** (`app/api/admin/events/settlable/route.ts`):
+   - 修復 `fight_order` 查詢語法
+   - 在 `select` 中添加必要的字段
+   - 重新生成 Prisma Client 以同步 schema
+
+**效能優化成果**:
+
+- **批量查詢**: 一次性查詢所有 Fighter，減少資料庫操作
+- **預先驗證**: 在 transaction 開始前驗證所有輸入，避免不必要的資料庫操作
+- **並行操作**: 使用 `Promise.all` 並行創建 FighterEvent
+- **錯誤處理**: 多層錯誤處理機制，提供清晰的錯誤信息
+
+**技術細節**:
+
+- **Prisma Client 同步**: 執行 `pnpm prisma generate` 確保 Client 與 schema 同步
+- **類型安全**: 確保 TypeScript 類型定義與 Prisma schema 完全一致
+- **錯誤處理策略**: 多層驗證（前端 → Zod → Service → Prisma）
+- **安全性**: 開發環境詳細錯誤，生產環境通用錯誤
+
+**相關文件**:
+- `lib/types.ts` - 類型定義更新
+- `lib/services/events.ts` - Service 層優化
+- `app/api/events/route.ts` - API 錯誤處理改進
+- `components/admin/event-create-form.tsx` - 前端錯誤處理改進
+- `app/api/admin/events/settlable/route.ts` - 查詢語法修復
+
+### docs/types-documentation
+
+**難度**: ★★★☆☆
+
+**描述**: 建立完整的類型系統文檔，記錄資料庫結構和 TypeScript 類型定義，供未來更改資料庫格式時參考
+
+**文檔結構**:
+
+1. **`docs/types/DATABASE_SCHEMA.md`**:
+   - 記錄 Prisma schema 中定義的所有資料表結構
+   - 每個表的字段說明、類型、預設值
+   - 表之間的關聯關係
+   - 索引優化說明
+   - 重要變更記錄（包含 Event 結構重構）
+
+2. **`docs/types/TYPESCRIPT_TYPES.md`**:
+   - 記錄 `lib/types.ts` 中定義的所有 TypeScript 類型
+   - 每個類型的定義和使用位置
+   - 類型之間的繼承關係
+   - 類型使用統計
+   - 類型變更記錄
+
+3. **`docs/types/TYPE_USAGE_TRACKING.md`**:
+   - 追蹤各個 TypeScript 類型在各個文件中的使用情況
+   - 按類型分組，列出所有使用位置
+   - 類型變更影響分析
+   - 快速查找指南
+
+4. **`docs/types/README.md`**:
+   - 類型系統文檔的使用指南
+   - 更改資料庫結構時的檢查清單
+   - 常見問題解答
+   - 維護說明
+
+**文檔內容**:
+
+- **資料庫表結構**: 13 個主要表的完整文檔
+  - User, Profile, Follows, Category, Post, Comment, PostLike, CommentLike
+  - Event, FighterEvent, Fighter, BettingLog, AuditLog
+- **TypeScript 類型**: 50+ 個類型定義的完整文檔
+  - Profile 相關類型（6個）
+  - User 相關類型（9個）
+  - Post 相關類型（5個）
+  - Comment 相關類型（4個）
+  - Event 相關類型（7個）
+  - Fighter 相關類型（4個）
+  - Betting 相關類型（4個）
+  - API 相關類型（6個）
+  - Admin 相關類型（2個）
+- **類型使用追蹤**: 詳細記錄每個類型的使用位置
+  - API 路由
+  - 服務層
+  - 前端組件
+  - 工具函數
+
+**使用場景**:
+
+1. **更改資料庫結構時**:
+   - 參考 `DATABASE_SCHEMA.md` 了解現有結構
+   - 使用 `TYPE_USAGE_TRACKING.md` 查找需要更新的文件
+   - 更新 `TYPESCRIPT_TYPES.md` 記錄類型變更
+
+2. **查找類型使用位置時**:
+   - 在 `TYPE_USAGE_TRACKING.md` 中查找類型名稱
+   - 查看所有使用位置
+   - 使用 grep 確認
+
+3. **添加新類型時**:
+   - 在 `lib/types.ts` 中定義類型
+   - 更新 `TYPESCRIPT_TYPES.md`
+   - 更新 `TYPE_USAGE_TRACKING.md`
+   - 更新 `DATABASE_SCHEMA.md`（如果涉及資料庫變更）
+
+**技術細節**:
+
+- **文檔格式**: Markdown
+- **語言**: 繁體中文（主要）和英文（註釋）
+- **維護**: 每次類型變更時更新
+- **同步**: 與 Prisma schema 和 TypeScript 類型定義保持同步
+
+**相關文件**:
+- `docs/types/DATABASE_SCHEMA.md` - 資料庫結構文檔
+- `docs/types/TYPESCRIPT_TYPES.md` - TypeScript 類型定義文檔
+- `docs/types/TYPE_USAGE_TRACKING.md` - 類型使用追蹤文檔
+- `docs/types/README.md` - 類型系統文檔使用指南
+
+## 2025-01-21
+
 ### feat/admin-fighter-create-form
 
 **難度**: ★★★☆☆

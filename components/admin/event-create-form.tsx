@@ -151,6 +151,20 @@ export function EventCreateForm() {
       const data = await response.json();
 
       if (!response.ok) {
+        // 處理驗證錯誤（Zod 錯誤）
+        // Handle validation errors (Zod errors)
+        if (data.details) {
+          const fieldErrors = Object.entries(data.details)
+            .map(([field, errors]) => {
+              const errorList = Array.isArray(errors) ? errors : [errors];
+              return `${field}: ${errorList.join(", ")}`;
+            })
+            .join("; ");
+          throw new Error(`驗證失敗 / Validation failed: ${fieldErrors}`);
+        }
+
+        // 處理其他錯誤
+        // Handle other errors
         throw new Error(data.error || "創建賽事失敗 / Failed to create event");
       }
 
@@ -179,7 +193,16 @@ export function EventCreateForm() {
         },
       ]);
     } catch (error: any) {
-      toast.error(error.message);
+      // 顯示詳細錯誤信息
+      // Display detailed error message
+      const errorMessage = error.message || "創建賽事失敗 / Failed to create event";
+      toast.error(errorMessage);
+      
+      // 開發環境：記錄完整錯誤信息到控制台
+      // Development: log full error to console
+      if (process.env.NODE_ENV === "development") {
+        console.error("Event creation error:", error);
+      }
     } finally {
       setIsSubmitting(false);
     }
