@@ -23,22 +23,27 @@ export async function POST(request: NextRequest) {
     const realIp = request.headers.get("x-real-ip");
     const ipAddress = getClientIpAddress(forwardedFor, realIp);
 
-    // Place bet using service layer
-    // サービス層を使用してベットを配置
+    // Place bet using service layer (updated to use fighterEventId)
+    // 使用服務層下注（更新為使用 fighterEventId）
     const bet = await placeBet(
       user.userId,
-      validatedData.eventId,
+      validatedData.fighterEventId,
       validatedData.target_winner_id,
       validatedData.amount,
       ipAddress
     );
 
+    // Get event ID from bet for cache invalidation
+    // 從投注記錄獲取賽事ID用於快取失效
+    const eventId = bet.eventId;
+
     // Update cache after bet placement
-    // ベット配置後にキャッシュを更新
-    revalidateTag(`event-${validatedData.eventId}`, "max");
-    revalidateTag(`event-odds-${validatedData.eventId}`, "max");
+    // 投注後更新快取
+    revalidateTag(`event-${eventId}`, "max");
+    revalidateTag(`fight-odds-${validatedData.fighterEventId}`, "max");
+    revalidateTag(`event-fights-${eventId}`, "max");
     revalidateTag("events", "max");
-    revalidatePath(`/events/${validatedData.eventId}`);
+    revalidatePath(`/events/${eventId}`);
 
     return NextResponse.json(bet, { status: 201 });
   } catch (error: any) {
@@ -74,8 +79,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (error.message === "Event not found") {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    if (
+      error.message === "Event not found" ||
+      error.message === "Fight not found"
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            error.message === "Fight not found"
+              ? "Fight not found"
+              : "Event not found",
+        },
+        { status: 404 }
+      );
+    }
+
+    if (error.message === "Betting is not available for this fight") {
+      return NextResponse.json(
+        { error: "Betting is not available for this fight" },
+        { status: 400 }
+      );
+    }
+
+    if (error.message === "Betting is closed for this fight") {
+      return NextResponse.json(
+        { error: "Betting is closed for this fight" },
+        { status: 400 }
+      );
+    }
+
+    if (error.message === "Target winner must be one of the fight fighters") {
+      return NextResponse.json(
+        { error: "Target winner must be one of the fight fighters" },
+        { status: 400 }
+      );
     }
 
     console.error("Error placing bet:", error);

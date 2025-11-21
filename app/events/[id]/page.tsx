@@ -1,8 +1,8 @@
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { BettingCard } from "@/components/betting/BettingCard";
-import { calculatePoolOdds } from "@/lib/betting-system";
+import { FightBettingCard } from "@/components/betting/FightBettingCard";
+import { getEventWithFights } from "@/lib/services/events";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,22 +74,15 @@ export default async function EventDetailPage({
   const { id } = await params;
   const user = await getCurrentUser();
 
-  // イベントデータを取得（キャッシュ付き）
-  // Get event data (with caching)
+  // イベントデータを取得（キャッシュ付き、包含對戰列表）
+  // Get event data (with caching, including fights)
   const event = await unstable_cache(
     async () => {
-      return prisma.event.findUnique({
-        where: { id },
-        include: {
-          _count: {
-            select: { bets: true, posts: true },
-          },
-        },
-      });
+      return getEventWithFights(id);
     },
-    [`event-${id}`],
+    [`event-with-fights-${id}`],
     {
-      tags: ["events", `event-${id}`],
+      tags: ["events", `event-${id}`, `event-fights-${id}`],
       revalidate: 60, // 60秒ごとに再検証 / Revalidate every 60 seconds
     }
   )();
@@ -98,13 +91,9 @@ export default async function EventDetailPage({
     notFound();
   }
 
-  const poolData = await calculatePoolOdds(id);
-
-  // Combine event with pool data
-  const eventWithPool = {
-    ...event,
-    poolData,
-  };
+  // Type assertion for event with fights
+  // 類型斷言：包含對戰列表的賽事
+  const eventWithFights = event as any;
 
   // 外部APIデータを取得
   // Get external API data
@@ -194,14 +183,70 @@ export default async function EventDetailPage({
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Betting Card */}
-          <div className="col-span-1 md:col-span-3">
+        {/* Fights Section */}
+        {eventWithFights.fighterEvents && eventWithFights.fighterEvents.length > 0 ? (
+          <div className="mb-8 space-y-6">
+            <h2 className="text-2xl font-bold">對戰列表 / Fight Card</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {eventWithFights.fighterEvents.map((fight: any) => {
+                // 只顯示每個對戰一次（使用 fighter_id 和 fight_order 組合）
+                // Only show each fight once (using fighter_id and fight_order combination)
+                if (!fight.opponent_id || !fight.opponent) return null;
+                
+                // 只顯示 fighter_id 較小的記錄（避免重複顯示）
+                // Only show records where fighter_id is smaller (avoid duplicate display)
+                const otherFight = eventWithFights.fighterEvents.find(
+                  (f: any) =>
+                    f.fight_order === fight.fight_order &&
+                    f.fighter_id === fight.opponent_id &&
+                    f.opponent_id === fight.fighter_id
+                );
+                
+                if (otherFight && fight.fighter_id > fight.opponent_id) {
+                  return null;
+                }
+
+                return (
+                  <FightBettingCard
+                    key={fight.id}
+                    fight={{
+                      id: fight.id,
+                      fighter: fight.fighter,
+                      opponent: fight.opponent,
+                      fightType: fight.fight_type,
+                      fightOrder: fight.fight_order,
+                      weightClass: fight.weight_class,
+                      isBettable: fight.is_bettable,
+                      status: fight.status,
+                      result: fight.result,
+                      method: fight.method,
+                      round: fight.round,
+                      time: fight.time,
+                      _count: fight._count,
+                    }}
+                    userPoints={user ? Number(user.virtual_score) : 0}
+                    eventStatus={event.status}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="mb-8">
             {user ? (
-              <BettingCard
-                event={eventWithPool as any}
-                userPoints={Number(user.virtual_score)}
-              />
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center space-y-4">
+                    <Users className="w-12 h-12 mx-auto text-muted-foreground" />
+                    <div>
+                      <p className="font-medium mb-2">尚未有對戰資訊 / No fights yet</p>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        此賽事尚未添加對戰組合
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ) : (
               <Card>
                 <CardContent className="pt-6">
@@ -224,9 +269,10 @@ export default async function EventDetailPage({
               </Card>
             )}
           </div>
+        )}
 
-          {/* Main Content */}
-          <div className="md:col-span-2 space-y-6">
+        {/* Main Content */}
+        <div className="space-y-6">
             {/* Fight Card */}
             {externalData?.strResult &&
             typeof externalData.strResult === "string" ? (
@@ -245,12 +291,12 @@ export default async function EventDetailPage({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Total Bets</p>
-                    <p className="text-2xl font-bold">{event._count.bets}</p>
+                    <p className="text-2xl font-bold">{eventWithFights._count?.bets || 0}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Pool</p>
+                    <p className="text-sm text-muted-foreground">Total Fights</p>
                     <p className="text-2xl font-bold">
-                      {poolData.totalPool.toLocaleString()} pts
+                      {eventWithFights.fighterEvents?.length || 0}
                     </p>
                   </div>
                 </div>
@@ -281,11 +327,11 @@ export default async function EventDetailPage({
                 </div>
               </CardHeader>
               <CardContent>
-                {event._count.posts > 0 ? (
+                {(eventWithFights._count?.posts || 0) > 0 ? (
                   <div className="space-y-2">
                     <p className="text-muted-foreground">
-                      {event._count.posts} related discussion
-                      {event._count.posts !== 1 ? "s" : ""}
+                      {eventWithFights._count?.posts || 0} related discussion
+                      {(eventWithFights._count?.posts || 0) !== 1 ? "s" : ""}
                     </p>
                     <Link
                       href={`/posts?eventId=${event.id}`}

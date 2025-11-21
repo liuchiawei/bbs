@@ -8,6 +8,7 @@ import { ProfileManagement } from "@/components/admin/profile-management";
 import { EventResultForm } from "@/components/admin/event-result-form";
 import { RollbackPanel } from "@/components/admin/rollback-panel";
 import { EventSyncButton } from "@/components/admin/event-sync-button";
+import { EventCreateForm } from "@/components/admin/event-create-form";
 import { t } from "@/lib/constants";
 
 export function AdminTabs() {
@@ -38,6 +39,7 @@ export function AdminTabs() {
       </TabsContent>
 
       <TabsContent value="events" className="mt-8 space-y-8">
+        <EventCreateForm />
         <EventSyncButton />
         <EventResultForm />
         <RollbackPanel />
