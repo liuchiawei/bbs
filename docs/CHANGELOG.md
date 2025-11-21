@@ -2,6 +2,116 @@
 
 ## 2025-11-21
 
+### feat/navbar-sidebar-restructure
+
+**難度**: ★★★☆☆
+
+**描述**: 重構導覽列 UI 架構，將左側 Search 圖標替換為 AppSideBar（從左側滑出的 Sheet），右側 Menu 圖標替換為用戶 Avatar，點擊後顯示用戶選單 Sheet（管理員會顯示管理頁連結）。使用 shadcn/ui 的 Sheet 組件實作，預留擴展框架。
+
+**問題分析**:
+
+1. **導覽列功能分散**: 左側只有 Search 圖標，右側 Menu Sheet 內容混雜，缺乏清晰的導航結構
+2. **用戶體驗不佳**: Menu Sheet 同時包含導航和用戶功能，組織不夠清晰
+3. **管理員功能不明顯**: 管理員頁面連結隱藏在 Menu Sheet 中，不夠直觀
+4. **缺乏擴展性**: 現有結構難以添加新的導航項目和功能
+
+**解決方案**:
+
+1. **AppSideBar 組件** (`components/layout/app-sidebar.tsx`) - 新建:
+   - 使用 Sheet 組件，設定 `side="left"` 從左側滑出
+   - Trigger 使用 PanelLeft 圖標（lucide-react）
+   - SheetContent 包含：
+     - SheetHeader：顯示 APP_NAME
+     - 導航連結列表：
+       - 首頁 (/)
+       - 賽事 (/events)
+       - 選手 (/fighter) - 預留連結，未來可改為列表頁
+       - 分類 (/category) - 預留連結，未來可改為列表頁
+       - 搜尋 (/search) - 保留搜尋功能
+     - 使用 Separator 分隔區塊
+     - 預留「其他功能」區塊註解，方便未來擴展
+   - 使用 `usePathname` 判斷當前頁面並高亮顯示（`isActive`）
+   - 響應式設計：手機版寬度調整（w-64 sm:w-80）
+
+2. **UserMenuSheet 組件** (`components/layout/user-menu-sheet.tsx`) - 新建:
+   - 使用 Sheet 組件，設定 `side="right"` 從右側滑出
+   - Trigger 使用 Avatar 組件（顯示用戶頭像或 fallback）
+   - SheetContent 包含：
+     - SheetHeader：
+       - 用戶頭像（大尺寸 h-20 w-20，居中）
+       - 用戶名稱（name 或 userId）
+       - 用戶 nickname（如有）
+       - 管理員 Badge（僅當 `user.isAdmin === true` 時顯示）
+     - 連結列表區塊：
+       - 我的頁面 (/user/[userId])
+       - 設定 (/settings)
+       - Separator
+       - 管理員頁面 (/admin) - 僅當 `user.isAdmin === true` 時顯示，使用 Shield 圖標和 primary 顏色
+       - Separator
+       - 登出按鈕（使用 LogOut 圖標和 destructive 顏色）
+     - SheetFooter：預留空間
+   - 處理未登入狀態：顯示登入/註冊按鈕（與現有邏輯一致）
+   - 接收 `user`、`isLoading`、`onLogout` 作為 props
+
+3. **Navbar 組件更新** (`components/layout/navbar.tsx`):
+   - 移除左側的 Search 圖標 Button
+   - 導入並使用 AppSideBar 組件（替換左側按鈕）
+   - 移除右側的 Menu Sheet（現有的 Sheet 組件）
+   - 導入並使用 UserMenuSheet 組件（替換右側按鈕）
+   - 保留現有的用戶狀態管理邏輯（fetchUser、handleLogout）
+   - 將用戶資料和登出函數作為 props 傳遞給 UserMenuSheet
+   - 保留現有的 scroll 隱藏/顯示邏輯
+   - 修復缺少的 `toast` 導入
+
+4. **多語言支援** (`lib/constants.ts`):
+   - 新增導航相關翻譯（四種語言：en, ja, zh-CN, zh-TW）：
+     - `NAV_HOME`: "首頁" / "Home" / "ホーム" / "首页"
+     - `NAV_EVENTS`: "賽事" / "Events" / "イベント" / "赛事"
+     - `NAV_FIGHTERS`: "選手" / "Fighters" / "ファイター" / "选手"
+     - `NAV_CATEGORIES`: "分類" / "Categories" / "カテゴリー" / "分类"
+     - `NAV_SEARCH`: "搜尋" / "Search" / "検索" / "搜索"
+     - `NAV_MY_PAGE`: "我的頁面" / "My Page" / "マイページ" / "我的页面"
+     - `NAV_SETTINGS`: "設定" / "Settings" / "設定" / "设置"
+     - `NAV_ADMIN`: "管理員" / "Admin" / "管理者" / "管理员"
+     - `NAV_LOGOUT`: "登出" / "Logout" / "ログアウト" / "登出"
+     - `NAV_MENU`: "選單" / "Menu" / "メニュー" / "菜单"
+
+**UI/UX 改進**:
+
+- **清晰的導航結構**: 左側 Sidebar 專注於頁面導航，右側 Avatar Menu 專注於用戶功能
+- **視覺層次優化**: 使用圖標、Badge、Separator 等元素提升視覺層次
+- **當前頁面高亮**: AppSideBar 自動判斷當前頁面並高亮顯示
+- **管理員功能突出**: 管理員連結使用不同的視覺樣式（Shield 圖標、primary 顏色）
+- **響應式設計**: 適配不同螢幕尺寸，手機版優化
+
+**技術細節**:
+
+- **shadcn/ui 組件**: 使用已安裝的 Sheet、Avatar、Button、Separator、Badge 組件
+- **Next.js Hooks**: 使用 `usePathname` 判斷當前頁面
+- **圖標庫**: 使用 lucide-react（PanelLeft、Home、Calendar、Users、FolderTree、Search、User、Settings、Shield、LogOut）
+- **類型安全**: UserMenuSheet 使用 TypeScript 介面定義 props
+- **組件分離**: 將導航和用戶功能分離為獨立組件，提高可維護性
+- **預留擴展**: 在組件中添加註解區塊，標註未來可添加的功能
+
+**預留擴展框架**:
+
+- **AppSideBar** 中預留註解區塊：
+  - 動態分類列表（從 API 獲取）
+  - 收藏/書籤功能
+  - 通知中心
+  - 最近瀏覽的頁面
+- **UserMenuSheet** 中預留註解區塊：
+  - 通知中心連結
+  - 訊息中心連結
+  - 其他用戶功能
+
+**相關文件**:
+
+- `components/layout/app-sidebar.tsx` - 新建 AppSideBar 組件
+- `components/layout/user-menu-sheet.tsx` - 新建 UserMenuSheet 組件
+- `components/layout/navbar.tsx` - 更新 Navbar，整合新組件
+- `lib/constants.ts` - 新增導航相關多語言翻譯
+
 ### feat/admin-event-list-and-ui-improvements
 
 **難度**: ★★★★☆

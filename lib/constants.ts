@@ -182,6 +182,18 @@ export const TRANSLATIONS = {
     ALREADY_HAVE_ACCOUNT: "Already have an account?",
     DONT_HAVE_ACCOUNT: "Don't have an account?",
 
+    // Navigation
+    NAV_HOME: "Home",
+    NAV_EVENTS: "Events",
+    NAV_FIGHTERS: "Fighters",
+    NAV_CATEGORIES: "Categories",
+    NAV_SEARCH: "Search",
+    NAV_MY_PAGE: "My Page",
+    NAV_SETTINGS: "Settings",
+    NAV_ADMIN: "Admin",
+    NAV_LOGOUT: "Logout",
+    NAV_MENU: "Menu",
+
     // Register Form
     CREATE_ACCOUNT: "Create an account",
     ENTER_DETAILS_TO_REGISTER: "Enter your details to register",
@@ -474,6 +486,18 @@ export const TRANSLATIONS = {
     ALREADY_HAVE_ACCOUNT: "すでにアカウントをお持ちですか？",
     DONT_HAVE_ACCOUNT: "アカウントをお持ちでないですか？",
 
+    // Navigation
+    NAV_HOME: "ホーム",
+    NAV_EVENTS: "イベント",
+    NAV_FIGHTERS: "ファイター",
+    NAV_CATEGORIES: "カテゴリー",
+    NAV_SEARCH: "検索",
+    NAV_MY_PAGE: "マイページ",
+    NAV_SETTINGS: "設定",
+    NAV_ADMIN: "管理者",
+    NAV_LOGOUT: "ログアウト",
+    NAV_MENU: "メニュー",
+
     // Register Form
     CREATE_ACCOUNT: "アカウントを作成",
     ENTER_DETAILS_TO_REGISTER: "登録情報を入力してください",
@@ -763,6 +787,18 @@ export const TRANSLATIONS = {
     ALREADY_HAVE_ACCOUNT: "已有账号？",
     DONT_HAVE_ACCOUNT: "还没有账号？",
 
+    // Navigation
+    NAV_HOME: "首页",
+    NAV_EVENTS: "赛事",
+    NAV_FIGHTERS: "选手",
+    NAV_CATEGORIES: "分类",
+    NAV_SEARCH: "搜索",
+    NAV_MY_PAGE: "我的页面",
+    NAV_SETTINGS: "设置",
+    NAV_ADMIN: "管理员",
+    NAV_LOGOUT: "登出",
+    NAV_MENU: "菜单",
+
     // Register Form
     CREATE_ACCOUNT: "创建账号",
     CANNOT_BE_CHANGED: "无法更改",
@@ -1041,6 +1077,18 @@ export const TRANSLATIONS = {
     USERNAME: "用戶名",
     ALREADY_HAVE_ACCOUNT: "已經有帳戶了嗎？",
     DONT_HAVE_ACCOUNT: "沒有帳戶嗎？",
+
+    // Navigation
+    NAV_HOME: "首頁",
+    NAV_EVENTS: "賽事",
+    NAV_FIGHTERS: "選手",
+    NAV_CATEGORIES: "分類",
+    NAV_SEARCH: "搜尋",
+    NAV_MY_PAGE: "我的頁面",
+    NAV_SETTINGS: "設定",
+    NAV_ADMIN: "管理員",
+    NAV_LOGOUT: "登出",
+    NAV_MENU: "選單",
     // Register Form
     CREATE_ACCOUNT: "註冊帳戶",
     ENTER_DETAILS_TO_REGISTER: "請輸入詳細信息",
