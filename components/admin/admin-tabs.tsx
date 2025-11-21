@@ -9,17 +9,21 @@ import { EventResultForm } from "@/components/admin/event-result-form";
 import { RollbackPanel } from "@/components/admin/rollback-panel";
 import { EventSyncButton } from "@/components/admin/event-sync-button";
 import { EventCreateForm } from "@/components/admin/event-create-form";
+import { FighterCreateForm } from "@/components/admin/fighter-create-form";
 import { t } from "@/lib/constants";
 
 export function AdminTabs() {
   return (
     <Tabs defaultValue="categories" className="w-full">
-      <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-5">
-        <TabsTrigger value="categories">{t("CATEGORIES_MANAGEMENT")}</TabsTrigger>
+      <TabsList className="grid w-full max-w-4xl mx-auto grid-cols-6">
+        <TabsTrigger value="categories">
+          {t("CATEGORIES_MANAGEMENT")}
+        </TabsTrigger>
         <TabsTrigger value="posts">{t("POSTS_MANAGEMENT")}</TabsTrigger>
         <TabsTrigger value="users">{t("USERS_MANAGEMENT")}</TabsTrigger>
         <TabsTrigger value="profiles">{t("PROFILE_MANAGEMENT")}</TabsTrigger>
-        <TabsTrigger value="events">Events Management</TabsTrigger>
+        <TabsTrigger value="events">{t("EVENTS_MANAGEMENT")}</TabsTrigger>
+        <TabsTrigger value="fighters">{t("FIGHTERS_MANAGEMENT")}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="categories" className="mt-8">
@@ -43,6 +47,10 @@ export function AdminTabs() {
         <EventSyncButton />
         <EventResultForm />
         <RollbackPanel />
+      </TabsContent>
+
+      <TabsContent value="fighters" className="mt-8 space-y-8">
+        <FighterCreateForm />
       </TabsContent>
     </Tabs>
   );

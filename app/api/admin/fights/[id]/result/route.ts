@@ -59,12 +59,13 @@ export async function POST(
       validatedData.winRound
     );
 
-    // Update cache
-    // 更新快取
+    // Update cache (符合 Next.js 16 規範，使用 'max' 參數)
+    // 更新快取（符合 Next.js 16 規範，使用 'max' 參數）
     revalidateTag(`event-${result.fight.event.id}`, "max");
     revalidateTag(`event-fights-${result.fight.event.id}`, "max");
     revalidateTag(`fight-odds-${id}`, "max");
     revalidateTag("events", "max");
+    revalidateTag("admin-settlable-events", "max"); // 更新管理員可結算事件列表快取
 
     return NextResponse.json(result);
   } catch (error: any) {

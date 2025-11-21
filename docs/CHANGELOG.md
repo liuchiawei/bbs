@@ -1,5 +1,120 @@
 # 開發日誌 / Development Log
 
+## 2025-01-21
+
+### feat/admin-fighter-create-form
+
+**難度**: ★★★☆☆
+
+**描述**: 實作管理員創立選手頁面，包含完整的表單組件和後端 API，遵循現有的 Prisma schema、TypeScript 類型和創建賽事頁面的樣式格式，支援自動 slug 生成、表單驗證和審計日誌記錄
+
+**功能概述**:
+
+實作管理員創建選手的完整功能：
+
+1. **POST /api/fighters API**: 創建選手的後端 API 路由
+2. **FighterCreateForm 組件**: 完整的前端表單組件
+3. **AdminTabs 整合**: 將新表單整合到管理員界面
+
+**API 路由更新** (`app/api/fighters/route.ts`):
+
+- **新增 POST 方法**:
+  - 驗證管理員權限（使用 `getCurrentUser()`）
+  - 輸入驗證（使用 Zod schema）：
+    - `name` (必填)
+    - `slug` (可選，未提供時自動生成)
+    - `sport_type` (可選，enum: boxing/ufc/mma/muay-thai/kickboxing)
+    - `nationality`, `date_born`, `height`, `weight`, `position`, `description`, `thumb`, `cutout` (可選)
+  - Slug 生成邏輯：
+    - 未提供時使用 `generateUniqueSlug()` 自動生成
+    - 提供時檢查唯一性（Prisma unique constraint）
+  - 創建 Fighter 記錄（遵循 Prisma schema）
+  - 記錄 AuditLog（使用 `createAuditLog()`，包含 adminId、actionType、description、ipAddress）
+  - 更新快取（`revalidateTag("fighters")`）
+  - 錯誤處理（Zod 驗證錯誤、Prisma unique constraint 錯誤）
+
+**前端組件** (`components/admin/fighter-create-form.tsx`) - 新建:
+
+- **表單結構**:
+  - 遵循 `event-create-form.tsx` 的樣式和結構
+  - 使用相同的 UI 組件：Card, CardHeader, CardTitle, CardDescription, CardContent, Input, Label, Select, Textarea, Button
+  - 響應式佈局：`grid-cols-1 md:grid-cols-2`
+- **表單字段分組**:
+  - **基本信息**:
+    - `name` (必填，Input)
+    - `slug` (可選，Input，顯示預覽，可手動編輯)
+    - `sport_type` (可選，Select: boxing, ufc, mma, muay-thai, kickboxing)
+    - `nationality` (可選，Input)
+    - `date_born` (可選，Input type="date")
+  - **身體數據**:
+    - `height` (可選，Input type="number"，單位：公分/cm，placeholder: "175")
+    - `weight` (可選，Input type="number"，單位：磅/lb，placeholder: "155")
+    - `position` (可選，Input，placeholder: "Weight class")
+  - **描述和圖片**:
+    - `description` (可選，Textarea)
+    - `thumb` (可選，Input type="url"，Profile thumbnail URL)
+    - `cutout` (可選，Input type="url"，Cutout image URL)
+- **Slug 自動生成**:
+  - 使用 `useEffect` 監聽 `name` 變化
+  - 當 `name` 改變且 `slug` 未被手動編輯時，自動生成 slug 預覽
+  - 使用 `generateSlug()` 生成（不檢查唯一性，僅預覽）
+  - 允許手動編輯 slug，編輯後不再自動更新
+  - 顯示 slug 預覽：`/fighter/{slug}`
+- **表單驗證**:
+  - `name` 必填驗證
+  - URL 格式驗證（thumb, cutout）
+  - 前端驗證後再提交
+- **提交處理**:
+  - 顯示 loading 狀態（Loader2 icon）
+  - 調用 POST /api/fighters
+  - 成功後顯示 toast 通知
+  - 重置表單（包括 `slugManuallyEdited` 狀態）
+  - 刷新頁面（router.refresh()）
+- **雙語標籤**（繁體中文/英文），與 event-create-form.tsx 保持一致
+
+**管理員界面整合** (`components/admin/admin-tabs.tsx`):
+
+- 添加新的 "Fighters Management" tab
+- 整合 FighterCreateForm 組件
+- 更新 TabsList 為 6 列佈局（grid-cols-6）
+- 使用多語言翻譯（`t("FIGHTERS_MANAGEMENT")`）
+
+**技術細節**:
+
+- **Slug 生成邏輯**:
+  - 前端預覽使用 `generateSlug()`（不檢查唯一性）
+  - 後端創建時使用 `generateUniqueSlug()`（檢查唯一性）
+  - 使用 `slugManuallyEdited` 狀態追蹤 slug 是否被手動編輯
+- **類型定義**:
+  - 使用 `lib/types.ts` 中已定義的 `Fighter` 接口
+  - 表單狀態使用對應的字段類型
+- **樣式一致性**:
+  - 遵循 `event-create-form.tsx` 的佈局：
+    - Card 容器
+    - grid-cols-1 md:grid-cols-2 響應式佈局
+    - 必填字段標記（紅色星號）
+    - 統一的 spacing 和 typography
+- **單位規範**:
+  - 身高：公分(cm)，使用 number input
+  - 體重：磅(lb)，使用 number input
+- **審計日誌**:
+  - 創建選手時自動記錄 AuditLog
+  - 包含完整信息：adminId、actionType ("CREATE_FIGHTER")、description、ipAddress
+
+**主要修改文件**:
+
+1. `app/api/fighters/route.ts` - 添加 POST 方法
+2. `components/admin/fighter-create-form.tsx` - 新建表單組件
+3. `components/admin/admin-tabs.tsx` - 整合新組件
+
+**注意事項**:
+
+- Slug 唯一性：使用 `generateUniqueSlug()` 確保 slug 唯一
+- 審計日誌完整性：所有管理員操作都必須記錄 AuditLog，包含 IP 地址
+- 表單驗證：前端和後端都進行驗證，確保數據完整性
+- 單位規範：身高使用公分(cm)，體重使用磅(lb)
+- 快取更新：創建選手後更新 `fighters` cache tag
+
 ## 2025-01-20
 
 ### feat/betting-system-enhancement

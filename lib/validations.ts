@@ -330,7 +330,6 @@ export const settleEventSchema = z.object({
   winnerId: z.string(),
   winMethod: z.string().optional(),
   winRound: z.number().int().positive().optional(),
-});
   eventId: z.string(),
   target_winner_id: z.string(),
   amount: z

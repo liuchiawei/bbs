@@ -88,9 +88,10 @@ export async function POST(request: NextRequest) {
       source,
     };
 
-    // キャッシュを無効化して最新データを取得できるようにする
-    // Invalidate cache to fetch latest data
+    // キャッシュを無効化して最新データを取得できるようにする（符合 Next.js 16 規範，使用 'max' 參數）
+    // Invalidate cache to fetch latest data (following Next.js 16 standards, using 'max' parameter)
     revalidateTag("events", "max");
+    revalidateTag("admin-settlable-events", "max"); // 更新管理員可結算事件列表快取
 
     return NextResponse.json({
       success: true,

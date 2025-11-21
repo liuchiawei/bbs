@@ -16,14 +16,25 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+interface Fighter {
+  id: string;
+  name: string;
+}
+
+interface MainFight {
+  id: string;
+  fighter_id: string;
+  opponent_id: string;
+  fighter: Fighter;
+  opponent: Fighter;
+}
+
 interface Event {
   id: string;
   name: string;
   fight_date: string;
-  status: "PENDING" | "OPEN" | "CLOSED" | "SETTLED" | "CANCELLED";
-  fighter_1_id: string;
-  fighter_2_id: string;
-  winner_id?: string | null;
+  status: "OPEN" | "CLOSED";
+  mainFight: MainFight | null;
 }
 
 export function EventResultForm() {
@@ -43,14 +54,15 @@ export function EventResultForm() {
   const fetchEvents = async () => {
     setIsLoading(true);
     try {
-      // Fetch all events and filter client-side
-      // すべてのイベントを取得し、クライアント側でフィルタリング
-      const response = await fetch("/api/events");
+      // 使用優化的管理員專用 API 端點
+      // Use optimized admin-specific API endpoint
+      const response = await fetch("/api/admin/events/settlable");
       if (response.ok) {
         const data = await response.json();
-        setEvents(data.filter((e: Event) => e.status === "OPEN" || e.status === "CLOSED"));
+        setEvents(data);
       } else {
-        toast.error("Failed to load events");
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        toast.error(errorData.error || "Failed to load events");
       }
     } catch (error) {
       console.error("Failed to fetch events:", error);
@@ -61,18 +73,21 @@ export function EventResultForm() {
   };
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
+  const selectedFight = selectedEvent?.mainFight;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedEventId || !winnerId) {
+    if (!selectedEventId || !winnerId || !selectedFight) {
       toast.error("Please select an event and winner");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/admin/events/${selectedEventId}/result`, {
+      // 使用新的對戰結算 API（基於 FighterEvent）
+      // Use new fight settlement API (based on FighterEvent)
+      const response = await fetch(`/api/admin/fights/${selectedFight.id}/result`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -85,10 +100,10 @@ export function EventResultForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to settle event");
+        throw new Error(data.error || "Failed to settle fight");
       }
 
-      toast.success("Event settled successfully!");
+      toast.success("Fight settled successfully!");
       setSelectedEventId("");
       setWinnerId("");
       setWinMethod("");
@@ -96,7 +111,7 @@ export function EventResultForm() {
       router.refresh();
       fetchEvents();
     } catch (error: any) {
-      toast.error(error.message || "Failed to settle event");
+      toast.error(error.message || "Failed to settle fight");
     } finally {
       setIsSubmitting(false);
     }
@@ -133,7 +148,7 @@ export function EventResultForm() {
             </Select>
           </div>
 
-          {selectedEvent && (
+          {selectedEvent && selectedFight ? (
             <>
               <div className="space-y-2">
                 <Label htmlFor="winner">Winner</Label>
@@ -142,11 +157,11 @@ export function EventResultForm() {
                     <SelectValue placeholder="Select winner" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={selectedEvent.fighter_1_id}>
-                      Fighter 1
+                    <SelectItem value={selectedFight.fighter_id}>
+                      {selectedFight.fighter.name}
                     </SelectItem>
-                    <SelectItem value={selectedEvent.fighter_2_id}>
-                      Fighter 2
+                    <SelectItem value={selectedFight.opponent_id}>
+                      {selectedFight.opponent.name}
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -174,16 +189,23 @@ export function EventResultForm() {
                 />
               </div>
             </>
-          )}
+          ) : selectedEvent && !selectedFight ? (
+            <div className="text-sm text-muted-foreground">
+              This event has no fights yet. Please add fights to the event first.
+            </div>
+          ) : null}
 
-          <Button type="submit" disabled={isSubmitting || !selectedEventId || !winnerId}>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting || !selectedEventId || !winnerId || !selectedFight}
+          >
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Settling...
               </>
             ) : (
-              "Settle Event"
+              "Settle Fight"
             )}
           </Button>
         </form>

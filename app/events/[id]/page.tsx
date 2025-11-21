@@ -184,7 +184,8 @@ export default async function EventDetailPage({
         </div>
 
         {/* Fights Section */}
-        {eventWithFights.fighterEvents && eventWithFights.fighterEvents.length > 0 ? (
+        {eventWithFights.fighterEvents &&
+        eventWithFights.fighterEvents.length > 0 ? (
           <div className="mb-8 space-y-6">
             <h2 className="text-2xl font-bold">對戰列表 / Fight Card</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -192,7 +193,7 @@ export default async function EventDetailPage({
                 // 只顯示每個對戰一次（使用 fighter_id 和 fight_order 組合）
                 // Only show each fight once (using fighter_id and fight_order combination)
                 if (!fight.opponent_id || !fight.opponent) return null;
-                
+
                 // 只顯示 fighter_id 較小的記錄（避免重複顯示）
                 // Only show records where fighter_id is smaller (avoid duplicate display)
                 const otherFight = eventWithFights.fighterEvents.find(
@@ -201,7 +202,7 @@ export default async function EventDetailPage({
                     f.fighter_id === fight.opponent_id &&
                     f.opponent_id === fight.fighter_id
                 );
-                
+
                 if (otherFight && fight.fighter_id > fight.opponent_id) {
                   return null;
                 }
@@ -239,7 +240,9 @@ export default async function EventDetailPage({
                   <div className="text-center space-y-4">
                     <Users className="w-12 h-12 mx-auto text-muted-foreground" />
                     <div>
-                      <p className="font-medium mb-2">尚未有對戰資訊 / No fights yet</p>
+                      <p className="font-medium mb-2">
+                        尚未有對戰資訊 / No fights yet
+                      </p>
                       <p className="text-sm text-muted-foreground mb-4">
                         此賽事尚未添加對戰組合
                       </p>
@@ -273,88 +276,88 @@ export default async function EventDetailPage({
 
         {/* Main Content */}
         <div className="space-y-6">
-            {/* Fight Card */}
-            {externalData?.strResult &&
-            typeof externalData.strResult === "string" ? (
-              <EventFightCard
-                fightCardText={externalData.strResult}
-                eventName={event.name}
-              />
-            ) : null}
+          {/* Fight Card */}
+          {externalData?.strResult &&
+          typeof externalData.strResult === "string" ? (
+            <EventFightCard
+              fightCardText={externalData.strResult}
+              eventName={event.name}
+            />
+          ) : null}
 
-            {/* Event Stats */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Event Statistics</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Bets</p>
-                    <p className="text-2xl font-bold">{eventWithFights._count?.bets || 0}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Fights</p>
-                    <p className="text-2xl font-bold">
-                      {eventWithFights.fighterEvents?.length || 0}
-                    </p>
-                  </div>
+          {/* Event Stats */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Event Statistics</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Bets</p>
+                  <p className="text-2xl font-bold">
+                    {eventWithFights._count?.bets || 0}
+                  </p>
                 </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Fights</p>
+                  <p className="text-2xl font-bold">
+                    {eventWithFights.fighterEvents?.length || 0}
+                  </p>
+                </div>
+              </div>
 
-                {event.last_synced_at && (
-                  <div className="pt-4 border-t text-xs text-muted-foreground">
-                    Last synced:{" "}
-                    {new Date(event.last_synced_at).toLocaleString()}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+              {event.last_synced_at && (
+                <div className="pt-4 border-t text-xs text-muted-foreground">
+                  Last synced: {new Date(event.last_synced_at).toLocaleString()}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-            {/* Related Discussions */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="w-5 h-5" />
-                    Discussion
-                  </CardTitle>
+          {/* Related Discussions */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Activity className="w-5 h-5" />
+                  Discussion
+                </CardTitle>
+                <Link
+                  href={`/posts/new?eventId=${event.id}`}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Create Post
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {(eventWithFights._count?.posts || 0) > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-muted-foreground">
+                    {eventWithFights._count?.posts || 0} related discussion
+                    {(eventWithFights._count?.posts || 0) !== 1 ? "s" : ""}
+                  </p>
+                  <Link
+                    href={`/posts?eventId=${event.id}`}
+                    className="text-sm text-primary hover:underline inline-flex items-center gap-1"
+                  >
+                    View all discussions
+                    <ExternalLink className="w-3 h-3" />
+                  </Link>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p className="mb-4">No discussions yet</p>
                   <Link
                     href={`/posts/new?eventId=${event.id}`}
                     className="text-sm text-primary hover:underline"
                   >
-                    Create Post
+                    Start the first discussion
                   </Link>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {(eventWithFights._count?.posts || 0) > 0 ? (
-                  <div className="space-y-2">
-                    <p className="text-muted-foreground">
-                      {eventWithFights._count?.posts || 0} related discussion
-                      {(eventWithFights._count?.posts || 0) !== 1 ? "s" : ""}
-                    </p>
-                    <Link
-                      href={`/posts?eventId=${event.id}`}
-                      className="text-sm text-primary hover:underline inline-flex items-center gap-1"
-                    >
-                      View all discussions
-                      <ExternalLink className="w-3 h-3" />
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <p className="mb-4">No discussions yet</p>
-                    <Link
-                      href={`/posts/new?eventId=${event.id}`}
-                      className="text-sm text-primary hover:underline"
-                    >
-                      Start the first discussion
-                    </Link>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { z } from "zod";
 import { createEventWithFights, getEventWithFights } from "@/lib/services/events";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, unstable_cache } from "next/cache";
 
 // Schema for creating an event with fights
 // 創建賽事及對戰的驗證 schema
@@ -30,6 +30,19 @@ const createEventSchema = z.object({
   ).min(1, "At least one fight is required"), // 至少需要1場對戰
 });
 
+/**
+ * GET /api/events
+ * Get events with optional filtering and caching
+ * 獲取賽事列表，支持可選過濾和快取
+ * 
+ * Query parameters:
+ * - status: Filter by event status
+ * - sport_type: Filter by sport type
+ * - promoter: Filter by promoter
+ * - include_fights: Include fighterEvents relation (default: false)
+ * - limit: Maximum number of events to return (default: 100)
+ * - offset: Number of events to skip (default: 0)
+ */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -37,7 +50,11 @@ export async function GET(request: NextRequest) {
     const sportType = searchParams.get("sport_type");
     const promoter = searchParams.get("promoter");
     const includeFights = searchParams.get("include_fights") === "true"; // 是否包含對戰列表
+    const limit = parseInt(searchParams.get("limit") || "100", 10);
+    const offset = parseInt(searchParams.get("offset") || "0", 10);
     
+    // 構建查詢條件
+    // Build query conditions
     const whereClause: any = {};
     if (status) {
       whereClause.status = status;
@@ -49,33 +66,97 @@ export async function GET(request: NextRequest) {
       whereClause.promoter = promoter;
     }
 
-    const events = await prisma.event.findMany({
-      where: whereClause,
-      orderBy: {
-        fight_date: "asc",
-      },
-      include: {
-        fighterEvents: includeFights
-          ? {
-              include: {
-                fighter: true,
-                opponent: true,
-                _count: {
+    // 構建快取 key（基於查詢參數）
+    // Build cache key (based on query parameters)
+    const cacheKey = `events-${status || "all"}-${sportType || "all"}-${promoter || "all"}-${includeFights ? "with-fights" : "no-fights"}-${limit}-${offset}`;
+    
+    // 構建 cache tags
+    // Build cache tags
+    const cacheTags = ["events"];
+    if (status) {
+      cacheTags.push(`events-status-${status}`);
+    }
+    if (sportType) {
+      cacheTags.push(`events-sport-${sportType}`);
+    }
+
+    // 使用快取優化性能（符合 Next.js 16 規範）
+    // Use cache for performance optimization (following Next.js 16 standards)
+    const events = await unstable_cache(
+      async () => {
+        return await prisma.event.findMany({
+          where: whereClause,
+          orderBy: {
+            fight_date: "asc",
+          },
+          take: limit,
+          skip: offset,
+          select: {
+            // 只選擇必要字段，減少數據傳輸
+            // Only select necessary fields to reduce data transfer
+            id: true,
+            name: true,
+            fight_date: true,
+            status: true,
+            sport_type: true,
+            promoter: true,
+            organization: true,
+            venue: true,
+            location: true,
+            description: true,
+            poster_url: true,
+            fighterEvents: includeFights
+              ? {
                   select: {
-                    bets: true,
+                    id: true,
+                    fighter_id: true,
+                    opponent_id: true,
+                    fight_type: true,
+                    fight_order: true,
+                    weight_class: true,
+                    is_bettable: true,
+                    status: true,
+                    fighter: {
+                      select: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                      },
+                    },
+                    opponent: {
+                      select: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                      },
+                    },
+                    _count: {
+                      select: {
+                        bets: true,
+                      },
+                    },
                   },
-                },
+                  orderBy: {
+                    fight_order: "asc",
+                  },
+                }
+              : false,
+            _count: {
+              select: { 
+                bets: true, 
+                posts: true,
+                fighterEvents: true,
               },
-              orderBy: {
-                fight_order: "asc",
-              },
-            }
-          : false,
-        _count: {
-          select: { bets: true, posts: true },
-        },
+            },
+          },
+        });
       },
-    });
+      [cacheKey],
+      {
+        tags: cacheTags,
+        revalidate: 60, // 60秒重新驗證（用戶瀏覽頻率較高）
+      }
+    )();
 
     return NextResponse.json(events);
   } catch (error) {
@@ -130,11 +211,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Update cache
-    // 更新快取
+    // Update cache (符合 Next.js 16 規範，使用 'max' 參數)
+    // 更新快取（符合 Next.js 16 規範，使用 'max' 參數）
     revalidateTag(`event-${result.event.id}`, "max");
     revalidateTag(`event-fights-${result.event.id}`, "max");
     revalidateTag("events", "max");
+    revalidateTag("admin-settlable-events", "max"); // 更新管理員可結算事件列表快取
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
