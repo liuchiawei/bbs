@@ -40,6 +40,8 @@ export async function POST(
     revalidateTag(`event-${eventId}`, "max");
     revalidateTag(`event-odds-${eventId}`, "max");
     revalidateTag("events", "max");
+    revalidateTag("admin-events", "max"); // 更新管理員賽事列表快取
+    revalidateTag("admin-settlable-events", "max"); // 更新管理員可結算事件列表快取
     revalidatePath(`/events/${eventId}`);
 
     return NextResponse.json({

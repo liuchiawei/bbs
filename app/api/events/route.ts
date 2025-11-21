@@ -218,6 +218,7 @@ export async function POST(request: NextRequest) {
     revalidateTag(`event-fights-${result.event.id}`, "max");
     revalidateTag("events", "max");
     revalidateTag("admin-settlable-events", "max"); // 更新管理員可結算事件列表快取
+    revalidateTag("admin-events", "max"); // 更新管理員賽事列表快取
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {

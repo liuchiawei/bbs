@@ -25,6 +25,7 @@ import { Eye, MessageCircle, Trash2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import type { AdminPostListItem } from "@/lib/types";
+import { formatAdminDate } from "@/lib/utils/admin";
 import { t } from "@/lib/constants";
 
 export function PostManagement() {
@@ -84,13 +85,6 @@ export function PostManagement() {
     }
   };
 
-  const formatDate = (date: Date | string) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
 
   if (isLoading) {
     return (
@@ -150,7 +144,7 @@ export function PostManagement() {
                     </div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(post.createdAt)}
+                    {formatAdminDate(post.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">

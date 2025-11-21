@@ -16,6 +16,7 @@ import type {
   UnifiedEventData,
   ExternalEventSource,
   SportType,
+  AdminEventListItem,
 } from "@/lib/types";
 import { TheSportsDBClient } from "@/lib/adapters/thesportsdb";
 import { generateEventId } from "@/lib/utils/id-generator";
@@ -739,4 +740,96 @@ export async function getEventByExternalId(
   });
 
   return event as Event | null;
+}
+
+/**
+ * Admin: Get all events with pagination and counts
+ * 管理員：獲取所有賽事（分頁和計數）
+ * 
+ * Uses cache for performance optimization (60 second revalidate)
+ * 使用快取優化效能（60秒重新驗證）
+ * 
+ * Returns events ordered by fight_date DESC (most recent first)
+ * 返回按 fight_date DESC 排序的賽事（最新的在前）
+ */
+export async function getAllEvents(
+  options: { page?: number; limit?: number } = {}
+): Promise<{
+  events: AdminEventListItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}> {
+  const { page = 1, limit = 10 } = options;
+  const skip = (page - 1) * limit;
+
+  // キャッシュキーを生成（ページとリミットを含む）
+  // Generate cache key (including page and limit)
+  const cacheKey = `admin-events-${page}-${limit}`;
+
+  return unstable_cache(
+    async () => {
+      const [events, total] = await Promise.all([
+        prisma.event.findMany({
+          skip,
+          take: limit,
+          orderBy: { fight_date: "desc" }, // 最新的在前 / Most recent first
+          select: {
+            id: true,
+            name: true,
+            fight_date: true,
+            status: true,
+            sport_type: true,
+            promoter: true,
+            organization: true,
+            venue: true,
+            location: true,
+            createdAt: true,
+            _count: {
+              select: {
+                fighterEvents: true,
+                bets: true,
+                posts: true,
+              },
+            },
+          },
+        }),
+        prisma.event.count(),
+      ]);
+
+      // Transform events to AdminEventListItem format
+      // 將賽事轉換為 AdminEventListItem 格式
+      const transformedEvents: AdminEventListItem[] = events.map((event) => ({
+        id: event.id,
+        name: event.name,
+        fight_date: event.fight_date,
+        status: event.status as "PENDING" | "OPEN" | "CLOSED" | "SETTLED" | "CANCELLED",
+        sport_type: event.sport_type as SportType | null,
+        promoter: event.promoter,
+        organization: event.organization,
+        venue: event.venue,
+        location: event.location,
+        createdAt: event.createdAt,
+        _count: event._count,
+      }));
+
+      return {
+        events: transformedEvents,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    },
+    [cacheKey],
+    {
+      tags: ["admin-events"],
+      revalidate: 60, // 60秒ごとに再検証 / Revalidate every 60 seconds
+    }
+  )();
 }

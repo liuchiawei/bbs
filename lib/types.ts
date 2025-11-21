@@ -326,6 +326,24 @@ export interface AdminPostListItem {
   };
 }
 
+export interface AdminEventListItem {
+  id: string;
+  name: string;
+  fight_date: Date | string;
+  status: "PENDING" | "OPEN" | "CLOSED" | "SETTLED" | "CANCELLED";
+  sport_type?: SportType | null;
+  promoter?: string | null;
+  organization?: string | null;
+  venue?: string | null;
+  location?: string | null;
+  createdAt: Date | string;
+  _count: {
+    fighterEvents: number;
+    bets: number;
+    posts: number;
+  };
+}
+
 // Betting Types
 export interface BettingLog {
   id: string;

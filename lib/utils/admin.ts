@@ -7,6 +7,25 @@
 import type { AdminUserListItem } from "@/lib/types";
 
 /**
+ * Format date for admin list display
+ * 格式化日期用於管理員列表顯示
+ * 
+ * 統一管理員列表的日期格式化邏輯，減少代碼重複
+ * Unified date formatting logic for admin lists, reducing code duplication
+ * 
+ * @param date - Date object, date string, or null/undefined
+ * @returns Formatted date string (e.g., "Jan 21, 2025") or "-" if null/undefined
+ */
+export function formatAdminDate(date: Date | string | null | undefined): string {
+  if (!date) return "-";
+  return new Date(date).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+/**
  * Prisma User with Profile type (from getAllUsers query)
  * Prisma User 與 Profile 類型（來自 getAllUsers 查詢）
  */

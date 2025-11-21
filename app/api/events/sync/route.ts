@@ -92,6 +92,7 @@ export async function POST(request: NextRequest) {
     // Invalidate cache to fetch latest data (following Next.js 16 standards, using 'max' parameter)
     revalidateTag("events", "max");
     revalidateTag("admin-settlable-events", "max"); // 更新管理員可結算事件列表快取
+    revalidateTag("admin-events", "max"); // 更新管理員賽事列表快取
 
     return NextResponse.json({
       success: true,

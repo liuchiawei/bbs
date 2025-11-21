@@ -17,6 +17,7 @@ import { ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import type { AdminUserListItem } from "@/lib/types";
+import { formatAdminDate } from "@/lib/utils/admin";
 import { t } from "@/lib/constants";
 
 export function UserManagement() {
@@ -73,13 +74,6 @@ export function UserManagement() {
     }
   };
 
-  const formatDate = (date: Date | string) => {
-    return new Date(date).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
 
   if (isLoading) {
     return (
@@ -146,7 +140,7 @@ export function UserManagement() {
                   <TableCell className="text-center">{user._count.posts}</TableCell>
                   <TableCell className="text-center">{user._count.comments}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {formatDate(user.createdAt)}
+                    {formatAdminDate(user.createdAt)}
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-2">

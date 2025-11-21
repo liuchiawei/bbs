@@ -1,5 +1,298 @@
 # 開發日誌 / Development Log
 
+## 2025-11-21
+
+### feat/admin-event-list-and-ui-improvements
+
+**難度**: ★★★★☆
+
+**描述**: 改進 Event Tab UI 架構，添加賽事列表顯示功能，優化效能（初始載入最近10場），使用 shadcn/ui 組件（Collapsible、Pagination），重用現有模式和工具函數，減少代碼重複
+
+**問題分析**:
+
+1. **缺少賽事列表顯示**: Event Tab 目前只有創建、同步、結果輸入、回溯等功能，無法快速查看和管理所有賽事
+2. **創建表單占用空間**: 創建表單一直展開，占用大量空間
+3. **代碼重複**: PostManagement、UserManagement、ProfileManagement 中有重複的 formatDate 函數
+4. **分頁功能簡單**: 現有分頁只使用簡單的 Previous/Next 按鈕
+
+**解決方案**:
+
+1. **類型定義擴展** (`lib/types.ts`):
+   - 新增 `AdminEventListItem` 接口
+   - 參考 `AdminUserListItem` 和 `AdminPostListItem` 的格式
+   - 包含基本賽事資訊和統計（對戰數、投注數、文章數）
+
+2. **管理員工具函數擴展** (`lib/utils/admin.ts`):
+   - 新增 `formatAdminDate()` 共用函數
+   - 統一日期格式化邏輯，支援 null/undefined 處理
+   - 減少代碼重複（移除了 3 個重複的 formatDate 函數）
+
+3. **Events Service 擴展** (`lib/services/events.ts`):
+   - 新增 `getAllEvents()` 函數
+   - 支援分頁（預設 limit=10，最近10場）
+   - 使用 `unstable_cache` 快取（tag: `"admin-events"`, revalidate: 60秒）
+   - 按 `fight_date` DESC 排序（最新的在前）
+
+4. **管理員賽事列表 API** (`app/api/admin/events/route.ts`) - 新建:
+   - GET 方法：獲取賽事列表（支援分頁）
+   - 參考 `app/api/admin/users/route.ts` 的結構
+   - 錯誤處理（開發環境詳細錯誤，生產環境通用錯誤）
+   - 返回格式：`{ data: AdminEventListItem[], pagination: {...} }`
+
+5. **EventList 組件** (`components/admin/event-list.tsx`) - 新建:
+   - 顯示賽事列表（Table 格式，重用 PostManagement 的模式）
+   - **使用 Pagination 組件**（已安裝的 shadcn/ui 組件）:
+     - 完整的頁碼導航（Previous、頁碼連結、Next）
+     - 當前頁高亮顯示（`isActive` prop）
+     - 支援多頁時顯示省略號（`PaginationEllipsis`）
+     - 響應式設計（手機版隱藏文字，只顯示圖標）
+   - 顯示欄位：名稱、日期、狀態、運動類型、對戰數、投注數、操作
+   - 狀態使用 Badge 顯示（不同顏色：PENDING/OPEN/CLOSED/SETTLED/CANCELLED）
+   - 使用共用的 `formatAdminDate()` 函數
+   - Loading 和空狀態處理
+
+6. **EventCreateForm 改進** (`components/admin/event-create-form.tsx`):
+   - **使用 Collapsible 組件**（已安裝的 shadcn/ui 組件）:
+     - 預設 `open={false}`（摺疊狀態）
+     - 使用 `CollapsibleTrigger` 和 `CollapsibleContent`
+     - 可程式化控制展開/收起狀態
+     - 內建平滑動畫過渡
+     - 添加 ChevronDown 圖標指示狀態
+   - 創建成功後自動摺疊並重置表單
+   - 使用 Card 組件包裝，保持 UI 一致性
+
+7. **Event Tab 結構重組** (`components/admin/admin-tabs.tsx`):
+   - 添加 EventList 組件（主要內容，在上方）
+   - 重新排列組件順序：列表 → 創建（摺疊）→ 同步 → 結果 → 回溯
+   - 確保佈局美觀和響應式
+
+8. **多語言支援** (`lib/constants.ts`):
+   - 新增四種語言的翻譯：
+     - `NO_EVENTS_FOUND`, `EVENTS`, `FIGHTS`, `BETS`
+     - `DATE`, `STATUS`, `SPORT_TYPE`, `NAME`
+     - `PENDING`, `OPEN`, `CLOSED`, `SETTLED`, `CANCELLED`
+
+9. **代碼重用優化**:
+   - PostManagement、UserManagement、ProfileManagement 改用 `formatAdminDate()`
+   - 減少代碼重複（移除了 3 個重複的 formatDate 函數）
+   - 重用 PostManagement 的分頁模式
+
+10. **快取清除優化**:
+    - 在所有相關 API 路由中添加 `revalidateTag("admin-events", "max")`:
+      - `app/api/events/route.ts` (POST)
+      - `app/api/admin/events/sync/route.ts`
+      - `app/api/admin/events/[id]/result/route.ts`
+      - `app/api/admin/events/[id]/rollback/route.ts`
+
+**效能優化成果**:
+
+- **初始載入快速**: 預設只載入10場賽事（limit=10）
+- **快取機制**: 使用 `unstable_cache` 快取查詢結果（60秒 revalidate）
+- **分頁載入**: 按需載入更多賽事，減少不必要的數據傳輸
+- **代碼重用**: 統一日期格式化邏輯，減少重複代碼
+
+**UI/UX 改進**:
+
+- **專業分頁**: 使用 Pagination 組件提供完整的頁碼導航
+- **空間優化**: 創建表單可摺疊，節省空間
+- **視覺清晰**: 狀態使用 Badge 顯示，不同顏色區分
+- **響應式設計**: 適配不同螢幕尺寸
+
+**技術細節**:
+
+- **shadcn/ui 組件**: 使用已安裝的 Collapsible 和 Pagination 組件
+- **類型安全**: 新增 `AdminEventListItem` 類型，確保類型一致性
+- **快取策略**: 使用 Next.js 16 的 `revalidateTag($tagNames, 'max')` 語法
+- **錯誤處理**: 開發環境詳細錯誤，生產環境通用錯誤
+- **代碼重用**: 重用現有模式和工具函數
+
+**相關文件**:
+
+- `lib/types.ts` - 新增 AdminEventListItem 類型
+- `lib/utils/admin.ts` - 新增 formatAdminDate() 共用函數
+- `lib/services/events.ts` - 新增 getAllEvents() 函數
+- `app/api/admin/events/route.ts` - 新建管理員賽事列表 API
+- `components/admin/event-list.tsx` - 新建 EventList 組件
+- `components/admin/event-create-form.tsx` - 改進添加 Collapsible
+- `components/admin/admin-tabs.tsx` - 更新 Event Tab 結構
+- `components/admin/post-management.tsx` - 改用 formatAdminDate()
+- `components/admin/user-management.tsx` - 改用 formatAdminDate()
+- `components/admin/profile-management.tsx` - 改用 formatAdminDate()
+- `lib/constants.ts` - 新增多語言翻譯
+- `app/api/events/route.ts` - 添加 admin-events 快取清除
+- `app/api/admin/events/sync/route.ts` - 添加 admin-events 快取清除
+- `app/api/admin/events/[id]/result/route.ts` - 添加 admin-events 快取清除
+- `app/api/admin/events/[id]/rollback/route.ts` - 添加 admin-events 快取清除
+
+### feat/admin-page-restructure
+
+**難度**: ★★★☆☆
+
+**描述**: 改造 Admin Page 頁面架構與 UI，分成三個管理區塊，提升組織性和用戶體驗
+
+**架構改進**:
+
+1. **三個管理區塊設計**:
+   - **第一區：討論區管理** (Forum Management)
+     - 圖標：`MessageSquare`
+     - 包含：Category、Post Tabs
+     - 說明：管理分類與文章內容
+   - **第二區：用戶管理** (User Management)
+     - 圖標：`Users`
+     - 包含：User、Profile Tabs
+     - 說明：管理用戶帳號與個人資料
+   - **第三區：資料管理** (Data Management)
+     - 圖標：`Database`
+     - 包含：Events、Fighters Tabs
+     - 說明：管理賽事與選手資料
+
+2. **UI 改進** (`components/admin/admin-tabs.tsx`):
+   - 使用 Card 組件組織三個區塊，視覺更清晰
+   - 每個區塊有圖標與標題
+   - 每個區塊內部使用 Tabs 切換子功能
+   - 響應式設計，適配不同螢幕尺寸
+   - 添加雙語說明（繁體中文/英文）
+
+3. **多語言支援** (`lib/constants.ts`):
+   - 新增四種語言的常數：
+     - `FORUM_MANAGEMENT`, `USER_MANAGEMENT_SECTION`, `DATA_MANAGEMENT`
+     - 英文、日文、簡體中文、繁體中文
+
+**優勢**:
+
+- **結構清晰**: 三個區塊明確分工，易於導航
+- **視覺改善**: 使用圖標和 Card 組件，提升視覺層次
+- **用戶體驗**: 更直觀的組織方式，減少認知負擔
+- **可擴展性**: 每個區塊獨立，易於添加新功能
+
+**相關文件**:
+
+- `components/admin/admin-tabs.tsx` - 重新設計為三個區塊
+- `app/admin/page.tsx` - 更新描述文字
+- `lib/constants.ts` - 新增三個區塊的多語言翻譯
+
+### fix/admin-user-charat-error
+
+**難度**: ★★★☆☆
+
+**描述**: 修復 Admin Management Page 點擊 User tabs 時的 charAt 錯誤，優化效能並完善錯誤處理
+
+**問題分析**:
+
+1. **charAt 錯誤**: `user.name.charAt(0)` 時 `user.name` 可能為 `undefined` 或 `null`
+2. **數據不一致**: Prisma 查詢返回的嵌套 profile 結構與前端期望的扁平結構不匹配
+3. **效能問題**: 缺少快取機制，每次查詢都訪問資料庫
+4. **錯誤處理**: API 路由錯誤處理不夠完善
+
+**修復內容**:
+
+1. **後端數據轉換** (`lib/utils/admin.ts`):
+   - 新增 `transformAdminUserListItem()` 函數
+   - 將嵌套的 profile 結構轉換為扁平結構
+   - 處理 `profile` 為 `null` 的情況，使用 `userId` 作為 `name` 預設值
+
+2. **Service 層優化** (`lib/services/users.ts`):
+   - `getAllUsers()` 應用 `transformAdminUserListItem()` 轉換
+   - 使用 `unstable_cache` 快取（tag: `"admin-users"`, revalidate: 60秒）
+   - 確保返回的數據符合 `AdminUserListItem` 類型
+
+3. **前端 Null Safety** (`components/admin/user-management.tsx`):
+   - 添加 optional chaining (`?.`) 和 nullish coalescing (`??`)
+   - `AvatarFallback` 使用 `user.name?.charAt(0) || user.userId?.charAt(0) || 'U'`
+
+4. **API 錯誤處理** (`app/api/admin/users/route.ts`):
+   - 添加分頁參數驗證
+   - 開發環境返回詳細錯誤訊息
+   - 生產環境返回通用錯誤訊息
+
+5. **快取清除** (`app/api/admin/users/[id]/ban/route.ts`, `unban/route.ts`):
+   - 添加 `revalidateTag("admin-users", "max")` 清除快取
+   - 確保封禁/解封後列表即時更新
+
+**效能優化成果**:
+
+- **快取機制**: 使用 `unstable_cache` 減少資料庫查詢
+- **數據一致性**: 統一的轉換函數確保數據格式一致
+- **錯誤處理**: 多層錯誤處理機制
+
+**技術細節**:
+
+- **類型安全**: 確保返回數據符合 `AdminEventListItem` 類型
+- **快取策略**: 使用 Next.js 16 的 `revalidateTag($tagNames, 'max')` 語法
+- **Null Safety**: 前端和後端都進行 null 檢查
+
+**相關文件**:
+
+- `lib/utils/admin.ts` - 新增 transformAdminUserListItem() 函數
+- `lib/services/users.ts` - 更新 getAllUsers() 應用轉換並添加快取
+- `components/admin/user-management.tsx` - 添加 null safety 檢查
+- `app/api/admin/users/route.ts` - 完善錯誤處理
+- `app/api/admin/users/[id]/ban/route.ts` - 添加快取清除
+- `app/api/admin/users/[id]/unban/route.ts` - 添加快取清除
+
+### docs/utils-documentation
+
+**難度**: ★★★☆☆
+
+**描述**: 建立完整的工具函數文檔，記錄所有工具函數的說明和使用位置，供開發者查找和使用
+
+**文檔結構**:
+
+1. **`docs/utils/README.md`**:
+   - 工具函數文檔的使用指南
+   - 目錄結構說明
+   - 使用場景和常見問題
+   - 維護說明
+
+2. **`docs/utils/UTILITY_FUNCTIONS.md`**:
+   - 記錄所有工具函數的詳細說明（18 個函數）
+   - 每個函數的功能、參數、返回值、使用範例
+   - 函數分類和索引
+   - 函數統計
+
+3. **`docs/utils/USAGE_TRACKING.md`**:
+   - 追蹤每個工具函數的使用位置
+   - 按函數分組，列出所有使用該函數的文件
+   - 使用頻率統計
+   - 重構建議
+
+**文檔內容**:
+
+- **通用工具** (lib/utils.ts): 2 個函數
+  - `transformUser()` - 用戶資料結構轉換
+  - `cn()` - CSS 類名合併
+- **Slug 生成** (lib/utils/slug.ts): 4 個函數
+  - `normalizeFighterName()`, `generateSlug()`, `generateUniqueSlug()`, `slugToPossibleNames()`
+- **ID 生成** (lib/utils/id-generator.ts): 3 個函數
+  - `generatePostId()`, `generateCommentId()`, `generateEventId()`
+- **Fighter 轉換** (lib/utils/fighter.ts): 3 個函數
+  - `convertJsonValue()`, `toFighterPublic()`, `toFighterWithEvents()`
+- **對戰卡解析** (lib/utils/fight-card-parser.ts): 1 個函數
+  - `parseFightCard()`
+- **賽事匹配** (lib/utils/event-matcher.ts): 4 個函數
+  - `normalizeEventName()`, `calculateNameSimilarity()`, `isDateWithinRange()`, `findMatchingEvent()`
+- **管理員工具** (lib/utils/admin.ts): 1 個函數
+  - `transformAdminUserListItem()` - 轉換管理員用戶列表項
+
+**使用場景**:
+
+1. **查找工具函數**: 在 `UTILITY_FUNCTIONS.md` 中查找函數定義和使用範例
+2. **查找使用位置**: 在 `USAGE_TRACKING.md` 中查找函數的使用位置
+3. **添加新函數**: 參考文檔格式，更新相關文檔
+
+**技術細節**:
+
+- **文檔格式**: Markdown
+- **語言**: 繁體中文（主要）和英文（註釋）
+- **維護**: 每次函數變更時更新
+- **同步**: 與實際代碼保持同步
+
+**相關文件**:
+
+- `docs/utils/README.md` - 工具函數文檔使用指南
+- `docs/utils/UTILITY_FUNCTIONS.md` - 工具函數詳細說明
+- `docs/utils/USAGE_TRACKING.md` - 工具函數使用位置追蹤
+
 ## 2025-01-21
 
 ### fix/event-creation-error-and-type-sync

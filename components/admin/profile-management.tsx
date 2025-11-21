@@ -16,6 +16,7 @@ import { ExternalLink, Trash2, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import type { Profile } from "@/lib/types";
+import { formatAdminDate } from "@/lib/utils/admin";
 import { t } from "@/lib/constants";
 
 interface ProfileListItem extends Profile {
@@ -80,10 +81,6 @@ export function ProfileManagement() {
     }
   };
 
-  const formatDate = (date: Date | string | null | undefined) => {
-    if (!date) return "-";
-    return new Date(date).toLocaleDateString();
-  };
 
   if (isLoading) {
     return <div className="text-center py-8">{t("LOADING")}</div>;
@@ -153,7 +150,7 @@ export function ProfileManagement() {
                   </div>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
-                  {formatDate(profile.createdAt)}
+                  {formatAdminDate(profile.createdAt)}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">

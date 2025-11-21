@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { calculatePoolOdds, settleEvent } from "@/lib/betting-system";
+import { revalidateTag, revalidatePath } from "next/cache";
 import { z } from "zod";
 
 const updateEventSchema = z.object({
@@ -91,6 +92,15 @@ export async function PUT(
         description: `Updated event ${id}. Status: ${validatedData.status}`,
       },
     });
+
+    // Update cache (符合 Next.js 16 規範，使用 'max' 參數)
+    // 更新快取（符合 Next.js 16 規範，使用 'max' 參數）
+    revalidateTag(`event-${id}`, "max");
+    revalidateTag(`event-fights-${id}`, "max");
+    revalidateTag("events", "max");
+    revalidateTag("admin-settlable-events", "max"); // 更新管理員可結算事件列表快取
+    revalidateTag("admin-events", "max"); // 更新管理員賽事列表快取
+    revalidatePath(`/events/${id}`);
 
     return NextResponse.json(event);
   } catch (error) {

@@ -10,6 +10,7 @@ import { EventResultForm } from "@/components/admin/event-result-form";
 import { RollbackPanel } from "@/components/admin/rollback-panel";
 import { EventSyncButton } from "@/components/admin/event-sync-button";
 import { EventCreateForm } from "@/components/admin/event-create-form";
+import { EventList } from "@/components/admin/event-list";
 import { FighterCreateForm } from "@/components/admin/fighter-create-form";
 import { t } from "@/lib/constants";
 import { MessageSquare, Users, Database } from "lucide-react";
@@ -102,6 +103,7 @@ export function AdminTabs() {
             </TabsList>
 
             <TabsContent value="events" className="mt-6 space-y-6">
+              <EventList />
               <EventCreateForm />
               <EventSyncButton />
               <EventResultForm />

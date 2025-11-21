@@ -12,10 +12,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { FightFormItem } from "./fight-form-item";
 import { toast } from "sonner";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, ChevronDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Fight {
@@ -30,6 +35,7 @@ interface Fight {
 export function EventCreateForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   // Event basic info
   const [name, setName] = useState("");
@@ -171,8 +177,8 @@ export function EventCreateForm() {
       toast.success("賽事創建成功！/ Event created successfully!");
       router.refresh();
       
-      // 重置表單
-      // Reset form
+      // 重置表單並自動摺疊
+      // Reset form and auto-collapse
       setName("");
       setFightDate("");
       setSportType("");
@@ -192,6 +198,7 @@ export function EventCreateForm() {
           isBettable: true,
         },
       ]);
+      setIsOpen(false); // 自動摺疊 / Auto-collapse
     } catch (error: any) {
       // 顯示詳細錯誤信息
       // Display detailed error message
@@ -209,14 +216,27 @@ export function EventCreateForm() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>創建賽事 / Create Event</CardTitle>
-        <CardDescription>
-          創建新的格鬥賽事並添加對戰組合 / Create a new combat sports event and add fights
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Card>
+        <CardHeader>
+          <CollapsibleTrigger asChild>
+            <div className="flex items-center justify-between cursor-pointer">
+              <div>
+                <CardTitle>創建賽事 / Create Event</CardTitle>
+                <CardDescription>
+                  創建新的格鬥賽事並添加對戰組合 / Create a new combat sports event and add fights
+                </CardDescription>
+              </div>
+              <ChevronDown
+                className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${
+                  isOpen ? "transform rotate-180" : ""
+                }`}
+              />
+            </div>
+          </CollapsibleTrigger>
+        </CardHeader>
+        <CollapsibleContent>
+          <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Event Basic Info */}
           <div className="space-y-4">
@@ -395,8 +415,10 @@ export function EventCreateForm() {
             )}
           </Button>
         </form>
-      </CardContent>
-    </Card>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
   );
 }
 
