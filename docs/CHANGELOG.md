@@ -1,5 +1,216 @@
 # 開發日誌 / Development Log
 
+## 2025-01-20
+
+### feat/betting-system-enhancement
+
+**難度**: ★★★★★
+
+**描述**: 實作完整的投注系統功能，包含投注交易、賠率顯示、管理員賽果輸入、結算邏輯、審計日誌和回溯功能，確保所有操作在 Transaction 中完成，並實作驗算機制確保彩金計算正確
+
+**功能概述**:
+
+實作 6 個核心子功能：
+
+1. **feat/betting-transaction**: 投注交易（最小 50，每次 10 單位，Transaction 保證）
+2. **feat/odds-display**: 賠率和彩池即時更新快取
+3. **feat/admin-result-input**: 管理員手動輸入賽果
+4. **feat/settlement-logic**: 結算邏輯與驗算
+5. **feat/audit-log**: 審計日誌記錄
+6. **feat/admin-rollback**: 管理員回溯功能
+
+**類型定義更新** (`lib/types.ts`):
+
+- 新增 `BettingOdds` 介面：
+  - `totalPool`: 總彩池
+  - `netPool`: 淨彩池（扣除手續費後）
+  - `odds`: 各選項賠率
+  - `betsByOutcome`: 各選項投注總額
+- 新增 `SettleEventInput` 介面：
+  - `winnerId`: 勝者 ID
+  - `winMethod`: 勝利方式（可選）
+  - `winRound`: 勝利回合（可選）
+
+**驗證 Schema 更新** (`lib/validations.ts`):
+
+- 新增 `placeBetSchema`:
+  - `amount`: 最小 50，必須是 10 的倍數（使用 `z.number().refine()` 驗證）
+- 新增 `settleEventSchema`:
+  - `winnerId`: 必填
+  - `winMethod`: 可選
+  - `winRound`: 可選（正整數）
+
+**審計日誌服務層** (`lib/services/audit.ts`) - 新建:
+
+- `getClientIpAddress()`: 統一處理 IP 地址獲取（支援 `x-forwarded-for` 和 `x-real-ip`）
+- `createAuditLog()`: 創建審計日誌條目（包含 adminId、actionType、description、ipAddress）
+- `getAuditLogs()`: 獲取審計日誌（支援分頁、篩選）
+
+**投注服務層** (`lib/services/betting.ts`) - 新建:
+
+- `placeBet()`: 投注邏輯（Transaction 保證原子性）
+  - 檢查餘額、扣除積分、創建 BettingLog、記錄 AuditLog
+- `getBettingOdds()`: 獲取賠率（使用 `unstable_cache` 快取，5 秒 revalidate）
+- `rollbackBet()`: 回溯單筆投注
+- `rollbackEvent()`: 回溯賽事所有投注
+
+**投注 API 更新** (`app/api/betting/route.ts`):
+
+- **POST**: 更新投注邏輯
+  - 最小投注額：50（從 10 改為 50）
+  - 投注額必須是 10 的倍數
+  - Transaction 中同時完成：檢查餘額、扣除積分、創建 BettingLog、記錄 AuditLog
+  - 投注後更新快取：`revalidateTag("event-{eventId}")`、`revalidateTag("event-odds-{eventId}")`、`revalidateTag("events")`
+  - 獲取 IP 地址並記錄 AuditLog
+
+**賠率查詢 API** (`app/api/betting/[eventId]/odds/route.ts`) - 新建:
+
+- **GET**: 查詢賽事賠率和彩池
+  - 使用 `calculatePoolOdds()` 計算
+  - 使用 `unstable_cache` 快取（tag: `"event-odds-{eventId}"`, revalidate: 5 秒）
+
+**投注列表 API** (`app/api/betting/[eventId]/bets/route.ts`) - 新建:
+
+- **GET**: 獲取賽事所有投注記錄
+  - 用於管理員回溯面板顯示
+
+**結算邏輯更新** (`lib/betting-system.ts`):
+
+- `settleEvent()` 函數增強：
+  - 添加 IP 地址參數
+  - 添加 `winMethod` 和 `winRound` 參數支援
+  - 驗證賽事狀態（必須是 OPEN 或 CLOSED）
+  - 驗證 winner_id 存在於 fighter_1_id 或 fighter_2_id
+  - **驗算機制**：結算後驗證 `總支出 + 手續費 = 總彩池`
+    - 允許小於 0.01 的捨入誤差
+    - 驗算失敗時記錄 AuditLog 並拋出錯誤
+  - 改進 AuditLog 記錄（包含詳細統計資訊）
+  - 使用 `createAuditLog()` 服務層而非直接操作資料庫
+
+**管理員賽果輸入 API** (`app/api/admin/events/[id]/result/route.ts`) - 新建:
+
+- **POST**: 輸入賽果並觸發結算
+  - 驗證管理員權限
+  - 驗證賽事狀態和 winner_id
+  - 調用 `settleEvent()` 進行結算
+  - 更新快取：`revalidateTag("event-{eventId}")`、`revalidateTag("events")`
+
+**管理員回溯 API**:
+
+- **單筆回溯** (`app/api/admin/betting/[betId]/rollback/route.ts`) - 新建:
+  - **POST**: 回溯單筆投注
+    - 驗證管理員權限
+    - 驗證投注狀態（必須是 PENDING）
+    - Transaction 中完成：恢復用戶積分、更新 BettingLog 狀態為 VOID、記錄 AuditLog
+- **批量回溯** (`app/api/admin/events/[id]/rollback/route.ts`) - 新建:
+  - **POST**: 回溯賽事所有投注
+    - 驗證管理員權限
+    - 驗證賽事狀態（必須是 SETTLED）
+    - Transaction 中完成：
+      - 遍歷所有投注，恢復用戶積分（處理 WON/LOST/PENDING 不同情況）
+      - 更新所有 BettingLog 狀態為 VOID
+      - 更新 Event 狀態為 OPEN（或 CLOSED，根據事件日期）
+      - 記錄 AuditLog
+
+**管理員同步 API** (`app/api/admin/events/sync/route.ts`) - 新建:
+
+- **POST**: 管理員專用事件同步端點
+  - 驗證管理員權限（不需要 secret）
+  - 調用 `syncEventsFromExternalAPI()` 同步賽事
+  - 更新快取
+
+**前端組件更新**:
+
+- **BettingCard** (`components/betting/BettingCard.tsx`):
+  - 更新最小投注額顯示：從 10 改為 50
+  - 更新輸入驗證：最小 50，必須是 10 的倍數
+  - 添加步進按鈕（+10, -10）方便調整投注額
+  - 改進錯誤處理和用戶提示
+- **EventResultForm** (`components/admin/event-result-form.tsx`) - 新建:
+  - 表單組件，用於輸入賽果
+  - 包含：event 選擇、winner 選擇、winMethod、winRound（可選）
+  - 提交後觸發結算 API
+- **RollbackPanel** (`components/admin/rollback-panel.tsx`) - 新建:
+  - 顯示賽事投注列表
+  - 提供單筆回溯和批量回溯按鈕
+  - 顯示回溯確認對話框
+- **EventSyncButton** (`components/admin/event-sync-button.tsx`) - 新建:
+  - 管理員手動觸發賽事同步的按鈕組件
+- **AdminTabs** (`components/admin/admin-tabs.tsx`):
+  - 新增 "Events Management" tab
+  - 整合 EventSyncButton、EventResultForm 和 RollbackPanel
+
+**快取策略**:
+
+- **投注後快取更新**:
+  - `revalidateTag("event-{eventId}", "max")`: 更新單一賽事快取
+  - `revalidateTag("event-odds-{eventId}", "max")`: 更新賠率快取
+  - `revalidateTag("events", "max")`: 更新賽事列表快取
+  - `revalidatePath("/events/[id]")`: 更新賽事頁面
+- **結算後快取更新**: 同上
+- **回溯後快取更新**: 同上
+
+**資料庫操作優化**:
+
+- **Transaction 使用**:
+  - 所有涉及多個資料庫操作的地方都使用 Transaction
+  - 投注：檢查餘額 + 扣除積分 + 創建 BettingLog + 記錄 AuditLog
+  - 結算：更新所有投注狀態 + 更新用戶積分 + 更新賽事狀態 + 記錄 AuditLog
+  - 回溯：恢復積分 + 更新投注狀態 + 記錄 AuditLog
+
+**錯誤處理**:
+
+- **投注錯誤**:
+  - 餘額不足：返回 400，錯誤訊息 "Insufficient funds"
+  - 投注額不符合規則：返回 400，錯誤訊息 "Amount must be multiple of 10 and minimum 50"
+  - 賽事狀態不允許投注：返回 400，錯誤訊息 "Betting is closed for this event"
+- **結算錯誤**:
+  - 驗算失敗：記錄 AuditLog，拋出錯誤，返回 500
+  - 賽事狀態錯誤：返回 400，錯誤訊息 "Event cannot be settled"
+- **回溯錯誤**:
+  - 投注已結算：返回 400，錯誤訊息 "Bet has already been settled"
+  - 賽事狀態錯誤：返回 400，錯誤訊息 "Event cannot be rolled back"
+
+**技術要點**:
+
+1. **Transaction 原子性**: 所有涉及多個資料庫操作的地方都使用 Transaction，確保數據一致性
+2. **快取策略**: 所有寫入操作後立即更新相關快取，確保數據一致性
+3. **驗算機制**: 結算後驗證 `總支出 + 手續費 = 總彩池`，確保計算正確性
+4. **審計日誌**: 所有管理員操作都記錄 AuditLog，包含 IP 地址
+5. **Decimal 精度**: 所有金額計算使用 `decimal.js` 的 `Decimal` 類型，避免浮點數誤差
+6. **IP 地址獲取**: 統一處理 IP 地址獲取（`x-forwarded-for` 或 `x-real-ip`）
+
+**主要修改文件**:
+
+1. `lib/types.ts` - 新增 BettingOdds 和 SettleEventInput 介面
+2. `lib/validations.ts` - 新增 placeBetSchema 和 settleEventSchema
+3. `lib/services/audit.ts` - 新建審計日誌服務層
+4. `lib/services/betting.ts` - 新建投注服務層
+5. `lib/betting-system.ts` - 更新結算邏輯，添加驗算機制
+6. `app/api/betting/route.ts` - 更新投注 API
+7. `app/api/betting/[eventId]/odds/route.ts` - 新建賠率查詢 API
+8. `app/api/betting/[eventId]/bets/route.ts` - 新建投注列表 API
+9. `app/api/admin/events/[id]/result/route.ts` - 新建賽果輸入 API
+10. `app/api/admin/betting/[betId]/rollback/route.ts` - 新建單筆回溯 API
+11. `app/api/admin/events/[id]/rollback/route.ts` - 新建批量回溯 API
+12. `app/api/admin/events/sync/route.ts` - 新建管理員同步 API
+13. `components/betting/BettingCard.tsx` - 更新前端組件
+14. `components/admin/event-result-form.tsx` - 新建管理員表單
+15. `components/admin/rollback-panel.tsx` - 新建回溯面板
+16. `components/admin/event-sync-button.tsx` - 新建同步按鈕
+17. `components/admin/admin-tabs.tsx` - 更新管理員標籤頁
+
+**注意事項**:
+
+- IP 地址獲取：使用 `x-forwarded-for` 或 `x-real-ip` header，如果都沒有則使用 'unknown'
+- Decimal 精度：所有金額計算使用 `decimal.js` 的 `Decimal` 類型，避免浮點數誤差
+- 快取更新時機：所有寫入操作後立即更新相關快取，確保數據一致性
+- Transaction 原子性：確保所有相關操作在同一 Transaction 中完成
+- 驗算邏輯：結算後必須驗證 `總支出 + 手續費 = 總彩池`，確保計算正確
+- 審計日誌完整性：所有管理員操作都必須記錄 AuditLog，包含 IP 地址
+- 錯誤處理：所有錯誤都應該有明確的錯誤訊息和適當的 HTTP 狀態碼
+- 向後兼容：現有的投注功能需要保持向後兼容，逐步遷移
+
 ## 2025-11-20
 
 ### refactor/prisma-7-upgrade
@@ -9,17 +220,20 @@
 **描述**: 將 Prisma 從 6.19.0 升級到 7.0.0，採用 adapter 模式連接資料庫，符合 Prisma 7.0 最新規範
 
 **問題背景**:
+
 - Prisma 7.0 移除了 `schema.prisma` 中 `datasource` 的 `url` 屬性
 - 需要使用 adapter 模式來連接資料庫
 - 需要確保所有 PrismaClient 實例化都使用新的 adapter 配置
 
 **解決方案架構**:
+
 - 安裝 `@prisma/adapter-pg` 和 `pg` 套件
 - 更新 `schema.prisma` 移除 `url` 屬性
 - 更新所有 PrismaClient 實例化使用 adapter
 - 確保向後兼容性和功能正常運作
 
 **套件升級** (`package.json`):
+
 - `@prisma/client`: 6.19.0 → 7.0.0
 - `prisma`: 6.19.0 → 7.0.0
 - 新增 `@prisma/adapter-pg`: 7.0.0
@@ -28,6 +242,7 @@
 - 新增 `@types/pg`: 8.15.6（PostgreSQL 類型定義）
 
 **Schema 更新** (`prisma/schema.prisma`):
+
 - **datasource db**:
   - 移除 `url = env("DATABASE_URL")` 屬性（Prisma 7.0 不再支援）
   - 保留 `provider = "postgresql"`
@@ -38,6 +253,7 @@
 **PrismaClient 實例化更新**:
 
 - **`lib/db.ts`**:
+
   - 導入 `PrismaPg` adapter 和 `Pool` from `pg`
   - 創建 PostgreSQL connection pool
   - 使用 adapter 實例化 PrismaClient
@@ -51,6 +267,7 @@
 **配置標準寫法**:
 
 - **schema.prisma 標準配置**:
+
   ```prisma
   generator client {
     provider = "prisma-client-js"
@@ -63,6 +280,7 @@
   ```
 
 - **PrismaClient 實例化標準寫法**:
+
   ```typescript
   import { PrismaClient } from "@prisma/client";
   import { PrismaPg } from "@prisma/adapter-pg";
@@ -83,10 +301,12 @@
 **Decimal 類型變更**:
 
 - **問題**: Prisma 7.0 移除了 `@prisma/client/runtime/library` 路徑，導致 `Decimal` 導入失敗
+
   - 錯誤訊息: `Module not found: Can't resolve '@prisma/client/runtime/library'`
   - 影響檔案: `lib/betting-system.ts`, `app/api/betting/route.ts`
 
 - **Prisma Decimal 的性質與作用**:
+
   - **任意精度十進位數值類型**: 用於精確處理金融、貨幣、投注等需要高精度的場景
   - **避免浮點數誤差**: JavaScript `number` 類型使用 IEEE 754 雙精度浮點數，會產生精度誤差（如 `0.1 + 0.2 = 0.30000000000000004`）
   - **資料庫映射**: 對應 PostgreSQL 的 `DECIMAL`/`NUMERIC` 類型
@@ -99,17 +319,20 @@
     - **為什麼必須用 Decimal？**: 避免累積誤差導致金額錯誤，確保派彩計算公平，符合金融級精度要求
 
 - **Prisma 7.0 移除 Decimal 的原因**:
+
   - **模組化與輕量化**: 將 `Decimal` 從 `@prisma/client/runtime/library` 移除，減少 Prisma Client 的依賴與體積
   - **使用底層實作**: Prisma 的 `Decimal` 實際上是基於 `decimal.js` 的包裝，直接使用 `decimal.js` 更直接、可控
   - **簡化導入路徑**: 舊路徑 `@prisma/client/runtime/library` 過於複雜，統一使用 `decimal.js` 更清晰
   - **與 Adapter 模式一致**: Prisma 7.0 引入 adapter 模式，將部分功能外置，保持核心簡潔
 
 - **解決方案**:
+
   - 安裝 `decimal.js` 套件（Prisma Decimal 的底層實作，API 完全兼容）
   - 安裝 `@types/pg` 類型定義（Prisma 7.0 使用 adapter 需要 PostgreSQL 類型支援）
   - 更新導入語句：將 `import { Decimal } from "@prisma/client/runtime/library"` 改為 `import { Decimal } from "decimal.js"`
 
 - **decimal.js 說明**:
+
   - JavaScript 的任意精度十進位算術庫
   - 與 Prisma Decimal API 完全兼容（`.add()`, `.sub()`, `.mul()`, `.div()`, `.gt()`, `.lt()` 等方法）
   - 提供 `.toNumber()`, `.toFixed()` 等轉換方法
@@ -120,6 +343,7 @@
   - TypeScript 需要類型定義才能正確編譯 `Pool` 等類型
 
 **驗證與測試**:
+
 - Schema 驗證通過 (`prisma validate`)
 - Prisma Client 成功重新生成 (`prisma generate`)
 - 所有 PrismaClient 實例化已更新
@@ -127,17 +351,20 @@
 - 備份檔案已建立（`package.json.backup`, `prisma/schema.prisma.backup`）
 
 **注意事項**:
+
 - **migrate 命令限制**: `prisma migrate status` 命令需要 `prisma.config.ts` 來配置 datasource URL，但根據要求不使用 `prisma.config.ts`，因此 migrate 相關命令可能需要額外配置
 - **環境變數**: `DATABASE_URL` 環境變數仍然需要設定，但現在用於創建 connection pool，而非直接在 schema 中引用
 - **連接池管理**: 使用 `pg` 的 `Pool` 來管理資料庫連接，提供更好的連接管理和效能
 
 **技術考量**:
+
 - **向後兼容性**: 所有現有的 Prisma 查詢和操作保持不變，僅改變連接方式
 - **效能優化**: 使用 connection pool 可以更好地管理資料庫連接，提升效能
 - **類型安全**: Prisma 7.0 保持完整的類型安全特性
 - **錯誤處理**: adapter 模式提供更好的錯誤處理和連接管理
 
 **主要修改文件**:
+
 1. `package.json` - 升級 Prisma 版本，新增 adapter、decimal.js、@types/pg 套件
 2. `prisma/schema.prisma` - 移除 datasource url 屬性
 3. `lib/db.ts` - 更新 PrismaClient 實例化使用 adapter
@@ -146,6 +373,7 @@
 6. `app/api/betting/route.ts` - 更新 Decimal 導入路徑（`@prisma/client/runtime/library` → `decimal.js`）
 
 **升級步驟總結**:
+
 1. ✅ 檢查 Node.js 版本（v24.1.0，符合要求）
 2. ✅ 備份現有配置檔案
 3. ✅ 升級 Prisma 套件到 7.0.0
@@ -166,21 +394,24 @@
 **描述**: 將 Post、Comment、Event 的 ID 格式從隨機 UUID 改為時間戳格式（年月日時分秒 + 隨機後綴），保留現有 UUID 記錄，僅新建立的記錄使用新格式
 
 **問題背景**:
+
 - 原本使用 UUID 作為主鍵，無法從 ID 看出建立時間
 - 需要更易讀的 ID 格式，方便識別記錄的建立時間
 - 要求保留現有資料，僅新記錄使用新格式
 
 **解決方案架構**:
+
 - 採用混合格式策略：現有 UUID 記錄保留，新記錄使用時間戳格式
 - 創建 ID 生成工具函數，確保唯一性
 - 移除 Schema 中的 `@default(uuid())`，改為手動生成
 
 **ID 格式設計** (`lib/utils/id-generator.ts`):
-- **格式**: `YYYYMMDDHHmmss` + 4位隨機數（共18位）
+
+- **格式**: `YYYYMMDDHHmmss` + 4 位隨機數（共 18 位）
 - **範例**: `202511201234561234`
 - **唯一性保證**:
   - 檢查資料庫中是否已存在相同 ID
-  - 若存在則重新生成（最多重試10次）
+  - 若存在則重新生成（最多重試 10 次）
   - 達到最大重試次數時添加額外隨機數
 - **函數**:
   - `generatePostId()`: Post 用 ID 生成
@@ -188,6 +419,7 @@
   - `generateEventId()`: Event 用 ID 生成
 
 **資料庫架構變更** (`prisma/schema.prisma`):
+
 - **Post 模型**:
   - 移除 `id String @id @default(uuid())`
   - 改為 `id String @id`（允許手動指定 ID）
@@ -202,6 +434,7 @@
   - 現有 UUID 記錄完全保留
 
 **服務層更新**:
+
 - **`lib/services/posts.ts`**:
   - `createPost()`: 在創建前調用 `generatePostId()` 生成新 ID
 - **`lib/services/comments.ts`**:
@@ -210,12 +443,14 @@
   - `syncEventsFromExternalAPI()`: 在創建 Event 前調用 `generateEventId()` 生成新 ID
 
 **API 路由更新**:
+
 - **`app/api/comments/route.ts`**:
   - POST handler: 在 transaction 內生成 Comment ID
 - **`app/api/events/route.ts`**:
   - POST handler: 在 transaction 內生成 Event ID
 
 **驗證邏輯更新** (`lib/validations.ts`):
+
 - **`createPostSchema`**:
   - 移除 `eventId` 的 `.uuid()` 驗證
   - 改為 `z.string().optional().nullable()`（允許 UUID 和新格式）
@@ -224,6 +459,7 @@
   - 改為 `z.string().optional().nullable()`
 
 **技術考量**:
+
 - **混合格式支援**: 系統中同時存在 UUID（舊）和時間戳格式（新）的 ID
 - **向後兼容**: 所有查詢、更新、刪除功能正常運作（都是 String 類型）
 - **URL 路由**: 兩種格式都支援，路由參數解析不受影響
@@ -231,11 +467,13 @@
 - **唯一性保證**: ID 生成函數包含重試機制，確保不會產生重複 ID
 
 **效能優化**:
+
 - ID 生成函數使用資料庫查詢檢查唯一性
-- 最多重試10次，避免無限循環
+- 最多重試 10 次，避免無限循環
 - 使用索引優化查詢性能（id 欄位為主鍵，自動建立索引）
 
 **主要修改文件**:
+
 1. `lib/utils/id-generator.ts` - 新建 ID 生成工具函數
 2. `prisma/schema.prisma` - 移除 Post、Comment、Event 的 `@default(uuid())`
 3. `lib/services/posts.ts` - 更新 `createPost()` 函數
@@ -247,6 +485,7 @@
 9. `prisma/migrations/20251120192459_change_id_format/migration.sql` - 新建 migration
 
 **注意事項**:
+
 - 現有 UUID 記錄完全保留，不受影響
 - 新建立的 Post、Comment、Event 記錄將使用新的時間戳格式 ID
 - 系統支援混合格式，兩種格式可以並存
@@ -264,16 +503,19 @@
 **主要變更** (`app/fighter/[slug]/page.tsx`):
 
 - **移除外部 API 同步**:
+
   - `generateMetadata` 和 `FighterPage` 不再調用外部 API
   - 明確標註只從內部資料庫查詢
   - 外部 API 同步應通過後台任務或 API 端點處理
 
 - **統一類型定義**:
+
   - 使用 `FighterPublic` 類型（來自 `lib/types`）替代內聯類型定義
   - 直接從 `FighterWithEvents` 提取數據，手動構建 `FighterPublic` 對象
   - 確保類型安全，修復 `undefined` 類型不匹配問題
 
 - **數據轉換優化**:
+
   - 使用 `?? null` 運算符處理 `undefined` 值，確保類型兼容
   - 明確處理 `eventsAsFighter` 中的可選字段（result, method, round, time, weight_class）
   - 確保 `event.sport_type` 正確處理 `undefined` 情況
@@ -286,6 +528,7 @@
 **服務層變更** (`lib/services/fighters.ts`):
 
 - **`getFighterBySlug` 函數簡化**:
+
   - 移除 `options` 參數，不再支援 `trySync` 選項
   - 僅查詢資料庫，不進行外部 API 同步
   - 返回類型明確為 `FighterWithEvents | null`
@@ -314,7 +557,7 @@
 
 - 外部 API 同步需要通過其他方式處理（後台任務、API 端點等）
 - 確保資料庫中有對應的 fighter 記錄，否則會返回 404
-- 快取策略保持不變（5分鐘快取）
+- 快取策略保持不變（5 分鐘快取）
 
 ## 2025-11-20
 
@@ -327,6 +570,7 @@
 **資料庫架構** (`prisma/schema.prisma`):
 
 - **新增 Fighter 模型**：
+
   - `id`: UUID (主鍵)
   - `slug`: String @unique - URL 友好的 slug（如 "conor-mcgregor"）
   - `name`: String - 選手全名
@@ -433,7 +677,7 @@
 
 **性能優化**:
 
-- 使用 Next.js 16 的 `unstable_cache` 快取選手數據（5分鐘）
+- 使用 Next.js 16 的 `unstable_cache` 快取選手數據（5 分鐘）
 - 使用 `revalidateTag` 清除快取
 - 資料庫索引優化查詢性能
 
@@ -500,6 +744,7 @@
 **使用流程**:
 
 當用戶訪問 `/fighter/conor-mcgregor` 時：
+
 1. 系統先查詢資料庫
 2. 如果找不到，自動從 slug 推測名字並搜尋 API
 3. 找到匹配後自動建立記錄
@@ -623,12 +868,14 @@
 **效能優化策略**:
 
 1. **資料庫負擔最小化**：
+
    - 增量更新：只更新變更的賽事
    - 批量操作：逐個處理但使用單一連接
    - 索引優化：關鍵欄位建立索引
    - 查詢優化：使用日期範圍過濾，避免全表掃描
 
 2. **載入速度優化**：
+
    - 使用 `unstable_cache` 快取查詢結果（60 秒 revalidate）
    - 使用 cache tags 精確控制快取失效
    - 前端使用 Server Components，減少客戶端 JavaScript
@@ -648,10 +895,12 @@
 **未來擴展性**:
 
 1. **多 API 來源支援**：
+
    - 適配器模式設計，可輕鬆新增 ESPN、UFC API 等
    - 統一數據格式確保前端組件無需修改
 
 2. **數據豐富化**：
+
    - `external_data` JSON 欄位保留原始數據，未來可擴展顯示更多資訊
    - 支援選手資訊、賽事統計等擴展欄位
 

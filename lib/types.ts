@@ -338,6 +338,23 @@ export interface BettingLog {
   createdAt: Date | string;
 }
 
+// Betting Odds Interface
+// 投注賠率介面
+export interface BettingOdds {
+  totalPool: number;
+  netPool: number;
+  odds: Record<string, number>;
+  betsByOutcome: Record<string, number>;
+}
+
+// Settle Event Input Interface
+// 結算賽事輸入介面
+export interface SettleEventInput {
+  winnerId: string;
+  winMethod?: string;
+  winRound?: number;
+}
+
 // External Event Source Types
 // 外部イベントソースタイプ
 export type ExternalEventSource = "thesportsdb" | "espn" | "ufc" | "other";
@@ -366,6 +383,32 @@ export interface UnifiedEventData {
 // Sync Status
 // 同期ステータス
 export type SyncStatus = "pending" | "syncing" | "completed" | "failed";
+
+// Event Match Result
+// 賽事匹配結果
+// Used for fuzzy matching during event deduplication
+// 用於賽事去重時的模糊匹配
+export interface EventMatchResult {
+  event: Event;
+  similarityScore: number;
+  matchType: "exact" | "fuzzy";
+}
+
+// Merge Event Options
+// 合併賽事選項
+// Configuration for merging external API data with existing manual event
+// 用於合併外部 API 資料與現有手動賽事的配置
+export interface MergeEventOptions {
+  // Preserve manual fields (do not overwrite)
+  // 保留手動欄位（不覆蓋）
+  preserveManualFields?: boolean;
+  // Update external fields even if they exist
+  // 即使存在也更新外部欄位
+  forceUpdateExternalFields?: boolean;
+  // Minimum similarity score for fuzzy matching
+  // 模糊匹配的最小相似度分數
+  minSimilarity?: number;
+}
 
 export interface Event {
   id: string;

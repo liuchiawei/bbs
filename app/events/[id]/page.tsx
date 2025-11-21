@@ -195,6 +195,36 @@ export default async function EventDetailPage({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Betting Card */}
+          <div className="col-span-1 md:col-span-3">
+            {user ? (
+              <BettingCard
+                event={eventWithPool as any}
+                userPoints={Number(user.virtual_score)}
+              />
+            ) : (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center space-y-4">
+                    <Users className="w-12 h-12 mx-auto text-muted-foreground" />
+                    <div>
+                      <p className="font-medium mb-2">Join the Action</p>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Login to place bets and join discussions
+                      </p>
+                      <Link
+                        href="/login"
+                        className="text-sm text-primary hover:underline"
+                      >
+                        Login →
+                      </Link>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
           {/* Main Content */}
           <div className="md:col-span-2 space-y-6">
             {/* Fight Card */}
@@ -278,36 +308,6 @@ export default async function EventDetailPage({
                 )}
               </CardContent>
             </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="md:col-span-1">
-            {user ? (
-              <BettingCard
-                event={eventWithPool as any}
-                userPoints={Number(user.virtual_score)}
-              />
-            ) : (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center space-y-4">
-                    <Users className="w-12 h-12 mx-auto text-muted-foreground" />
-                    <div>
-                      <p className="font-medium mb-2">Join the Action</p>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Login to place bets and join discussions
-                      </p>
-                      <Link
-                        href="/login"
-                        className="text-sm text-primary hover:underline"
-                      >
-                        Login →
-                      </Link>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
       </div>

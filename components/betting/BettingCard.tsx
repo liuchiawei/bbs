@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,7 +44,7 @@ export function BettingCard({ event, userPoints }: BettingCardProps) {
   const router = useRouter();
 
   // Parse fighters from event name (assuming "Fighter A vs Fighter B" format)
-  const fighters = event.name.split(" vs ").map(s => s.trim());
+  const fighters = event.name.split(" vs ").map((s) => s.trim());
   const fighterA = fighters[0] || "Home";
   const fighterB = fighters[1] || "Away";
 
@@ -46,16 +53,29 @@ export function BettingCard({ event, userPoints }: BettingCardProps) {
     { id: fighterB, name: fighterB },
   ];
 
+  const adjustAmount = (delta: number) => {
+    const current = Number(amount) || 0;
+    const newAmount = Math.max(50, Math.min(userPoints, current + delta));
+    // Round to nearest multiple of 10
+    const rounded = Math.round(newAmount / 10) * 10;
+    setAmount(rounded.toString());
+  };
+
   const handleBet = async () => {
     if (!selectedWinner) {
       toast.error("Please select a winner");
       return;
     }
-    if (!amount || isNaN(Number(amount)) || Number(amount) < 10) {
-      toast.error("Minimum bet is 10 points");
+    const betAmount = Number(amount);
+    if (!amount || isNaN(betAmount) || betAmount < 50) {
+      toast.error("Minimum bet is 50 points");
       return;
     }
-    if (Number(amount) > userPoints) {
+    if (betAmount % 10 !== 0) {
+      toast.error("Amount must be multiple of 10");
+      return;
+    }
+    if (betAmount > userPoints) {
       toast.error("Insufficient points");
       return;
     }
@@ -68,14 +88,14 @@ export function BettingCard({ event, userPoints }: BettingCardProps) {
         body: JSON.stringify({
           eventId: event.id,
           target_winner_id: selectedWinner,
-          amount: Number(amount),
+          amount: betAmount,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to place bet");
+        throw new Error(data.error || data.message || "Failed to place bet");
       }
 
       toast.success("Bet placed successfully!");
@@ -95,10 +115,10 @@ export function BettingCard({ event, userPoints }: BettingCardProps) {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto border-2 border-dashed border-border bg-card/50 shadow-xl relative overflow-hidden">
+    <Card className="w-full mx-auto border-2 border-dashed border-border bg-card/50 shadow-xl relative overflow-hidden">
       {/* Receipt jagged edge effect could go here with CSS clip-path if desired */}
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-primary opacity-50" />
-      
+
       <CardHeader className="text-center pb-2">
         <CardTitle className="flex items-center justify-center gap-2 uppercase tracking-widest text-lg font-black">
           <Trophy className="w-5 h-5 text-accent" />
@@ -126,7 +146,9 @@ export function BettingCard({ event, userPoints }: BettingCardProps) {
                 {selectedWinner === outcome.id && (
                   <div className="absolute top-0 right-0 w-3 h-3 bg-primary transform rotate-45 translate-x-1.5 -translate-y-1.5" />
                 )}
-                <div className="font-black text-lg uppercase italic">{outcome.name}</div>
+                <div className="font-black text-lg uppercase italic">
+                  {outcome.name}
+                </div>
                 <div className="text-sm font-mono text-muted-foreground mt-1">
                   <span className="text-accent-foreground bg-accent px-1 rounded text-xs font-bold">
                     {getOdds(outcome.id)}x
@@ -137,21 +159,57 @@ export function BettingCard({ event, userPoints }: BettingCardProps) {
           </div>
 
           <div className="space-y-2 bg-muted/30 p-4 rounded-lg border border-border/50">
-            <Label htmlFor="amount" className="uppercase text-xs font-bold tracking-wider">Wager Amount (Points)</Label>
+            <Label
+              htmlFor="amount"
+              className="uppercase text-xs font-bold tracking-wider"
+            >
+              Wager Amount (Points)
+            </Label>
             <div className="relative">
               <Input
                 id="amount"
                 type="number"
-                placeholder="MIN 10"
+                placeholder="MIN 50"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                min={10}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (
+                    value === "" ||
+                    (!isNaN(Number(value)) && Number(value) >= 0)
+                  ) {
+                    setAmount(value);
+                  }
+                }}
+                min={50}
                 max={userPoints}
+                step={10}
                 className="font-mono text-lg text-right pr-24 bg-background/50"
               />
               <div className="absolute right-3 top-2.5 text-xs font-mono text-muted-foreground">
                 BAL: {userPoints.toLocaleString()}
               </div>
+            </div>
+            <div className="flex gap-2 justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => adjustAmount(-10)}
+                disabled={Number(amount) <= 50}
+                className="text-xs"
+              >
+                -10
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => adjustAmount(10)}
+                disabled={Number(amount) >= userPoints}
+                className="text-xs"
+              >
+                +10
+              </Button>
             </div>
           </div>
 
@@ -159,15 +217,24 @@ export function BettingCard({ event, userPoints }: BettingCardProps) {
             <div className="bg-primary/5 border border-primary/20 p-4 rounded-none text-sm space-y-2 relative">
               <div className="absolute -left-1 top-1/2 w-2 h-4 bg-background rounded-r-full transform -translate-y-1/2" />
               <div className="absolute -right-1 top-1/2 w-2 h-4 bg-background rounded-l-full transform -translate-y-1/2" />
-              
+
               <div className="flex justify-between items-center border-b border-dashed border-primary/20 pb-2">
-                <span className="uppercase text-xs font-bold text-muted-foreground">Selection</span>
-                <span className="font-black uppercase">{outcomes.find(o => o.id === selectedWinner)?.name}</span>
+                <span className="uppercase text-xs font-bold text-muted-foreground">
+                  Selection
+                </span>
+                <span className="font-black uppercase">
+                  {outcomes.find((o) => o.id === selectedWinner)?.name}
+                </span>
               </div>
               <div className="flex justify-between items-center pt-1">
-                <span className="uppercase text-xs font-bold text-muted-foreground">Est. Payout</span>
+                <span className="uppercase text-xs font-bold text-muted-foreground">
+                  Est. Payout
+                </span>
                 <span className="font-black text-xl text-primary">
-                  {(Number(amount) * Number(getOdds(selectedWinner))).toFixed(0)} <span className="text-xs align-top">PTS</span>
+                  {(Number(amount) * Number(getOdds(selectedWinner))).toFixed(
+                    0
+                  )}{" "}
+                  <span className="text-xs align-top">PTS</span>
                 </span>
               </div>
             </div>
@@ -175,17 +242,19 @@ export function BettingCard({ event, userPoints }: BettingCardProps) {
         </div>
       </CardContent>
       <CardFooter>
-        <Button 
-          className="w-full font-black uppercase tracking-widest text-lg h-12 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all" 
-          onClick={handleBet} 
-          disabled={isLoading || event.status !== "OPEN"}
+        <Button
+          className="w-full font-black uppercase tracking-widest text-lg h-12 shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all"
+          onClick={handleBet}
+          disabled={
+            isLoading || (event.status !== "OPEN" && event.status !== "PENDING")
+          }
         >
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
               PROCESSING...
             </>
-          ) : event.status !== "OPEN" ? (
+          ) : event.status !== "OPEN" && event.status !== "PENDING" ? (
             "BETTING CLOSED"
           ) : (
             "CONFIRM WAGER"

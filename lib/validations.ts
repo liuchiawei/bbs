@@ -295,3 +295,22 @@ export const createCommentSchema = z.object({
   postId: z.string(),
   parentId: z.string().optional(),
 });
+
+// Betting Schemas
+// 投注相關 Schema
+export const placeBetSchema = z.object({
+  eventId: z.string(),
+  target_winner_id: z.string(),
+  amount: z
+    .number()
+    .min(50, "Minimum bet is 50 points")
+    .refine((val) => val % 10 === 0, "Amount must be multiple of 10"),
+});
+
+// Settle Event Schema
+// 結算賽事 Schema
+export const settleEventSchema = z.object({
+  winnerId: z.string(),
+  winMethod: z.string().optional(),
+  winRound: z.number().int().positive().optional(),
+});
