@@ -14,40 +14,120 @@ import { z } from "zod";
 import { revalidateTag } from "next/cache";
 
 /**
- * GET /api/fighters?sport_type=xxx
- * Get all fighters (optionally filtered by sport type)
- * 獲取所有選手（可選按運動類型過濾）
+ * GET /api/fighters
+ * Get fighters with pagination, search, filtering, and sorting
+ * 獲取選手列表（支援分頁、搜索、篩選、排序）
  * 
  * Query params:
- * - sport_type: Optional sport type filter (boxing, ufc, mma, etc.)
+ * - page: Page number (default: 1)
+ * - limit: Items per page (default: 12, max: 50)
+ * - search: Search by name (case-insensitive)
+ * - sport_type: Filter by sport type (boxing, ufc, mma, etc.)
+ * - nationality: Filter by nationality
+ * - sortBy: Sort field (name, createdAt) (default: name)
+ * - sortOrder: Sort order (asc, desc) (default: asc)
  * 
- * Returns: Array of Fighter
- * 返回：Fighter陣列
+ * Returns: { data: Fighter[], pagination: { page, limit, total, totalPages } }
+ * 返回：{ data: Fighter[], pagination: { page, limit, total, totalPages } }
  */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    
+    // パラメータを取得
+    // Get parameters
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "12")));
+    const search = searchParams.get("search")?.trim() || "";
     const sportType = searchParams.get("sport_type");
+    const nationality = searchParams.get("nationality");
+    const sortBy = searchParams.get("sortBy") || "name";
+    const sortOrder = searchParams.get("sortOrder") || "asc";
 
+    // バリデーション
+    // Validation
+    const validSortFields = ["name", "createdAt"];
+    const validSortOrders = ["asc", "desc"];
+    
+    const finalSortBy = validSortFields.includes(sortBy) ? sortBy : "name";
+    const finalSortOrder = validSortOrders.includes(sortOrder) ? sortOrder : "asc";
+
+    // WHERE 句を構築
+    // Build WHERE clause
     const whereClause: any = {};
-    if (sportType) {
+
+    // 検索条件（名前）
+    // Search condition (name)
+    if (search) {
+      whereClause.name = {
+        contains: search,
+        mode: "insensitive",
+      };
+    }
+
+    // スポーツタイプフィルター
+    // Sport type filter
+    if (sportType && sportType !== "all") {
       whereClause.sport_type = sportType;
     }
 
-    const fighters = await prisma.fighter.findMany({
-      where: whereClause,
-      orderBy: {
-        name: "asc",
-      },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        sport_type: true,
+    // 国籍フィルター
+    // Nationality filter
+    if (nationality && nationality !== "all") {
+      whereClause.nationality = {
+        contains: nationality,
+        mode: "insensitive",
+      };
+    }
+
+    // ソート条件を構築
+    // Build sort condition
+    const orderBy: any = {};
+    orderBy[finalSortBy] = finalSortOrder;
+
+    // スキップ計算
+    // Calculate skip
+    const skip = (page - 1) * limit;
+
+    // データ取得とカウントを並列実行
+    // Fetch data and count in parallel
+    const [fighters, total] = await Promise.all([
+      prisma.fighter.findMany({
+        where: whereClause,
+        orderBy,
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          sport_type: true,
+          nationality: true,
+          thumb: true,
+          cutout: true,
+          position: true,
+          weight: true,
+          createdAt: true,
+        },
+      }),
+      prisma.fighter.count({
+        where: whereClause,
+      }),
+    ]);
+
+    // ページネーション情報を計算
+    // Calculate pagination info
+    const totalPages = Math.ceil(total / limit);
+
+    return NextResponse.json({
+      data: fighters,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
       },
     });
-
-    return NextResponse.json(fighters);
   } catch (error) {
     console.error("Error fetching fighters:", error);
     return NextResponse.json(
