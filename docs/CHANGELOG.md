@@ -1,5 +1,136 @@
 # 開發日誌 / Development Log
 
+## 2025-11-23
+
+### fix/fight-page-typescript-null-safety
+
+**難度**: ★☆☆☆☆
+
+**描述**: 修復 Fight Page 中的 TypeScript 類型錯誤，正確處理 `opponent_id` 和 `opponentStats` 可能為 `null` 的情況
+
+**問題分析**:
+
+1. **TypeScript 類型錯誤**: `getFighterRecentFights(fightData.opponent_id, 5)` 時，`opponent_id` 可能為 `null`，但函數參數類型為 `string`
+2. **組件類型不匹配**: `preloadedStats={fightData.opponentStats}` 時，`opponentStats` 可能為 `null`，但組件期望 `undefined`
+
+**修復內容**:
+
+1. **修復 `opponent_id` null 檢查** (`app/fight/[id]/page.tsx`):
+   - 在調用 `getFighterRecentFights` 前檢查 `opponent_id` 是否存在
+   - 若為 `null`，返回空數組 `Promise.resolve([])` 而非調用函數
+   - 確保類型安全，避免運行時錯誤
+
+2. **修復 `opponentStats` null 轉換** (`app/fight/[id]/page.tsx`):
+   - 將 `null` 轉換為 `undefined`：`preloadedStats={fightData.opponentStats || undefined}`
+   - 符合組件期望的可選類型定義
+
+**技術細節**:
+
+- **Null Safety**: 使用條件檢查和 `|| undefined` 運算符確保類型安全
+- **向後兼容**: 修復不影響現有功能，僅改善類型安全性
+- **錯誤處理**: 當 `opponent_id` 為 `null` 時優雅降級，返回空數組
+
+**主要修改文件**:
+
+1. `app/fight/[id]/page.tsx` - 修復 TypeScript 類型錯誤
+
+**注意事項**:
+
+- 所有類型錯誤已修復，通過 linter 檢查
+- 單人賽事（無 opponent）時正確處理，不會導致錯誤
+
+### feat/fight-bidirectional-query-improvement
+
+**難度**: ★★★★☆
+
+**描述**: 統一Fight創建邏輯為雙向記錄，並改進查詢邏輯以包含fighter_id和opponent_id兩側的對戰，確保Fighter Page和Fight Page能完整顯示所有相關對戰記錄。同時優化型態定義統一性、快取策略和統計計算準確性。
+
+**問題分析**:
+
+1. **創建邏輯不一致**: `app/api/fights/route.ts`創建雙向記錄，但`lib/services/events.ts`和`lib/services/fighter-events.ts`只創建單向記錄
+2. **查詢不完整**: 所有查詢只查`fighter_id`，忽略`opponent_id`，導致選手作為對手時的對戰不出現在歷史記錄中
+3. **統計不準確**: `calculateFighterStats`只計算`fighter_id`的記錄，遺漏作為`opponent_id`的對戰結果
+4. **型態定義需要優化**: 確保型態統一、簡潔、高效
+
+**解決方案**:
+
+1. **創建統一查詢函數** (`lib/services/fights.ts`):
+   - 新增`getFighterAllFights()`函數，使用`OR`條件查詢`fighter_id`和`opponent_id`
+   - 改進`calculateFighterStats()`使用新的統一查詢邏輯
+   - 正確處理雙向對戰結果（當選手是opponent時反轉結果）
+   - 更新`getFighterRecentFights()`使用雙向查詢
+
+2. **統一創建邏輯**:
+   - **`lib/services/events.ts`**: `createEventWithFights()`改為創建雙向記錄（使用`flatMap`）
+   - **`lib/services/fighter-events.ts`**: `linkFighterToEvent()`在有opponent時創建雙向記錄（使用transaction確保原子性）
+
+3. **更新查詢函數** (`lib/services/fighters.ts`):
+   - `getFighterEvents()`: 使用雙向查詢（`OR`條件）
+   - `getFighterFightsPaginated()`: 使用雙向查詢並正確處理角色轉換
+   - `_getFighterFromDB()`: 查詢`fightsAsFighter`和`fightsAsOpponent`並合併
+
+4. **更新工具函數** (`lib/utils/fighter.ts`):
+   - `toFighterWithEvents()`: 正確合併雙向對戰，交換fighter和opponent角色，反轉結果
+   - 合併時去重（基於fight id），按日期排序
+
+5. **更新API路由**:
+   - `app/api/fighters/[slug]/recent-fights/route.ts`: 使用雙向查詢並正確處理角色
+   - `app/api/fighters/[slug]/fights/route.ts`: 通過調用`getFighterFightsPaginated`間接更新
+
+6. **更新前端頁面** (`app/fighter/[slug]/page.tsx`):
+   - `totalFights`計算使用雙向查詢
+   - `generateMetadata`中的統計計算使用雙向查詢並正確反轉結果
+   - `initialFights`直接使用`fighter.fightsAsFighter`（已由`toFighterWithEvents`合併）
+
+7. **優化快取標籤策略**:
+   - `app/api/fights/route.ts`: 創建Fight時失效相關選手的快取（`fighter-{fighterId}`和`fighter-{opponentId}`）
+   - `app/api/fights/[id]/route.ts`: 更新Fight時失效相關選手的快取
+   - 所有`revalidateTag`調用使用`revalidateTag(tagName, 'max')`格式（符合Next.js 16規範）
+
+8. **更新其他查詢函數** (`lib/services/fighter-events.ts`):
+   - `getFighterEventHistory()`: 使用雙向查詢
+
+**效能優化**:
+
+- **單一查詢**: 使用`OR`條件而非兩次查詢合併，利用現有索引（`fighter_id`和`opponent_id`都有索引）
+- **快取策略**: 使用`unstable_cache`減少重複查詢，正確設置cache tags
+- **批量操作**: 使用transaction確保原子性
+- **型態定義優化**: 使用TypeScript的utility types減少重複定義，確保查詢結果型態統一
+
+**技術細節**:
+
+- **資料庫層**: 無需變更schema，現有設計已支援雙向關係（`fighter_id`和`opponent_id`都有索引）
+- **查詢優化**: 使用`OR`條件查詢，利用現有索引提升效能
+- **結果處理**: 當選手是opponent時，正確反轉結果（Win ↔ Loss，Draw/NC不變）
+- **角色交換**: 在`toFighterWithEvents`中正確交換fighter和opponent的角色
+- **快取失效**: 創建/更新Fight時同時失效相關選手的快取，確保數據一致性
+
+**向後兼容性**:
+
+- 資料庫schema無需變更，保持向後兼容
+- 現有API響應格式保持不變
+- 前端組件接口保持不變
+- 僅改進內部查詢邏輯
+
+**主要修改文件**:
+
+1. `lib/services/fights.ts` - 創建統一查詢函數，改進統計計算
+2. `lib/services/events.ts` - 統一創建邏輯為雙向記錄
+3. `lib/services/fighter-events.ts` - 統一創建邏輯，更新查詢函數
+4. `lib/services/fighters.ts` - 更新所有查詢函數使用雙向查詢
+5. `lib/utils/fighter.ts` - 更新`toFighterWithEvents`正確處理雙向對戰
+6. `app/api/fighters/[slug]/recent-fights/route.ts` - 更新API路由
+7. `app/fighter/[slug]/page.tsx` - 更新前端頁面查詢邏輯
+8. `app/api/fights/route.ts` - 優化快取標籤策略
+9. `app/api/fights/[id]/route.ts` - 優化快取標籤策略
+
+**注意事項**:
+
+- 所有`revalidateTag`調用都使用`revalidateTag(tagName, 'max')`格式，符合Next.js 16規範
+- 創建/更新Fight時正確失效相關選手的快取，確保雙向查詢結果正確更新
+- 型態定義統一、簡潔、高效，確保所有查詢返回一致的型態結構
+- 結果反轉邏輯正確處理Win/Loss轉換，Draw和NC保持不變
+
 ## 2025-01-22
 
 ### feat/fight-page-and-fighter-hover-card

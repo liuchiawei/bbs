@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   HoverCard,
   HoverCardContent,
@@ -81,7 +80,7 @@ interface FighterProfileHoverCardProps {
 /**
  * Fighter Profile Hover Card Component
  * 選手資料懸停卡片組件
- * 
+ *
  * Displays fighter profile information when hovering over fighter name/avatar
  * 當懸停在選手名字/頭像上時顯示選手資料資訊
  */
@@ -98,7 +97,9 @@ export function FighterProfileHoverCard({
 }: FighterProfileHoverCardProps) {
   const [stats, setStats] = useState(preloadedStats);
   const [recentFights, setRecentFights] = useState(preloadedRecentFights);
-  const [loading, setLoading] = useState(!preloadedStats || !preloadedRecentFights);
+  const [loading, setLoading] = useState(
+    !preloadedStats || !preloadedRecentFights
+  );
 
   // 如果沒有預載入資料，則從 API 獲取
   // If no preloaded data, fetch from API
@@ -115,7 +116,9 @@ export function FighterProfileHoverCard({
         const identifier = fighterSlug || fighterId;
         const [statsRes, fightsRes] = await Promise.all([
           fetch(`/api/fighters/${identifier}/stats`).catch(() => null),
-          fetch(`/api/fighters/${identifier}/recent-fights?limit=3`).catch(() => null),
+          fetch(`/api/fighters/${identifier}/recent-fights?limit=3`).catch(
+            () => null
+          ),
         ]);
 
         if (statsRes?.ok) {
@@ -165,7 +168,9 @@ export function FighterProfileHoverCard({
   return (
     <HoverCard>
       <HoverCardTrigger asChild>
-        {trigger || defaultTrigger}
+        <Link href={`/fighter/${fighterSlug}`}>
+          {trigger || defaultTrigger}
+        </Link>
       </HoverCardTrigger>
       <HoverCardContent className="w-80" side="right" align="start">
         <div className="space-y-4">
@@ -186,8 +191,7 @@ export function FighterProfileHoverCard({
                   <Badge
                     variant="outline"
                     className={`text-xs shrink-0 ${
-                      sportTypeColors[fighterSportType] ||
-                      sportTypeColors.other
+                      sportTypeColors[fighterSportType] || sportTypeColors.other
                     }`}
                   >
                     {fighterSportType}
@@ -276,4 +280,3 @@ export function FighterProfileHoverCard({
     </HoverCard>
   );
 }
-

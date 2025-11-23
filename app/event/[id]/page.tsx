@@ -188,7 +188,7 @@ export default async function EventDetailPage({
         {eventWithFights.fights && eventWithFights.fights.length > 0 ? (
           <div className="mb-8 space-y-6">
             <h2 className="text-2xl font-bold">對戰列表 / Fight Card</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               {eventWithFights.fights.map((fight) => {
                 // 只顯示每個對戰一次（使用 fighter_id 和 fight_order 組合）
                 // Only show each fight once (using fighter_id and fight_order combination)

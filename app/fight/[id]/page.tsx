@@ -89,7 +89,9 @@ export default async function FightDetailPage({
   // Get fighter recent fights
   const [fighterRecentFights, opponentRecentFights] = await Promise.all([
     getFighterRecentFights(fightData.fighter_id, 5),
-    getFighterRecentFights(fightData.opponent_id, 5),
+    fightData.opponent_id
+      ? getFighterRecentFights(fightData.opponent_id, 5)
+      : Promise.resolve([]),
   ]);
 
   const fightDate = new Date(fightData.event.fight_date);
@@ -195,7 +197,7 @@ export default async function FightDetailPage({
               fighterThumb={fightData.opponent.thumb}
               fighterNationality={fightData.opponent.nationality}
               fighterSportType={fightData.opponent.sport_type || undefined}
-              preloadedStats={fightData.opponentStats}
+              preloadedStats={fightData.opponentStats || undefined}
               preloadedRecentFights={opponentRecentFights.map((f) => ({
                 id: f.id,
                 result: f.result,
@@ -275,7 +277,9 @@ export default async function FightDetailPage({
                     {odds.odds[fightData.fighter.id]?.toFixed(2) || "1.00"}x
                   </div>
                   <div className="text-sm text-muted-foreground mt-1">
-                    投注池: {odds.betsByOutcome[fightData.fighter.id]?.toFixed(0) || 0} PTS
+                    投注池:{" "}
+                    {odds.betsByOutcome[fightData.fighter.id]?.toFixed(0) || 0}{" "}
+                    PTS
                   </div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
@@ -286,7 +290,9 @@ export default async function FightDetailPage({
                     {odds.odds[fightData.opponent.id]?.toFixed(2) || "1.00"}x
                   </div>
                   <div className="text-sm text-muted-foreground mt-1">
-                    投注池: {odds.betsByOutcome[fightData.opponent.id]?.toFixed(0) || 0} PTS
+                    投注池:{" "}
+                    {odds.betsByOutcome[fightData.opponent.id]?.toFixed(0) || 0}{" "}
+                    PTS
                   </div>
                 </div>
               </div>
@@ -349,25 +355,33 @@ export default async function FightDetailPage({
                       <div className="text-2xl font-bold text-green-600">
                         {fightData.fighterStats.wins}
                       </div>
-                      <div className="text-xs text-muted-foreground">勝 / W</div>
+                      <div className="text-xs text-muted-foreground">
+                        勝 / W
+                      </div>
                     </div>
                     <div className="text-center p-3 bg-red-500/10 rounded">
                       <div className="text-2xl font-bold text-red-600">
                         {fightData.fighterStats.losses}
                       </div>
-                      <div className="text-xs text-muted-foreground">負 / L</div>
+                      <div className="text-xs text-muted-foreground">
+                        負 / L
+                      </div>
                     </div>
                     <div className="text-center p-3 bg-yellow-500/10 rounded">
                       <div className="text-2xl font-bold text-yellow-600">
                         {fightData.fighterStats.draws}
                       </div>
-                      <div className="text-xs text-muted-foreground">平 / D</div>
+                      <div className="text-xs text-muted-foreground">
+                        平 / D
+                      </div>
                     </div>
                     <div className="text-center p-3 bg-muted rounded">
                       <div className="text-2xl font-bold">
                         {fightData.fighterStats.total}
                       </div>
-                      <div className="text-xs text-muted-foreground">總 / Total</div>
+                      <div className="text-xs text-muted-foreground">
+                        總 / Total
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -376,11 +390,14 @@ export default async function FightDetailPage({
               {/* Recent Fights */}
               {fighterRecentFights.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-2">最近對戰 / Recent Fights</h3>
+                  <h3 className="font-semibold mb-2">
+                    最近對戰 / Recent Fights
+                  </h3>
                   <div className="space-y-2">
                     {fighterRecentFights.map((fight) => (
-                      <div
+                      <Link
                         key={fight.id}
+                        href={`/fight/${fight.id}`}
                         className="flex items-center gap-3 p-2 bg-muted/50 rounded text-sm"
                       >
                         {getResultIcon(fight.result)}
@@ -393,9 +410,11 @@ export default async function FightDetailPage({
                           </div>
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {new Date(fight.event.fight_date).toLocaleDateString()}
+                          {new Date(
+                            fight.event.fight_date
+                          ).toLocaleDateString()}
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -429,8 +448,10 @@ export default async function FightDetailPage({
                     fighterSlug={fightData.opponent.slug}
                     fighterThumb={fightData.opponent.thumb}
                     fighterNationality={fightData.opponent.nationality}
-                    fighterSportType={fightData.opponent.sport_type || undefined}
-                    preloadedStats={fightData.opponentStats}
+                    fighterSportType={
+                      fightData.opponent.sport_type || undefined
+                    }
+                    preloadedStats={fightData.opponentStats || undefined}
                     preloadedRecentFights={opponentRecentFights.map((f) => ({
                       id: f.id,
                       result: f.result,
@@ -461,25 +482,33 @@ export default async function FightDetailPage({
                       <div className="text-2xl font-bold text-green-600">
                         {fightData.opponentStats.wins}
                       </div>
-                      <div className="text-xs text-muted-foreground">勝 / W</div>
+                      <div className="text-xs text-muted-foreground">
+                        勝 / W
+                      </div>
                     </div>
                     <div className="text-center p-3 bg-red-500/10 rounded">
                       <div className="text-2xl font-bold text-red-600">
                         {fightData.opponentStats.losses}
                       </div>
-                      <div className="text-xs text-muted-foreground">負 / L</div>
+                      <div className="text-xs text-muted-foreground">
+                        負 / L
+                      </div>
                     </div>
                     <div className="text-center p-3 bg-yellow-500/10 rounded">
                       <div className="text-2xl font-bold text-yellow-600">
                         {fightData.opponentStats.draws}
                       </div>
-                      <div className="text-xs text-muted-foreground">平 / D</div>
+                      <div className="text-xs text-muted-foreground">
+                        平 / D
+                      </div>
                     </div>
                     <div className="text-center p-3 bg-muted rounded">
                       <div className="text-2xl font-bold">
                         {fightData.opponentStats.total}
                       </div>
-                      <div className="text-xs text-muted-foreground">總 / Total</div>
+                      <div className="text-xs text-muted-foreground">
+                        總 / Total
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -488,11 +517,14 @@ export default async function FightDetailPage({
               {/* Recent Fights */}
               {opponentRecentFights.length > 0 && (
                 <div>
-                  <h3 className="font-semibold mb-2">最近對戰 / Recent Fights</h3>
+                  <h3 className="font-semibold mb-2">
+                    最近對戰 / Recent Fights
+                  </h3>
                   <div className="space-y-2">
                     {opponentRecentFights.map((fight) => (
-                      <div
+                      <Link
                         key={fight.id}
+                        href={`/fight/${fight.id}`}
                         className="flex items-center gap-3 p-2 bg-muted/50 rounded text-sm"
                       >
                         {getResultIcon(fight.result)}
@@ -505,9 +537,11 @@ export default async function FightDetailPage({
                           </div>
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {new Date(fight.event.fight_date).toLocaleDateString()}
+                          {new Date(
+                            fight.event.fight_date
+                          ).toLocaleDateString()}
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -560,4 +594,3 @@ export default async function FightDetailPage({
     </div>
   );
 }
-

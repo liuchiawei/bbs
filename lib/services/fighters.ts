@@ -87,6 +87,17 @@ async function _getFighterFromDB(
                   sport_type: true,
                 },
               },
+              fighter: {
+                select: {
+                  id: true,
+                  slug: true,
+                  name: true,
+                  thumb: true,
+                  cutout: true,
+                  sport_type: true,
+                  nationality: true,
+                },
+              },
               opponent: {
                 select: {
                   id: true,
@@ -107,6 +118,69 @@ async function _getFighterFromDB(
                   last_synced_at: true,
                   createdAt: true,
                   updatedAt: true,
+                },
+              },
+            },
+            orderBy: {
+              event: {
+                fight_date: "desc",
+              },
+            },
+            take: 10, // 初始載入只載入最近10場 / Initial load only 10 most recent fights
+          },
+          fightsAsOpponent: {
+            select: {
+              id: true,
+              fighter_id: true,
+              event_id: true,
+              opponent_id: true,
+              result: true,
+              method: true,
+              round: true,
+              time: true,
+              weight_class: true,
+              createdAt: true,
+              updatedAt: true,
+              event: {
+                select: {
+                  id: true,
+                  name: true,
+                  fight_date: true,
+                  status: true,
+                  sport_type: true,
+                },
+              },
+              fighter: {
+                select: {
+                  id: true,
+                  slug: true,
+                  name: true,
+                  thumb: true,
+                  cutout: true,
+                  sport_type: true,
+                  nationality: true,
+                  external_id: true,
+                  external_source: true,
+                  external_data: true,
+                  date_born: true,
+                  height: true,
+                  weight: true,
+                  position: true,
+                  description: true,
+                  last_synced_at: true,
+                  createdAt: true,
+                  updatedAt: true,
+                },
+              },
+              opponent: {
+                select: {
+                  id: true,
+                  slug: true,
+                  name: true,
+                  thumb: true,
+                  cutout: true,
+                  sport_type: true,
+                  nationality: true,
                 },
               },
             },
@@ -779,7 +853,7 @@ export async function syncFighterFromAPI(fighterId: string): Promise<boolean> {
 
 /**
  * Get fighter events
- * 取得選手的賽事
+ * 取得選手的賽事（包含作為fighter和opponent的所有對戰）
  *
  * Returns FightWithDetails[] from lib/types.
  * 返回 lib/types 中的 FightWithDetails[] 類型。
@@ -788,10 +862,16 @@ export async function getFighterEvents(
   fighterId: string
 ): Promise<FighterWithEvents["fightsAsFighter"]> {
   const events = await prisma.fight.findMany({
-    where: { fighter_id: fighterId },
+    where: {
+      OR: [
+        { fighter_id: fighterId },
+        { opponent_id: fighterId },
+      ],
+    },
     include: {
-      event: true,
+      fighter: true,
       opponent: true,
+      event: true,
     },
     orderBy: {
       event: {
@@ -879,9 +959,16 @@ export async function getFighterFightsPaginated(
     async () => {
       // 參考 admin page 的寫法，使用明確的 select 指定需要的欄位
       // Reference admin page pattern, use explicit select to specify required fields
+      // 查詢包含作為fighter和opponent的所有對戰
+      // Query includes all fights as both fighter and opponent
       const [fights, total] = await Promise.all([
         prisma.fight.findMany({
-          where: { fighter_id: fighterId },
+          where: {
+            OR: [
+              { fighter_id: fighterId },
+              { opponent_id: fighterId },
+            ],
+          },
           select: {
             id: true,
             fighter_id: true,
@@ -901,6 +988,28 @@ export async function getFighterFightsPaginated(
                 fight_date: true,
                 status: true,
                 sport_type: true,
+              },
+            },
+            fighter: {
+              select: {
+                id: true,
+                slug: true,
+                name: true,
+                thumb: true,
+                cutout: true,
+                sport_type: true,
+                nationality: true,
+                external_id: true,
+                external_source: true,
+                external_data: true,
+                date_born: true,
+                height: true,
+                weight: true,
+                position: true,
+                description: true,
+                last_synced_at: true,
+                createdAt: true,
+                updatedAt: true,
               },
             },
             opponent: {
@@ -935,48 +1044,63 @@ export async function getFighterFightsPaginated(
           },
         }),
         prisma.fight.count({
-          where: { fighter_id: fighterId },
+          where: {
+            OR: [
+              { fighter_id: fighterId },
+              { opponent_id: fighterId },
+            ],
+          },
         }),
       ]);
 
       // 轉換為 FightWithDetails 類型
       // Convert to FightWithDetails type
-      const transformedFights: FightWithDetails[] = fights.map((fe) => ({
-        id: fe.id,
-        fighter_id: fe.fighter_id,
-        event_id: fe.event_id,
-        opponent_id: fe.opponent_id,
-        result: fe.result,
-        method: fe.method,
-        round: fe.round,
-        time: fe.time,
-        weight_class: fe.weight_class,
-        createdAt: fe.createdAt,
-        updatedAt: fe.updatedAt,
-        event: fe.event as Event,
-        opponent: fe.opponent
-          ? {
-              id: fe.opponent.id,
-              slug: fe.opponent.slug,
-              name: fe.opponent.name,
-              external_id: fe.opponent.external_id,
-              external_source: fe.opponent.external_source,
-              external_data: convertJsonValue(fe.opponent.external_data),
-              sport_type: fe.opponent.sport_type as SportType | null,
-              nationality: fe.opponent.nationality,
-              date_born: fe.opponent.date_born,
-              height: fe.opponent.height,
-              weight: fe.opponent.weight,
-              position: fe.opponent.position,
-              description: fe.opponent.description,
-              thumb: fe.opponent.thumb,
-              cutout: fe.opponent.cutout,
-              last_synced_at: fe.opponent.last_synced_at,
-              createdAt: fe.opponent.createdAt,
-              updatedAt: fe.opponent.updatedAt,
-            }
-          : null,
-      }));
+      // 需要確定該選手在對戰中的角色（fighter或opponent）
+      // Need to determine fighter's role in the fight (fighter or opponent)
+      const transformedFights: FightWithDetails[] = fights.map((fe) => {
+        const isFighter = fe.fighter_id === fighterId;
+        // 如果選手是opponent，需要交換fighter和opponent的角色
+        // If fighter is opponent, need to swap fighter and opponent roles
+        const actualFighter = isFighter ? fe.fighter : fe.opponent;
+        const actualOpponent = isFighter ? fe.opponent : fe.fighter;
+        
+        return {
+          id: fe.id,
+          fighter_id: fe.fighter_id,
+          event_id: fe.event_id,
+          opponent_id: fe.opponent_id,
+          result: fe.result,
+          method: fe.method,
+          round: fe.round,
+          time: fe.time,
+          weight_class: fe.weight_class,
+          createdAt: fe.createdAt,
+          updatedAt: fe.updatedAt,
+          event: fe.event as Event,
+          opponent: actualOpponent
+            ? {
+                id: actualOpponent.id,
+                slug: actualOpponent.slug,
+                name: actualOpponent.name,
+                external_id: actualOpponent.external_id,
+                external_source: actualOpponent.external_source,
+                external_data: convertJsonValue(actualOpponent.external_data),
+                sport_type: actualOpponent.sport_type as SportType | null,
+                nationality: actualOpponent.nationality,
+                date_born: actualOpponent.date_born,
+                height: actualOpponent.height,
+                weight: actualOpponent.weight,
+                position: actualOpponent.position,
+                description: actualOpponent.description,
+                thumb: actualOpponent.thumb,
+                cutout: actualOpponent.cutout,
+                last_synced_at: actualOpponent.last_synced_at,
+                createdAt: actualOpponent.createdAt,
+                updatedAt: actualOpponent.updatedAt,
+              }
+            : null,
+        };
+      });
 
       return {
         fights: transformedFights,

@@ -6,6 +6,7 @@
 
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
+import type { FightWithDetails } from "@/lib/types";
 
 /**
  * Get fight with full details including event, fighters, and statistics
@@ -57,17 +58,44 @@ export async function getFightWithDetails(fightId: string) {
 }
 
 /**
+ * Get all fights for a fighter (both as fighter and as opponent)
+ * 獲取選手的所有對戰（無論是作為fighter還是opponent）
+ * 
+ * @param fighterId Fighter ID
+ * @returns All fights with event and opponent details
+ */
+async function getFighterAllFights(fighterId: string) {
+  return prisma.fight.findMany({
+    where: {
+      OR: [
+        { fighter_id: fighterId },
+        { opponent_id: fighterId },
+      ],
+    },
+    include: {
+      fighter: true,
+      opponent: true,
+      event: true,
+    },
+    orderBy: {
+      event: {
+        fight_date: "desc",
+      },
+    },
+  });
+}
+
+/**
  * Calculate fighter statistics from fight history
- * 從對戰歷史計算選手統計
+ * 從對戰歷史計算選手統計（包含所有對戰，無論是fighter還是opponent）
  * 
  * @param fighterId Fighter ID
  * @returns Fighter statistics (wins, losses, draws, total)
  */
 async function calculateFighterStats(fighterId: string) {
-  const fights = await prisma.fight.findMany({
-    where: { fighter_id: fighterId },
-    select: { result: true },
-  });
+  // 使用統一查詢函數獲取所有對戰
+  // Use unified query function to get all fights
+  const fights = await getFighterAllFights(fighterId);
 
   let wins = 0;
   let losses = 0;
@@ -75,13 +103,34 @@ async function calculateFighterStats(fighterId: string) {
 
   fights.forEach((fight) => {
     if (!fight.result) return;
+    
+    // 判斷該選手在對戰中的角色
+    // Determine fighter's role in the fight
+    const isFighter = fight.fighter_id === fighterId;
     const result = fight.result.toLowerCase();
-    if (result.includes("win")) {
-      wins++;
-    } else if (result.includes("loss")) {
-      losses++;
-    } else if (result.includes("draw") || result === "nc") {
-      draws++;
+    
+    // 結果是從fighter角度記錄的，需要根據角色轉換
+    // Result is recorded from fighter's perspective, need to convert based on role
+    if (isFighter) {
+      // 選手是fighter，結果直接使用
+      // Fighter is the fighter, use result directly
+      if (result.includes("win")) {
+        wins++;
+      } else if (result.includes("loss")) {
+        losses++;
+      } else if (result.includes("draw") || result === "nc") {
+        draws++;
+      }
+    } else {
+      // 選手是opponent，結果需要反轉
+      // Fighter is the opponent, need to reverse the result
+      if (result.includes("win")) {
+        losses++; // fighter贏了，opponent輸了
+      } else if (result.includes("loss")) {
+        wins++; // fighter輸了，opponent贏了
+      } else if (result.includes("draw") || result === "nc") {
+        draws++;
+      }
     }
   });
 
@@ -95,7 +144,7 @@ async function calculateFighterStats(fighterId: string) {
 
 /**
  * Get fighter recent fights (last N fights)
- * 獲取選手最近對戰（最近N場）
+ * 獲取選手最近對戰（最近N場，包含作為fighter和opponent的所有對戰）
  * 
  * @param fighterId Fighter ID
  * @param limit Number of fights to return
@@ -108,8 +157,22 @@ export async function getFighterRecentFights(
   return unstable_cache(
     async () => {
       return prisma.fight.findMany({
-        where: { fighter_id: fighterId },
+        where: {
+          OR: [
+            { fighter_id: fighterId },
+            { opponent_id: fighterId },
+          ],
+        },
         include: {
+          fighter: {
+            select: {
+              id: true,
+              slug: true,
+              name: true,
+              thumb: true,
+              cutout: true,
+            },
+          },
           opponent: {
             select: {
               id: true,

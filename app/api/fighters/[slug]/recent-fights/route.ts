@@ -43,8 +43,22 @@ export async function GET(
     }
 
     const fights = await prisma.fight.findMany({
-      where: { fighter_id: fighterId },
+      where: {
+        OR: [
+          { fighter_id: fighterId },
+          { opponent_id: fighterId },
+        ],
+      },
       include: {
+        fighter: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            thumb: true,
+            cutout: true,
+          },
+        },
         opponent: {
           select: {
             id: true,
@@ -72,25 +86,32 @@ export async function GET(
     });
 
     return NextResponse.json({
-      fights: fights.map((fight) => ({
-        id: fight.id,
-        result: fight.result,
-        method: fight.method,
-        round: fight.round,
-        time: fight.time,
-        opponent: fight.opponent
-          ? {
-              id: fight.opponent.id,
-              name: fight.opponent.name,
-              slug: fight.opponent.slug,
-            }
-          : null,
-        event: {
-          id: fight.event.id,
-          name: fight.event.name,
-          fight_date: fight.event.fight_date,
-        },
-      })),
+      fights: fights.map((fight) => {
+        // 判斷該選手在對戰中的角色
+        // Determine fighter's role in the fight
+        const isFighter = fight.fighter_id === fighterId;
+        const actualOpponent = isFighter ? fight.opponent : fight.fighter;
+        
+        return {
+          id: fight.id,
+          result: fight.result,
+          method: fight.method,
+          round: fight.round,
+          time: fight.time,
+          opponent: actualOpponent
+            ? {
+                id: actualOpponent.id,
+                name: actualOpponent.name,
+                slug: actualOpponent.slug,
+              }
+            : null,
+          event: {
+            id: fight.event.id,
+            name: fight.event.name,
+            fight_date: fight.event.fight_date,
+          },
+        };
+      }),
     });
   } catch (error) {
     console.error("Error fetching recent fights:", error);

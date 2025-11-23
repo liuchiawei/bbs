@@ -178,6 +178,13 @@ export async function POST(request: NextRequest) {
     revalidateTag("events", "max");
     revalidateTag("admin-events", "max"); // 更新管理員賽事列表快取
     revalidateTag("admin-settlable-events", "max"); // 更新管理員可結算事件列表快取
+    // 失效相關選手的快取（確保雙向查詢結果正確更新）
+    // Invalidate related fighters' cache (ensure bidirectional query results are correctly updated)
+    revalidateTag(`fighter-${validatedData.fighterId}`, "max");
+    revalidateTag(`fighter-${validatedData.opponentId}`, "max");
+    revalidateTag(`fighter-fights-${validatedData.fighterId}`, "max");
+    revalidateTag(`fighter-fights-${validatedData.opponentId}`, "max");
+    revalidateTag("fighters", "max");
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {

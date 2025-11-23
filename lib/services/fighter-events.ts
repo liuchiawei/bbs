@@ -75,23 +75,74 @@ export async function linkFighterToEvent(
         fightOrder = (maxOrder?.fight_order || 0) + 1;
       }
 
-      const created = await prisma.fight.create({
-        data: {
-          fighter_id: fighterId,
-          event_id: eventId,
-          opponent_id: options?.opponentId || null,
-          fight_type: options?.fightType || "MAIN",
-          fight_order: fightOrder,
-          weight_class: options?.weightClass || null,
-          result: options?.result || null,
-          method: options?.method || null,
-          round: options?.round || null,
-          time: options?.time || null,
-          is_bettable: options?.isBettable !== false, // 預設true
-          status: options?.status || "CONFIRMED",
-        },
-      });
-      return created.id;
+      // 如果有opponentId，創建雙向記錄；否則只創建單向記錄（單人賽事）
+      // If opponentId exists, create bidirectional records; otherwise create single record (single fighter event)
+      if (options?.opponentId) {
+        // 使用transaction確保原子性
+        // Use transaction to ensure atomicity
+        const result = await prisma.$transaction(async (tx) => {
+          // 創建fighter的Fight記錄
+          // Create Fight record for fighter
+          const fighterFight = await tx.fight.create({
+            data: {
+              fighter_id: fighterId,
+              event_id: eventId,
+              opponent_id: options.opponentId,
+              fight_type: options?.fightType || "MAIN",
+              fight_order: fightOrder!,
+              weight_class: options?.weightClass || null,
+              result: options?.result || null,
+              method: options?.method || null,
+              round: options?.round || null,
+              time: options?.time || null,
+              is_bettable: options?.isBettable !== false, // 預設true
+              status: options?.status || "CONFIRMED",
+            },
+          });
+
+          // 創建opponent的Fight記錄（使用相同的對戰順序）
+          // Create Fight record for opponent (using same fight order)
+          await tx.fight.create({
+            data: {
+              fighter_id: options.opponentId,
+              event_id: eventId,
+              opponent_id: fighterId,
+              fight_type: options?.fightType || "MAIN",
+              fight_order: fightOrder!,
+              weight_class: options?.weightClass || null,
+              result: null, // opponent的結果需要單獨設置
+              method: options?.method || null,
+              round: options?.round || null,
+              time: options?.time || null,
+              is_bettable: options?.isBettable !== false, // 預設true
+              status: options?.status || "CONFIRMED",
+            },
+          });
+
+          return fighterFight.id;
+        });
+        return result;
+      } else {
+        // 單人賽事，只創建單向記錄
+        // Single fighter event, create single record only
+        const created = await prisma.fight.create({
+          data: {
+            fighter_id: fighterId,
+            event_id: eventId,
+            opponent_id: null,
+            fight_type: options?.fightType || "MAIN",
+            fight_order: fightOrder!,
+            weight_class: options?.weightClass || null,
+            result: options?.result || null,
+            method: options?.method || null,
+            round: options?.round || null,
+            time: options?.time || null,
+            is_bettable: options?.isBettable !== false, // 預設true
+            status: options?.status || "CONFIRMED",
+          },
+        });
+        return created.id;
+      }
     }
   } catch (error) {
     console.error(
@@ -104,12 +155,19 @@ export async function linkFighterToEvent(
 
 /**
  * Get fighter event history
- * 取得選手完整賽事歷史
+ * 取得選手完整賽事歷史（包含作為fighter和opponent的所有對戰）
  */
 export async function getFighterEventHistory(fighterId: string) {
   return prisma.fight.findMany({
-    where: { fighter_id: fighterId },
+    where: {
+      OR: [
+        { fighter_id: fighterId },
+        { opponent_id: fighterId },
+      ],
+    },
     include: {
+      fighter: true,
+      opponent: true,
       event: {
         include: {
           _count: {
@@ -120,7 +178,6 @@ export async function getFighterEventHistory(fighterId: string) {
           },
         },
       },
-      opponent: true,
     },
     orderBy: {
       event: {

@@ -83,7 +83,11 @@ export function FightBettingCard({
   // 獲取對戰賠率
   // Fetch fight odds
   useEffect(() => {
-    if (!fight.isBettable || fight.status === "COMPLETED" || fight.status === "CANCELLED") {
+    if (
+      !fight.isBettable ||
+      fight.status === "COMPLETED" ||
+      fight.status === "CANCELLED"
+    ) {
       setLoadingOdds(false);
       return;
     }
@@ -152,7 +156,9 @@ export function FightBettingCard({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || data.message || "投注失敗 / Failed to place bet");
+        throw new Error(
+          data.error || data.message || "投注失敗 / Failed to place bet"
+        );
       }
 
       toast.success("投注成功！/ Bet placed successfully!");
@@ -196,8 +202,19 @@ export function FightBettingCard({
   ];
 
   return (
-    <Card className="w-full border-2 border-dashed border-border bg-card/50 shadow-xl relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-accent to-primary opacity-50" />
+    <Card
+      className={`w-full border-2 border-border shadow-xl relative overflow-hidden
+        ${canBet ? "bg-card/50" : "bg-muted/50"}
+        `}
+    >
+      <div
+        className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r opacity-50
+        ${
+          fight.fightType === "MAIN"
+            ? "from-primary to-secondary"
+            : "from-foreground to-background"
+        }`}
+      />
 
       <CardHeader className="text-center pb-2">
         <div className="flex items-center justify-between mb-2">
@@ -210,10 +227,14 @@ export function FightBettingCard({
             </Badge>
           )}
         </div>
-        <div className="flex items-center justify-between mb-2">
-          <CardTitle className="flex items-center justify-center gap-2 uppercase tracking-widest text-lg font-black">
+        <div className="flex flex-col items-center justify-between gap-1 mb-2">
+          <CardTitle className="flex items-end justify-center gap-2 uppercase tracking-widest text-xl md:text-4xl font-black">
             <Trophy className="w-5 h-5 text-accent" />
-            Official Bet Slip
+            {fight.fighter.name}{" "}
+            <span className="text-sm md:text-md text-muted-foreground font-normal">
+              vs
+            </span>{" "}
+            {fight.opponent.name}
           </CardTitle>
           <Link
             href={`/fight/${fight.id}`}
@@ -241,7 +262,9 @@ export function FightBettingCard({
           <div className="grid grid-cols-2 gap-4">
             {outcomes.map((outcome) => {
               const fighterData =
-                outcome.id === fight.fighter.id ? fight.fighter : fight.opponent;
+                outcome.id === fight.fighter.id
+                  ? fight.fighter
+                  : fight.opponent;
               return (
                 <div
                   key={outcome.id}
@@ -250,8 +273,8 @@ export function FightBettingCard({
                     selectedWinner === outcome.id
                       ? "border-primary bg-primary/5"
                       : canBet
-                        ? "border-muted hover:border-primary/30"
-                        : "border-muted opacity-50 cursor-not-allowed"
+                      ? "border-muted hover:border-primary/30"
+                      : "border-muted opacity-50 cursor-not-allowed"
                   }`}
                 >
                   {selectedWinner === outcome.id && (
@@ -285,9 +308,11 @@ export function FightBettingCard({
                       {loadingOdds ? "..." : `${getOdds(outcome.id)}x`}
                     </span>
                   </div>
-                  {fight.result && fight.result === (outcome.id === fight.fighter.id ? "Win" : "Loss") && (
-                    <Badge className="mt-2 bg-green-500">勝 / Winner</Badge>
-                  )}
+                  {fight.result &&
+                    fight.result ===
+                      (outcome.id === fight.fighter.id ? "Win" : "Loss") && (
+                      <Badge className="mt-2 bg-green-500">勝 / Winner</Badge>
+                    )}
                 </div>
               );
             })}
@@ -370,7 +395,9 @@ export function FightBettingCard({
                   預計派彩 / Est. Payout
                 </span>
                 <span className="font-black text-xl text-primary">
-                  {(Number(amount) * Number(getOdds(selectedWinner))).toFixed(0)}{" "}
+                  {(Number(amount) * Number(getOdds(selectedWinner))).toFixed(
+                    0
+                  )}{" "}
                   <span className="text-xs align-top">PTS</span>
                 </span>
               </div>
@@ -421,4 +448,3 @@ export function FightBettingCard({
     </Card>
   );
 }
-

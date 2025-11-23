@@ -119,10 +119,12 @@ export async function createEventWithFights(
       },
     });
 
-    // 批量創建Fight記錄（並行操作）
-    // Batch create Fight records (parallel operations)
+    // 批量創建Fight記錄（雙向記錄，確保兩位選手都能查詢到對戰）
+    // Batch create Fight records (bidirectional records, ensure both fighters can query fights)
     const fightsCreated = await Promise.all(
-      fights.map((fight) =>
+      fights.flatMap((fight) => [
+        // 創建fighter1的Fight記錄
+        // Create Fight record for fighter1
         tx.fight.create({
           data: {
             event_id: event.id,
@@ -134,8 +136,22 @@ export async function createEventWithFights(
             is_bettable: fight.isBettable !== false, // 預設true
             status: "CONFIRMED",
           },
-        })
-      )
+        }),
+        // 創建fighter2的Fight記錄（使用相同的對戰順序）
+        // Create Fight record for fighter2 (using same fight order)
+        tx.fight.create({
+          data: {
+            event_id: event.id,
+            fighter_id: fight.opponentId,
+            opponent_id: fight.fighterId,
+            fight_type: fight.fightType,
+            fight_order: fight.fightOrder,
+            weight_class: fight.weightClass || null,
+            is_bettable: fight.isBettable !== false, // 預設true
+            status: "CONFIRMED",
+          },
+        }),
+      ])
     );
 
     return {
