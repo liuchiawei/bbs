@@ -1,8 +1,8 @@
 /**
  * Fights API Route
  * 對戰API路由
- * Handles CRUD operations for fights (FighterEvent)
- * 處理對戰（FighterEvent）的CRUD操作
+ * Handles CRUD operations for fights
+ * 處理對戰的CRUD操作
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -20,8 +20,8 @@ import { revalidateTag } from "next/cache";
  * Query params:
  * - eventId: Event ID (required)
  * 
- * Returns: Array of FighterEvent with fighter, opponent, and betting stats
- * 返回：FighterEvent陣列，包含選手、對手和投注統計
+ * Returns: Array of Fight with fighter, opponent, and betting stats
+ * 返回：Fight陣列，包含選手、對手和投注統計
  */
 export async function GET(request: NextRequest) {
   try {
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
 
     // 檢查對戰順序是否已存在
     // Check if fight order already exists
-    const existingFight = await prisma.fighterEvent.findFirst({
+    const existingFight = await prisma.fight.findFirst({
       where: {
         event_id: validatedData.eventId,
         fight_order: validatedData.fightOrder,
@@ -138,9 +138,9 @@ export async function POST(request: NextRequest) {
     // 創建對戰（Transaction）
     // Create fight (Transaction)
     const result = await prisma.$transaction(async (tx) => {
-      // 創建fighter1的FighterEvent
-      // Create FighterEvent for fighter1
-      const fighter1Event = await tx.fighterEvent.create({
+      // 創建fighter1的Fight
+      // Create Fight for fighter1
+      const fighter1Fight = await tx.fight.create({
         data: {
           event_id: validatedData.eventId,
           fighter_id: validatedData.fighterId,
@@ -153,9 +153,9 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // 創建fighter2的FighterEvent（使用相同的對戰順序）
-      // Create FighterEvent for fighter2 (using same fight order)
-      const fighter2Event = await tx.fighterEvent.create({
+      // 創建fighter2的Fight（使用相同的對戰順序）
+      // Create Fight for fighter2 (using same fight order)
+      const fighter2Fight = await tx.fight.create({
         data: {
           event_id: validatedData.eventId,
           fighter_id: validatedData.opponentId,
@@ -168,14 +168,16 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      return { fighter1Event, fighter2Event };
+      return { fighter1Fight, fighter2Fight };
     });
 
-    // 更新快取
-    // Update cache
+    // 更新快取（符合 Next.js 16 規範，使用 'max' 參數）
+    // Update cache (符合 Next.js 16 規範，使用 'max' 參數)
     revalidateTag(`event-${validatedData.eventId}`, "max");
     revalidateTag(`event-fights-${validatedData.eventId}`, "max");
     revalidateTag("events", "max");
+    revalidateTag("admin-events", "max"); // 更新管理員賽事列表快取
+    revalidateTag("admin-settlable-events", "max"); // 更新管理員可結算事件列表快取
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {

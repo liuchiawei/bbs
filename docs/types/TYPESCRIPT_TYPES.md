@@ -1158,10 +1158,10 @@ export interface UploadResponse {
 export interface AdminUserListItem {
   id: string;
   userId: string;
-  name: string;
-  nickname?: string | null;
+  name: string; // 從profile讀取
+  nickname?: string | null; // 從profile讀取
   email: string;
-  avatar?: string | null;
+  avatar?: string | null; // 從profile讀取
   isAdmin: boolean;
   isBanned: boolean;
   createdAt: Date | string;
@@ -1172,12 +1172,13 @@ export interface AdminUserListItem {
 }
 ```
 
-**用途**: 管理員用戶列表項目類型
+**用途**: 管理員用戶列表項目類型（扁平化的 profile 資料）
 
 **使用位置**:
 - `lib/types.ts` - 類型定義
 - `components/admin/user-management.tsx` - 用戶管理組件
 - `app/api/admin/users/route.ts` - 管理員用戶API
+- `lib/services/users.ts` - User服務層
 
 ---
 
@@ -1205,6 +1206,105 @@ export interface AdminPostListItem {
 - `lib/types.ts` - 類型定義
 - `components/admin/post-management.tsx` - 貼文管理組件
 - `app/api/admin/posts/route.ts` - 管理員貼文API
+
+---
+
+### AdminEventListItem
+
+**定義**:
+```typescript
+export interface AdminEventListItem {
+  id: string;
+  name: string;
+  fight_date: Date | string;
+  status: "PENDING" | "OPEN" | "CLOSED" | "SETTLED" | "CANCELLED";
+  sport_type?: SportType | null;
+  promoter?: string | null;
+  organization?: string | null;
+  venue?: string | null;
+  location?: string | null;
+  createdAt: Date | string;
+  _count: {
+    fights: number; // 修正：fighterEvents → fights (2025-01-21)
+    bets: number;
+    posts: number;
+  };
+}
+```
+
+**用途**: 管理員賽事列表項目類型
+
+**使用位置**:
+- `lib/types.ts` - 類型定義
+- `components/admin/event-list.tsx` - 賽事管理組件
+- `app/api/admin/events/route.ts` - 管理員賽事API
+- `lib/services/events.ts` - Event服務層
+
+**重要變更** (2025-01-21):
+- ✅ 修正: `_count.fighterEvents` → `_count.fights`（與資料庫 schema 同步）
+
+---
+
+## 類型使用統計 / Type Usage Statistics
+
+**定義**:
+```typescript
+export interface AdminPostListItem {
+  id: string;
+  title: string;
+  content: string;
+  views: number;
+  likes: number;
+  createdAt: Date | string;
+  user: UserPublic;
+  _count: {
+    comments: number;
+  };
+}
+```
+
+**用途**: 管理員貼文列表項目類型
+
+**使用位置**:
+- `lib/types.ts` - 類型定義
+- `components/admin/post-management.tsx` - 貼文管理組件
+- `app/api/admin/posts/route.ts` - 管理員貼文API
+
+---
+
+### AdminEventListItem
+
+**定義**:
+```typescript
+export interface AdminEventListItem {
+  id: string;
+  name: string;
+  fight_date: Date | string;
+  status: "PENDING" | "OPEN" | "CLOSED" | "SETTLED" | "CANCELLED";
+  sport_type?: SportType | null;
+  promoter?: string | null;
+  organization?: string | null;
+  venue?: string | null;
+  location?: string | null;
+  createdAt: Date | string;
+  _count: {
+    fights: number; // 修正：fighterEvents → fights (2025-01-21)
+    bets: number;
+    posts: number;
+  };
+}
+```
+
+**用途**: 管理員賽事列表項目類型
+
+**使用位置**:
+- `lib/types.ts` - 類型定義
+- `components/admin/event-list.tsx` - 賽事管理組件
+- `app/api/admin/events/route.ts` - 管理員賽事API
+- `lib/services/events.ts` - Event服務層
+
+**重要變更** (2025-01-21):
+- ✅ 修正: `_count.fighterEvents` → `_count.fights`（與資料庫 schema 同步）
 
 ---
 
@@ -1242,7 +1342,30 @@ export interface AdminPostListItem {
 - `lib/services/events.ts` - Event服務層
 - `app/api/events/*` - Event API路由
 - `components/admin/event-create-form.tsx` - 創建賽事表單
-- `app/events/[id]/page.tsx` - 賽事詳情頁面
+- `app/event/[id]/page.tsx` - 賽事詳情頁面
+
+---
+
+### 2025-01-21: AdminEventListItem 類型修正
+
+**變更內容**:
+- ✅ 修正: `_count.fighterEvents` → `_count.fights`（與資料庫 schema 同步，FighterEvent 已改名為 Fight）
+
+**影響文件**:
+- `lib/types.ts` - 類型定義
+- `lib/services/events.ts` - Event服務層
+- `components/admin/event-list.tsx` - 賽事管理組件
+
+---
+
+### 2025-01-21: 類型註釋完善
+
+**變更內容**:
+- ✅ 為所有類型添加了繁體中文和日文註釋說明
+- ✅ 確保類型定義與實際使用一致
+
+**影響文件**:
+- `lib/types.ts` - 所有類型定義都已添加註釋
 
 ---
 

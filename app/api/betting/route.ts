@@ -23,11 +23,11 @@ export async function POST(request: NextRequest) {
     const realIp = request.headers.get("x-real-ip");
     const ipAddress = getClientIpAddress(forwardedFor, realIp);
 
-    // Place bet using service layer (updated to use fighterEventId)
-    // 使用服務層下注（更新為使用 fighterEventId）
+    // Place bet using service layer (updated to use fightId)
+    // 使用服務層下注（更新為使用 fightId）
     const bet = await placeBet(
       user.userId,
-      validatedData.fighterEventId,
+      validatedData.fightId,
       validatedData.target_winner_id,
       validatedData.amount,
       ipAddress
@@ -40,10 +40,10 @@ export async function POST(request: NextRequest) {
     // Update cache after bet placement
     // 投注後更新快取
     revalidateTag(`event-${eventId}`, "max");
-    revalidateTag(`fight-odds-${validatedData.fighterEventId}`, "max");
+    revalidateTag(`fight-odds-${validatedData.fightId}`, "max");
     revalidateTag(`event-fights-${eventId}`, "max");
     revalidateTag("events", "max");
-    revalidatePath(`/events/${eventId}`);
+    revalidatePath(`/event/${eventId}`);
 
     return NextResponse.json(bet, { status: 201 });
   } catch (error: any) {

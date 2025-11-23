@@ -65,6 +65,7 @@ export async function POST(
     revalidateTag(`event-fights-${result.fight.event.id}`, "max");
     revalidateTag(`fight-odds-${id}`, "max");
     revalidateTag("events", "max");
+    revalidateTag("admin-events", "max"); // 更新管理員賽事列表快取
     revalidateTag("admin-settlable-events", "max"); // 更新管理員可結算事件列表快取
 
     return NextResponse.json(result);

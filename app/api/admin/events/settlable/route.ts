@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
             name: true,
             fight_date: true,
             status: true,
-            fighterEvents: {
+            fights: {
               where: {
                 fight_order: 1, // 只獲取第一個對戰（主賽）
               },
@@ -89,13 +89,13 @@ export async function GET(request: NextRequest) {
           name: event.name,
           fight_date: event.fight_date.toISOString(),
           status: event.status as "OPEN" | "CLOSED",
-          mainFight: event.fighterEvents[0]
+          mainFight: event.fights[0]
             ? {
-                id: event.fighterEvents[0].id,
-                fighter_id: event.fighterEvents[0].fighter_id,
-                opponent_id: event.fighterEvents[0].opponent_id,
-                fighter: event.fighterEvents[0].fighter,
-                opponent: event.fighterEvents[0].opponent,
+                id: event.fights[0].id,
+                fighter_id: event.fights[0].fighter_id,
+                opponent_id: event.fights[0].opponent_id,
+                fighter: event.fights[0].fighter,
+                opponent: event.fights[0].opponent,
               }
             : null,
         }));

@@ -40,7 +40,7 @@ export async function POST(
     revalidateTag(`event-${bet.eventId}`, "max");
     revalidateTag(`event-odds-${bet.eventId}`, "max");
     revalidateTag("events", "max");
-    revalidatePath(`/events/${bet.eventId}`);
+    revalidatePath(`/event/${bet.eventId}`);
 
     return NextResponse.json({
       message: "Bet rolled back successfully",

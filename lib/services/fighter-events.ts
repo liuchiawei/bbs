@@ -1,6 +1,6 @@
 /**
- * Fighter Event Service
- * 選手賽事關聯服務層
+ * Fight Service
+ * 對戰服務層
  * Handles linking fighters to events and retrieving fight history
  */
 
@@ -13,7 +13,7 @@ import { prisma } from "@/lib/db";
  * @param fighterId Fighter ID
  * @param eventId Event ID
  * @param options 對戰選項（包含對戰類型、順序、投注設定等）
- * @returns Created or updated FighterEvent ID
+ * @returns Created or updated Fight ID
  */
 export async function linkFighterToEvent(
   fighterId: string,
@@ -34,7 +34,7 @@ export async function linkFighterToEvent(
   try {
     // Check if link already exists (by fighter_id + event_id)
     // 檢查關聯是否已存在（通過 fighter_id + event_id）
-    const existing = await prisma.fighterEvent.findFirst({
+    const existing = await prisma.fight.findFirst({
       where: {
         fighter_id: fighterId,
         event_id: eventId,
@@ -44,7 +44,7 @@ export async function linkFighterToEvent(
     if (existing) {
       // Update existing link
       // 更新現有關聯
-      const updated = await prisma.fighterEvent.update({
+      const updated = await prisma.fight.update({
         where: { id: existing.id },
         data: {
           opponent_id: options?.opponentId ?? existing.opponent_id,
@@ -67,7 +67,7 @@ export async function linkFighterToEvent(
       // If fight_order not specified, auto-assign (query max order + 1)
       let fightOrder = options?.fightOrder;
       if (fightOrder === undefined) {
-        const maxOrder = await prisma.fighterEvent.findFirst({
+        const maxOrder = await prisma.fight.findFirst({
           where: { event_id: eventId },
           orderBy: { fight_order: "desc" },
           select: { fight_order: true },
@@ -75,7 +75,7 @@ export async function linkFighterToEvent(
         fightOrder = (maxOrder?.fight_order || 0) + 1;
       }
 
-      const created = await prisma.fighterEvent.create({
+      const created = await prisma.fight.create({
         data: {
           fighter_id: fighterId,
           event_id: eventId,
@@ -107,7 +107,7 @@ export async function linkFighterToEvent(
  * 取得選手完整賽事歷史
  */
 export async function getFighterEventHistory(fighterId: string) {
-  return prisma.fighterEvent.findMany({
+  return prisma.fight.findMany({
     where: { fighter_id: fighterId },
     include: {
       event: {
@@ -138,7 +138,7 @@ export async function getFighterEventHistory(fighterId: string) {
  * @param fighter2Id Fighter 2 ID
  * @param eventId Event ID
  * @param options 對戰選項（包含對戰類型、順序、結果等）
- * @returns Created FighterEvent IDs [fighter1EventId, fighter2EventId]
+ * @returns Created Fight IDs [fighter1FightId, fighter2FightId]
  */
 export async function linkFightToEvent(
   fighter1Id: string,
@@ -161,7 +161,7 @@ export async function linkFightToEvent(
   // If fight_order not specified, auto-assign
   let fightOrder = options?.fightOrder;
   if (fightOrder === undefined) {
-    const maxOrder = await prisma.fighterEvent.findFirst({
+    const maxOrder = await prisma.fight.findFirst({
       where: { event_id: eventId },
       orderBy: { fight_order: "desc" },
       select: { fight_order: true },
@@ -207,10 +207,10 @@ export async function linkFightToEvent(
  * 獲取賽事的所有對戰（按順序）
  * 
  * @param eventId Event ID
- * @returns FighterEvent array ordered by fight_order
+ * @returns Fight array ordered by fight_order
  */
 export async function getFightsByEvent(eventId: string) {
-  return prisma.fighterEvent.findMany({
+  return prisma.fight.findMany({
     where: { event_id: eventId },
     include: {
       fighter: true,
@@ -231,21 +231,21 @@ export async function getFightsByEvent(eventId: string) {
  * Update fight result
  * 更新對戰結果
  * 
- * @param fighterEventId FighterEvent ID
+ * @param fightId Fight ID
  * @param result Result from fighter's perspective (Win/Loss/Draw/NC)
  * @param method Win method (KO/TKO/Decision等)
  * @param round Round number
  * @param time Time in round
  */
 export async function updateFightResult(
-  fighterEventId: string,
+  fightId: string,
   result: string,
   method?: string | null,
   round?: number | null,
   time?: string | null
 ) {
-  return prisma.fighterEvent.update({
-    where: { id: fighterEventId },
+  return prisma.fight.update({
+    where: { id: fightId },
     data: {
       result,
       method: method || null,

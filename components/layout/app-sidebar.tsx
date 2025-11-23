@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { PanelLeft, Home, Calendar, Users, FolderTree, Search } from "lucide-react";
-import { t } from "@/lib/constants";
+import { t, TRANSLATIONS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 // 導航項目配置
@@ -24,7 +24,7 @@ const navigationItems = [
     icon: Home,
   },
   {
-    href: "/events",
+    href: "/event",
     label: "NAV_EVENTS",
     icon: Calendar,
   },
@@ -76,7 +76,7 @@ export function AppSideBar() {
                   )}
                 >
                   <Icon className="h-4 w-4" />
-                  {t(item.label)}
+                  {t(item.label as keyof typeof TRANSLATIONS.en)}
                 </Button>
               </Link>
             );

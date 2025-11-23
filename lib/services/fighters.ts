@@ -17,6 +17,8 @@ import type {
   Fighter,
   FighterWithEvents,
   FighterPublic,
+  FightWithDetails,
+  Event,
 } from "@/lib/types";
 import {
   toFighterPublic,
@@ -40,19 +42,80 @@ async function _getFighterFromDB(
   return unstable_cache(
     async () => {
       console.log(`[Fighter DB] Querying database for slug: "${slug}"`);
+      // 參考 admin page 的寫法，使用明確的 select 指定需要的欄位
+      // Reference admin page pattern, use explicit select to specify required fields
       const fighter = await prisma.fighter.findUnique({
         where: { slug },
-        include: {
-          eventsAsFighter: {
-            include: {
-              event: true,
-              opponent: true,
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          external_id: true,
+          external_source: true,
+          external_data: true,
+          sport_type: true,
+          nationality: true,
+          date_born: true,
+          height: true,
+          weight: true,
+          position: true,
+          description: true,
+          thumb: true,
+          cutout: true,
+          last_synced_at: true,
+          createdAt: true,
+          updatedAt: true,
+          fightsAsFighter: {
+            select: {
+              id: true,
+              fighter_id: true,
+              event_id: true,
+              opponent_id: true,
+              result: true,
+              method: true,
+              round: true,
+              time: true,
+              weight_class: true,
+              createdAt: true,
+              updatedAt: true,
+              event: {
+                select: {
+                  id: true,
+                  name: true,
+                  fight_date: true,
+                  status: true,
+                  sport_type: true,
+                },
+              },
+              opponent: {
+                select: {
+                  id: true,
+                  slug: true,
+                  name: true,
+                  thumb: true,
+                  cutout: true,
+                  sport_type: true,
+                  nationality: true,
+                  external_id: true,
+                  external_source: true,
+                  external_data: true,
+                  date_born: true,
+                  height: true,
+                  weight: true,
+                  position: true,
+                  description: true,
+                  last_synced_at: true,
+                  createdAt: true,
+                  updatedAt: true,
+                },
+              },
             },
             orderBy: {
               event: {
                 fight_date: "desc",
               },
             },
+            take: 10, // 初始載入只載入最近10場 / Initial load only 10 most recent fights
           },
         },
       });
@@ -69,7 +132,9 @@ async function _getFighterFromDB(
           )}, value:`,
           fighter.external_data
         );
-        const convertedFighter = toFighterWithEvents(fighter);
+        // Type assertion needed because toFighterWithEvents expects full Event type
+        // 類型斷言是必要的，因為 toFighterWithEvents 期望完整的 Event 類型
+        const convertedFighter = toFighterWithEvents(fighter as any);
         // Debug: Log converted external_data
         // 調試：記錄轉換後的 external_data
         if (convertedFighter.external_data) {
@@ -133,7 +198,7 @@ export async function getFightersBySlug(
         const fighter = await prisma.fighter.findUnique({
           where: { slug },
           include: {
-            eventsAsFighter: {
+            fightsAsFighter: {
               include: {
                 event: true,
                 opponent: true,
@@ -159,7 +224,7 @@ export async function getFightersBySlug(
             },
           },
           include: {
-            eventsAsFighter: {
+            fightsAsFighter: {
               include: {
                 event: true,
                 opponent: true,
@@ -716,13 +781,13 @@ export async function syncFighterFromAPI(fighterId: string): Promise<boolean> {
  * Get fighter events
  * 取得選手的賽事
  *
- * Returns FighterEventWithDetails[] from lib/types.
- * 返回 lib/types 中的 FighterEventWithDetails[] 類型。
+ * Returns FightWithDetails[] from lib/types.
+ * 返回 lib/types 中的 FightWithDetails[] 類型。
  */
 export async function getFighterEvents(
   fighterId: string
-): Promise<FighterWithEvents["eventsAsFighter"]> {
-  const events = await prisma.fighterEvent.findMany({
+): Promise<FighterWithEvents["fightsAsFighter"]> {
+  const events = await prisma.fight.findMany({
     where: { fighter_id: fighterId },
     include: {
       event: true,
@@ -735,8 +800,8 @@ export async function getFighterEvents(
     },
   });
 
-  // Convert to FighterEventWithDetails type
-  // 轉換為 FighterEventWithDetails 類型
+  // Convert to FightWithDetails type
+  // 轉換為 FightWithDetails 類型
   return events.map((fe) => ({
     id: fe.id,
     fighter_id: fe.fighter_id,
@@ -749,7 +814,7 @@ export async function getFighterEvents(
     weight_class: fe.weight_class,
     createdAt: fe.createdAt,
     updatedAt: fe.updatedAt,
-    event: fe.event as FighterWithEvents["eventsAsFighter"][0]["event"],
+    event: fe.event as FighterWithEvents["fightsAsFighter"][0]["event"],
     opponent: fe.opponent
       ? {
           id: fe.opponent.id,
@@ -773,6 +838,162 @@ export async function getFighterEvents(
         }
       : null,
   }));
+}
+
+/**
+ * Get fighter fights with pagination
+ * 取得選手對戰列表（分頁）
+ *
+ * Returns paginated fight list with total count.
+ * 返回分頁的對戰列表和總數。
+ */
+export async function getFighterFightsPaginated(
+  fighterId: string,
+  options: { page?: number; limit?: number } = {}
+): Promise<{
+  fights: FightWithDetails[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}> {
+  const { page = 1, limit = 10 } = options;
+  const skip = (page - 1) * limit;
+
+  // 驗證參數
+  // Validate parameters
+  if (page < 1) {
+    throw new Error("Page must be greater than 0");
+  }
+  if (limit < 1 || limit > 50) {
+    throw new Error("Limit must be between 1 and 50");
+  }
+
+  // キャッシュキーを生成
+  // Generate cache key
+  const cacheKey = `fighter-fights-${fighterId}-${page}-${limit}`;
+
+  return unstable_cache(
+    async () => {
+      // 參考 admin page 的寫法，使用明確的 select 指定需要的欄位
+      // Reference admin page pattern, use explicit select to specify required fields
+      const [fights, total] = await Promise.all([
+        prisma.fight.findMany({
+          where: { fighter_id: fighterId },
+          select: {
+            id: true,
+            fighter_id: true,
+            event_id: true,
+            opponent_id: true,
+            result: true,
+            method: true,
+            round: true,
+            time: true,
+            weight_class: true,
+            createdAt: true,
+            updatedAt: true,
+            event: {
+              select: {
+                id: true,
+                name: true,
+                fight_date: true,
+                status: true,
+                sport_type: true,
+              },
+            },
+            opponent: {
+              select: {
+                id: true,
+                slug: true,
+                name: true,
+                thumb: true,
+                cutout: true,
+                sport_type: true,
+                nationality: true,
+                external_id: true,
+                external_source: true,
+                external_data: true,
+                date_born: true,
+                height: true,
+                weight: true,
+                position: true,
+                description: true,
+                last_synced_at: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          },
+          skip: skip,
+          take: limit,
+          orderBy: {
+            event: {
+              fight_date: "desc",
+            },
+          },
+        }),
+        prisma.fight.count({
+          where: { fighter_id: fighterId },
+        }),
+      ]);
+
+      // 轉換為 FightWithDetails 類型
+      // Convert to FightWithDetails type
+      const transformedFights: FightWithDetails[] = fights.map((fe) => ({
+        id: fe.id,
+        fighter_id: fe.fighter_id,
+        event_id: fe.event_id,
+        opponent_id: fe.opponent_id,
+        result: fe.result,
+        method: fe.method,
+        round: fe.round,
+        time: fe.time,
+        weight_class: fe.weight_class,
+        createdAt: fe.createdAt,
+        updatedAt: fe.updatedAt,
+        event: fe.event as Event,
+        opponent: fe.opponent
+          ? {
+              id: fe.opponent.id,
+              slug: fe.opponent.slug,
+              name: fe.opponent.name,
+              external_id: fe.opponent.external_id,
+              external_source: fe.opponent.external_source,
+              external_data: convertJsonValue(fe.opponent.external_data),
+              sport_type: fe.opponent.sport_type as SportType | null,
+              nationality: fe.opponent.nationality,
+              date_born: fe.opponent.date_born,
+              height: fe.opponent.height,
+              weight: fe.opponent.weight,
+              position: fe.opponent.position,
+              description: fe.opponent.description,
+              thumb: fe.opponent.thumb,
+              cutout: fe.opponent.cutout,
+              last_synced_at: fe.opponent.last_synced_at,
+              createdAt: fe.opponent.createdAt,
+              updatedAt: fe.opponent.updatedAt,
+            }
+          : null,
+      }));
+
+      return {
+        fights: transformedFights,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    },
+    [cacheKey],
+    {
+      tags: [`fighter-fights-${fighterId}`],
+      revalidate: 60, // 60秒キャッシュ / 60 seconds cache
+    }
+  )();
 }
 
 /**

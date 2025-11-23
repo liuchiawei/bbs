@@ -61,7 +61,7 @@ export function EventCard({ event }: EventCardProps) {
   };
 
   return (
-    <Link href={`/events/${event.id}`}>
+    <Link href={`/event/${event.id}`}>
       <Card className="group relative overflow-hidden border-border/50 bg-card/50 hover:bg-card/80 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/50 h-full flex flex-col">
         {/* Background Gradient Effect */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

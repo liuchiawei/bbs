@@ -40,7 +40,7 @@ const createEventSchema = z.object({
  * - status: Filter by event status
  * - sport_type: Filter by sport type
  * - promoter: Filter by promoter
- * - include_fights: Include fighterEvents relation (default: false)
+ * - include_fights: Include fights relation (default: false)
  * - limit: Maximum number of events to return (default: 100)
  * - offset: Number of events to skip (default: 0)
  */
@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
             location: true,
             description: true,
             poster_url: true,
-            fighterEvents: includeFights
+            fights: includeFights
               ? {
                   select: {
                     id: true,
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
               select: { 
                 bets: true, 
                 posts: true,
-                fighterEvents: true,
+                fights: true,
               },
             },
           },

@@ -8,7 +8,7 @@ export const RAKE_PERCENTAGE = 0.1; // 10% house take
  * Calculate current pool odds for a specific fight
  * 計算特定對戰的當前賠率池
  * 
- * @param fighterEventId FighterEvent ID
+ * @param fightId Fight ID
  * @param tx Optional Prisma transaction client (for use within transactions)
  * @returns BettingOdds for the fight
  * 
@@ -16,7 +16,7 @@ export const RAKE_PERCENTAGE = 0.1; // 10% house take
  * Calculates odds based on all bets for this fight, each fighter's odds = net pool / total bets on that fighter
  */
 export async function calculateFightOdds(
-  fighterEventId: string,
+  fightId: string,
   tx?: any
 ): Promise<{
   totalPool: number;
@@ -30,13 +30,13 @@ export async function calculateFightOdds(
   // Get all bets for this fight (excluding VOID)
   const bets = await prismaClient.bettingLog.findMany({
     where: {
-      fighterEventId,
+      fightId,
       settlement_status: { not: "VOID" },
     },
   });
 
   const totalPool = bets.reduce(
-    (sum, bet) => sum.add(new Decimal(bet.bet_amount)),
+    (sum: Decimal, bet: { bet_amount: any }) => sum.add(new Decimal(bet.bet_amount)),
     new Decimal(0)
   );
   const netPool = totalPool.mul(1 - RAKE_PERCENTAGE);
@@ -45,7 +45,7 @@ export async function calculateFightOdds(
   // Group bets by target_winner_id
   const betsByOutcome: Record<string, Decimal> = {};
 
-  bets.forEach((bet) => {
+  bets.forEach((bet: { target_winner_id: string; bet_amount: any }) => {
     const target = bet.target_winner_id;
     if (!betsByOutcome[target]) {
       betsByOutcome[target] = new Decimal(0);
@@ -84,12 +84,12 @@ export async function calculateFightOdds(
 /**
  * Calculate current pool odds for a specific event (deprecated)
  * 計算特定賽事的當前賠率池（已棄用）
- * @deprecated Use calculateFightOdds(fighterEventId) instead
+ * @deprecated Use calculateFightOdds(fightId) instead
  */
 export async function calculatePoolOdds(eventId: string) {
   // 向後兼容：返回第一個對戰的賠率（如果存在）
   // Backward compatibility: return odds for first fight if exists
-  const firstFight = await prisma.fighterEvent.findFirst({
+  const firstFight = await prisma.fight.findFirst({
     where: { event_id: eventId },
     orderBy: { fight_order: "asc" },
   });
@@ -112,7 +112,7 @@ export async function calculatePoolOdds(eventId: string) {
  * Settle a specific fight and distribute payouts
  * 結算特定對戰並分配派彩
  * 
- * @param fighterEventId FighterEvent ID
+ * @param fightId Fight ID
  * @param winnerId Winner ID (fighter_id或opponent_id)
  * @param adminId Admin ID for audit log
  * @param ipAddress IP address for audit log
@@ -124,7 +124,7 @@ export async function calculatePoolOdds(eventId: string) {
  * Validates fight status, calculates payouts, updates bet statuses, records audit log
  */
 export async function settleFight(
-  fighterEventId: string,
+  fightId: string,
   winnerId: string,
   adminId: string,
   ipAddress: string = "unknown",
@@ -132,10 +132,10 @@ export async function settleFight(
   winRound?: number
 ) {
   return await prisma.$transaction(async (tx) => {
-    // 1. Get FighterEvent to validate
-    // 取得FighterEvent以驗證
-    const fighterEvent = await tx.fighterEvent.findUnique({
-      where: { id: fighterEventId },
+    // 1. Get Fight to validate
+    // 取得Fight以驗證
+    const fight = await tx.fight.findUnique({
+      where: { id: fightId },
       include: {
         event: true,
         fighter: true,
@@ -143,22 +143,22 @@ export async function settleFight(
       },
     });
 
-    if (!fighterEvent) {
+    if (!fight) {
       throw new Error("Fight not found");
     }
 
     // 2. Validate winner matches fight fighters
     // 驗證勝者匹配對戰選手
     if (
-      winnerId !== fighterEvent.fighter_id &&
-      winnerId !== fighterEvent.opponent_id
+      winnerId !== fight.fighter_id &&
+      winnerId !== fight.opponent_id
     ) {
       throw new Error("Winner ID must be one of the fight fighters");
     }
 
     // 3. Validate fight status
     // 驗證對戰狀態
-    if (fighterEvent.status === "CANCELLED") {
+    if (fight.status === "CANCELLED") {
       throw new Error("Cannot settle a cancelled fight");
     }
 
@@ -166,7 +166,7 @@ export async function settleFight(
     // 獲取該對戰的所有投注
     const bets = await tx.bettingLog.findMany({
       where: {
-        fighterEventId,
+        fightId,
         settlement_status: "PENDING",
       },
     });
@@ -174,10 +174,10 @@ export async function settleFight(
     if (bets.length === 0) {
       // No bets to settle - just update fight result
       // 沒有投注需要結算 - 僅更新對戰結果
-      const result = winnerId === fighterEvent.fighter_id ? "Win" : "Loss";
+      const result = winnerId === fight.fighter_id ? "Win" : "Loss";
       
-      await tx.fighterEvent.update({
-        where: { id: fighterEventId },
+      await tx.fight.update({
+        where: { id: fightId },
         data: {
           result,
           method: winMethod || null,
@@ -191,13 +191,13 @@ export async function settleFight(
       await createAuditLog(
         adminId,
         "SETTLE_FIGHT",
-        `Settled fight ${fighterEventId} (event ${fighterEvent.event.id}). Winner: ${winnerId}. No bets to process.`,
+        `Settled fight ${fightId} (event ${fight.event.id}). Winner: ${winnerId}. No bets to process.`,
         ipAddress
       );
 
       return {
         message: "Fight settled. No bets to process.",
-        fight: fighterEvent,
+        fight: fight,
         totalPool: 0,
         netPool: 0,
         rakeAmount: 0,
@@ -220,7 +220,7 @@ export async function settleFight(
     // 計算勝者
     const winningBets = bets.filter((bet) => bet.target_winner_id === winnerId);
     const totalWinningAmount = winningBets.reduce(
-      (sum, bet) => sum.add(new Decimal(bet.bet_amount)),
+      (sum: Decimal, bet: { bet_amount: any }) => sum.add(new Decimal(bet.bet_amount)),
       new Decimal(0)
     );
 
@@ -295,11 +295,11 @@ export async function settleFight(
       throw new Error(errorMessage);
     }
 
-    // 10. Update FighterEvent result and status
-    // 更新FighterEvent結果和狀態
-    const result = winnerId === fighterEvent.fighter_id ? "Win" : "Loss";
-    await tx.fighterEvent.update({
-      where: { id: fighterEventId },
+    // 10. Update Fight result and status
+    // 更新Fight結果和狀態
+    const result = winnerId === fight.fighter_id ? "Win" : "Loss";
+    await tx.fight.update({
+      where: { id: fightId },
       data: {
         result,
         method: winMethod || null,
@@ -310,16 +310,16 @@ export async function settleFight(
 
     // 11. Check if all fights in event are completed, update event status if so
     // 檢查賽事所有對戰是否完成，如果是則更新賽事狀態
-    const allFights = await tx.fighterEvent.findMany({
-      where: { event_id: fighterEvent.event.id },
+    const allFightsInEvent = await tx.fight.findMany({
+      where: { event_id: fight.event.id },
     });
-    const allCompleted = allFights.every(
+    const allCompleted = allFightsInEvent.every(
       (f) => f.status === "COMPLETED" || f.status === "CANCELLED"
     );
 
     if (allCompleted) {
       await tx.event.update({
-        where: { id: fighterEvent.event.id },
+        where: { id: fight.event.id },
         data: {
           status: "SETTLED",
         },
@@ -328,7 +328,7 @@ export async function settleFight(
 
     // 12. Create Audit Log
     // 創建審計日誌
-    const auditDescription = `Settled fight ${fighterEventId} (${fighterEvent.fighter.name} vs ${fighterEvent.opponent?.name || "TBD"}) in event ${fighterEvent.event.id} (${fighterEvent.event.name}). Winner: ${winnerId}. Total Pool: ${totalPool.toString()}, Net Pool: ${netPool.toString()}, Rake: ${rakeAmount.toString()}, Total Payouts: ${totalPayouts.toString()}, Winning Bets: ${winningBets.length}, Losing Bets: ${losingBets.length}, Payout Ratio: ${
+    const auditDescription = `Settled fight ${fightId} (${fight.fighter.name} vs ${fight.opponent?.name || "TBD"}) in event ${fight.event.id} (${fight.event.name}). Winner: ${winnerId}. Total Pool: ${totalPool.toString()}, Net Pool: ${netPool.toString()}, Rake: ${rakeAmount.toString()}, Total Payouts: ${totalPayouts.toString()}, Winning Bets: ${winningBets.length}, Losing Bets: ${losingBets.length}, Payout Ratio: ${
       totalWinningAmount.gt(0)
         ? netPool.div(totalWinningAmount).toFixed(4)
         : "N/A"
@@ -337,7 +337,7 @@ export async function settleFight(
     await createAuditLog(adminId, "SETTLE_FIGHT", auditDescription, ipAddress);
 
     return {
-      fight: fighterEvent,
+      fight: fight,
       totalPool: totalPool.toNumber(),
       netPool: netPool.toNumber(),
       rakeAmount: rakeAmount.toNumber(),
@@ -359,7 +359,7 @@ export async function settleFight(
  * 結算賽事所有對戰（批量操作）
  * 
  * @param eventId Event ID
- * @param fightResults Array of fight results { fighterEventId, winnerId, winMethod?, winRound? }
+ * @param fightResults Array of fight results { fightId, winnerId, winMethod?, winRound? }
  * @param adminId Admin ID
  * @param ipAddress IP address
  * @returns Settlement results for all fights
@@ -370,7 +370,7 @@ export async function settleFight(
 export async function settleAllFightsInEvent(
   eventId: string,
   fightResults: Array<{
-    fighterEventId: string;
+    fightId: string;
     winnerId: string;
     winMethod?: string;
     winRound?: number;
@@ -385,7 +385,7 @@ export async function settleAllFightsInEvent(
   for (const fightResult of fightResults) {
     try {
       const result = await settleFight(
-        fightResult.fighterEventId,
+        fightResult.fightId,
         fightResult.winnerId,
         adminId,
         ipAddress,
@@ -393,13 +393,13 @@ export async function settleAllFightsInEvent(
         fightResult.winRound
       );
       results.push({
-        fighterEventId: fightResult.fighterEventId,
+        fightId: fightResult.fightId,
         success: true,
         result,
       });
     } catch (error) {
       results.push({
-        fighterEventId: fightResult.fighterEventId,
+        fightId: fightResult.fightId,
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
       });
@@ -418,7 +418,7 @@ export async function settleAllFightsInEvent(
 /**
  * Settle an event (deprecated, use settleFight instead)
  * 結算賽事（已棄用，請使用settleFight）
- * @deprecated Use settleFight(fighterEventId, ...) instead
+ * @deprecated Use settleFight(fightId, ...) instead
  */
 export async function settleEvent(
   eventId: string,
@@ -430,7 +430,7 @@ export async function settleEvent(
 ) {
   // 向後兼容：找到第一個對戰並結算
   // Backward compatibility: find first fight and settle
-  const firstFight = await prisma.fighterEvent.findFirst({
+  const firstFight = await prisma.fight.findFirst({
     where: { event_id: eventId },
     orderBy: { fight_order: "asc" },
   });

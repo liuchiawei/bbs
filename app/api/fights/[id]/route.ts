@@ -20,8 +20,8 @@ import { revalidateTag } from "next/cache";
  * Get single fight details with betting odds
  * 獲取單一對戰詳情（包含投注賠率）
  * 
- * Returns: FighterEvent with fighter, opponent, event, and betting odds
- * 返回：FighterEvent，包含選手、對手、賽事和投注賠率
+ * Returns: Fight with fighter, opponent, event, and betting odds
+ * 返回：Fight，包含選手、對手、賽事和投注賠率
  */
 export async function GET(
   request: NextRequest,
@@ -30,7 +30,7 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const fight = await prisma.fighterEvent.findUnique({
+    const fight = await prisma.fight.findUnique({
       where: { id },
       include: {
         fighter: true,
@@ -120,7 +120,7 @@ export async function PATCH(
 
     // 更新對戰
     // Update fight
-    const updatedFight = await prisma.fighterEvent.update({
+    const updatedFight = await prisma.fight.update({
       where: { id },
       data: {
         result: validatedData.result,
@@ -140,12 +140,14 @@ export async function PATCH(
       },
     });
 
-    // 更新快取
-    // Update cache
+    // 更新快取（符合 Next.js 16 規範，使用 'max' 參數）
+    // Update cache (符合 Next.js 16 規範，使用 'max' 參數)
     revalidateTag(`event-${updatedFight.event_id}`, "max");
     revalidateTag(`event-fights-${updatedFight.event_id}`, "max");
     revalidateTag(`fight-odds-${id}`, "max");
     revalidateTag("events", "max");
+    revalidateTag("admin-events", "max"); // 更新管理員賽事列表快取
+    revalidateTag("admin-settlable-events", "max"); // 更新管理員可結算事件列表快取
 
     return NextResponse.json(updatedFight);
   } catch (error) {

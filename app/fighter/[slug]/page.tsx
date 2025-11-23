@@ -2,7 +2,8 @@ import { unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
 import { getFighterBySlug } from "@/lib/services/fighters";
 import { FighterProfileCard } from "@/components/fighters/fighter-profile-card";
-import { FighterEventHistory } from "@/components/fighters/fighter-event-history";
+import { FighterFightHistory } from "@/components/fighters/fighter-fight-history";
+import { prisma } from "@/lib/db";
 import type { FighterPublic } from "@/lib/types";
 import type { Metadata } from "next";
 
@@ -28,12 +29,24 @@ export async function generateMetadata({
     };
   }
 
-  const eventCount = fighter.eventsAsFighter.length;
-  const winCount = fighter.eventsAsFighter.filter((e) =>
-    e.result?.toLowerCase().includes("win")
+  // 取得總對戰數和統計（用於 metadata）
+  // Get total fight count and statistics (for metadata)
+  const totalFights = await prisma.fight.count({
+    where: { fighter_id: fighter.id },
+  });
+
+  // 取得所有對戰結果用於統計（僅用於 metadata，不影響頁面載入）
+  // Get all fight results for statistics (only for metadata, doesn't affect page load)
+  const allFights = await prisma.fight.findMany({
+    where: { fighter_id: fighter.id },
+    select: { result: true },
+  });
+
+  const winCount = allFights.filter((f) =>
+    f.result?.toLowerCase().includes("win")
   ).length;
-  const lossCount = fighter.eventsAsFighter.filter((e) =>
-    e.result?.toLowerCase().includes("loss")
+  const lossCount = allFights.filter((f) =>
+    f.result?.toLowerCase().includes("loss")
   ).length;
 
   return {
@@ -41,8 +54,8 @@ export async function generateMetadata({
     description: `${
       fighter.name
     } - ${fighter.sport_type?.toUpperCase()} fighter. Record: ${winCount}-${lossCount}-${
-      eventCount - winCount - lossCount
-    } (${eventCount} fights)`,
+      totalFights - winCount - lossCount
+    } (${totalFights} fights)`,
     openGraph: {
       title: fighter.name,
       description: `${fighter.sport_type?.toUpperCase()} fighter${
@@ -81,9 +94,15 @@ export default async function FighterPage({
     `[Fighter Page] Successfully loaded fighter: ${fighter.name} (slug: ${fighter.slug})`
   );
 
-  // Transform events for component
-  // 轉換賽事數據供組件使用
-  const events = fighter.eventsAsFighter.map((fe) => ({
+  // Get total fight count from database
+  // 從資料庫取得總對戰數
+  const totalFights = await prisma.fight.count({
+    where: { fighter_id: fighter.id },
+  });
+
+  // Transform initial fights for component (first 10)
+  // 轉換初始對戰數據供組件使用（前10場）
+  const initialFights = fighter.fightsAsFighter.map((fe) => ({
     id: fe.id,
     result: fe.result ?? null,
     method: fe.method ?? null,
@@ -121,7 +140,7 @@ export default async function FighterPage({
     height: fighter.height ?? null,
     weight:
       fighter.weight ??
-      fighter.eventsAsFighter.find((f) => f.fighter_id === fighter.id)?.weight_class ??
+      fighter.fightsAsFighter.find((f) => f.fighter_id === fighter.id)?.weight_class ??
       (fighter.external_data as any)?.strWeight ??
       null,
     position: fighter.position ?? null,
@@ -140,7 +159,11 @@ export default async function FighterPage({
           <FighterProfileCard fighter={fighterData} />
         </div>
         {/* Fight History */}
-        <FighterEventHistory events={events} />
+        <FighterFightHistory
+          initialFights={initialFights}
+          fighterSlug={slug}
+          totalFights={totalFights}
+        />
       </div>
     </div>
   );

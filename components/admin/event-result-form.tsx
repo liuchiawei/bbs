@@ -85,8 +85,8 @@ export function EventResultForm() {
 
     setIsSubmitting(true);
     try {
-      // 使用新的對戰結算 API（基於 FighterEvent）
-      // Use new fight settlement API (based on FighterEvent)
+      // 使用新的對戰結算 API（基於 Fight）
+      // Use new fight settlement API (based on Fight)
       const response = await fetch(`/api/admin/fights/${selectedFight.id}/result`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

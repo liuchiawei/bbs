@@ -1,5 +1,83 @@
 # 開發日誌 / Development Log
 
+## 2025-01-22
+
+### fix/admin-cache-revalidation-nextjs16
+
+**難度**: ★★★☆☆
+
+**描述**: 全面檢視並修復所有管理員操作後的快取更新邏輯，確保符合 Next.js 16 規範，使用 `revalidateTag(tagName, 'max')` 語法，建立讀取快速、資料庫操作最少，同時又兼具向後包容性的現代化網頁
+
+**問題分析**:
+
+1. **快取更新遺漏**: 部分管理員操作後缺少完整的快取更新，導致數據不一致
+2. **Next.js 16 規範**: 需要確認所有 `revalidateTag` 調用都使用新的 `'max'` 參數格式
+3. **管理員操作完整性**: 需要確保所有管理員操作（創建賽事、更新對戰、結算、更改用戶 Profile 等）都有正確的快取更新
+
+**修復內容**:
+
+1. **修復 `app/api/events/[id]/route.ts` 中 settleEvent 調用的快取更新**:
+   - 問題：調用 `settleEvent` 時缺少快取更新和 IP 地址參數
+   - 修復：
+     - 添加 IP 地址獲取邏輯（使用 `getClientIpAddress`）
+     - 添加完整的快取更新（包括 `admin-events` 和 `admin-settlable-events`）
+     - 使用 `revalidateTag(tagName, "max")` 符合 Next.js 16 規範
+   - 同時修復了正常更新邏輯：
+     - 修正 `winner_id` 不是 Event 模型欄位的問題，只更新 `status`
+     - 添加 IP 地址到 audit log
+
+2. **修復 `app/api/admin/fights/[id]/result/route.ts` 缺少管理員快取更新**:
+   - 問題：結算對戰時缺少 `admin-events` 快取更新
+   - 修復：添加 `admin-events` 快取更新
+
+3. **修復 `app/api/fights/[id]/route.ts` 管理員更新對戰時的快取更新**:
+   - 問題：管理員更新對戰資訊時缺少管理員相關快取更新
+   - 修復：添加 `admin-events` 和 `admin-settlable-events` 快取更新
+
+4. **修復 `app/api/fights/route.ts` 創建對戰時的快取更新**:
+   - 問題：創建對戰時缺少管理員相關快取更新
+   - 修復：添加 `admin-events` 和 `admin-settlable-events` 快取更新
+
+5. **修復 `app/api/admin/categories/route.ts` 創建分類時的快取更新**:
+   - 問題：創建分類時只更新了 `categories` 快取
+   - 修復：添加 `posts` 快取更新以保持一致性
+
+**驗證結果**:
+
+- ✅ 所有 `revalidateTag` 調用都符合 Next.js 16 規範（使用 `"max"` 參數）
+- ✅ 所有管理員操作都有完整的快取更新
+- ✅ 沒有發現使用舊的單參數形式的 `revalidateTag`
+- ✅ 所有修改的檔案都沒有 linter 錯誤
+
+**快取更新策略**:
+
+所有管理員操作現在都會正確更新以下快取：
+- **賽事相關**: `event-{id}`, `event-fights-{id}`, `event-odds-{id}`, `events`
+- **管理員專用**: `admin-events`, `admin-settlable-events`
+- **用戶相關**: `profile-{userId}`, `user-{userId}`, `admin-users`
+- **內容相關**: `posts`, `hot-posts`, `categories`, `fighters`
+
+**技術細節**:
+
+- **Next.js 16 規範**: 所有快取更新都使用 `revalidateTag(tagName, "max")` 語法
+- **向後兼容性**: 保持與現有快取標籤的兼容性
+- **效能優化**: 精確更新相關快取，減少不必要的資料庫操作
+- **數據一致性**: 確保所有寫入操作後立即更新相關快取
+
+**主要修改文件**:
+
+1. `app/api/events/[id]/route.ts` - 修復 settleEvent 快取更新，修正 winner_id 處理邏輯，添加 IP 地址到 audit log
+2. `app/api/admin/fights/[id]/result/route.ts` - 添加 admin-events 快取更新
+3. `app/api/fights/[id]/route.ts` - 添加管理員相關快取更新
+4. `app/api/fights/route.ts` - 添加管理員相關快取更新
+5. `app/api/admin/categories/route.ts` - 添加 posts 快取更新
+
+**注意事項**:
+
+- 所有快取更新都使用 `revalidateTag(tagName, "max")`，符合 Next.js 16 規範
+- 確保讀取快速、資料庫操作最少，同時又兼具向後包容性
+- 管理員操作後立即更新相關快取，確保數據一致性
+
 ## 2025-11-21
 
 ### feat/navbar-sidebar-restructure

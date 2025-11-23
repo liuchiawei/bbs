@@ -42,7 +42,7 @@ export async function POST(
     revalidateTag("events", "max");
     revalidateTag("admin-events", "max"); // 更新管理員賽事列表快取
     revalidateTag("admin-settlable-events", "max"); // 更新管理員可結算事件列表快取
-    revalidatePath(`/events/${eventId}`);
+    revalidatePath(`/event/${eventId}`);
 
     return NextResponse.json({
       message: "Event rolled back successfully",

@@ -32,8 +32,8 @@ import { createAuditLog } from "./audit";
  * @param fights 對戰列表
  * @returns Created event with fights
  * 
- * 使用Transaction確保資料一致性，一次性創建Event和所有FighterEvent記錄
- * Uses Transaction to ensure data consistency, creates Event and all FighterEvent records in one operation
+ * 使用Transaction確保資料一致性，一次性創建Event和所有Fight記錄
+ * Uses Transaction to ensure data consistency, creates Event and all Fight records in one operation
  */
 export async function createEventWithFights(
   eventData: {
@@ -113,17 +113,17 @@ export async function createEventWithFights(
         poster_url: eventData.poster_url || null,
         external_id: eventData.external_id || null,
         external_source: eventData.external_source || null,
-        external_data: eventData.external_data || null,
+        external_data: eventData.external_data ? (eventData.external_data as any) : null,
         last_synced_at: eventData.external_id ? new Date() : null,
         sync_status: eventData.external_id ? "completed" : "pending",
       },
     });
 
-    // 批量創建FighterEvent記錄（並行操作）
-    // Batch create FighterEvent records (parallel operations)
-    const fighterEvents = await Promise.all(
+    // 批量創建Fight記錄（並行操作）
+    // Batch create Fight records (parallel operations)
+    const fightsCreated = await Promise.all(
       fights.map((fight) =>
-        tx.fighterEvent.create({
+        tx.fight.create({
           data: {
             event_id: event.id,
             fighter_id: fight.fighterId,
@@ -140,7 +140,7 @@ export async function createEventWithFights(
 
     return {
       event,
-      fights: fighterEvents,
+      fights: fightsCreated,
     };
   });
 }
@@ -158,13 +158,68 @@ export async function createEventWithFights(
 export async function getEventWithFights(eventId: string) {
   return unstable_cache(
     async () => {
+      // 參考 admin page 的寫法，使用明確的 select/include 指定需要的欄位
+      // Reference admin page pattern, use explicit select/include to specify required fields
       const event = await prisma.event.findUnique({
         where: { id: eventId },
-        include: {
-          fighterEvents: {
-            include: {
-              fighter: true,
-              opponent: true,
+        select: {
+          id: true,
+          name: true,
+          fight_date: true,
+          status: true,
+          sport_type: true,
+          promoter: true,
+          organization: true,
+          venue: true,
+          location: true,
+          description: true,
+          poster_url: true,
+          external_id: true,
+          external_source: true,
+          external_data: true,
+          last_synced_at: true,
+          sync_status: true,
+          createdAt: true,
+          updatedAt: true,
+          fights: {
+            select: {
+              id: true,
+              event_id: true,
+              fighter_id: true,
+              opponent_id: true,
+              fight_type: true,
+              fight_order: true,
+              weight_class: true,
+              result: true,
+              method: true,
+              round: true,
+              time: true,
+              is_bettable: true,
+              status: true,
+              createdAt: true,
+              updatedAt: true,
+              fighter: {
+                select: {
+                  id: true,
+                  slug: true,
+                  name: true,
+                  thumb: true,
+                  cutout: true,
+                  sport_type: true,
+                  nationality: true,
+                },
+              },
+              opponent: {
+                select: {
+                  id: true,
+                  slug: true,
+                  name: true,
+                  thumb: true,
+                  cutout: true,
+                  sport_type: true,
+                  nationality: true,
+                },
+              },
               _count: {
                 select: {
                   bets: true,
@@ -224,7 +279,7 @@ export async function getWeeklyCombatEvents(): Promise<Event[]> {
           fight_date: "asc",
         },
         include: {
-          fighterEvents: {
+          fights: {
             include: {
               fighter: true,
               opponent: true,
@@ -790,7 +845,7 @@ export async function getAllEvents(
             createdAt: true,
             _count: {
               select: {
-                fighterEvents: true,
+                fights: true,
                 bets: true,
                 posts: true,
               },

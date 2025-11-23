@@ -142,15 +142,15 @@ export function toFighterPublic(
  * 將帶關聯的 Prisma Fighter 轉換為 FighterWithEvents
  * 
  * This utility function handles the type conversion from Prisma's Fighter
- * (with eventsAsFighter relations) to FighterWithEvents from lib/types.
+ * (with fightsAsFighter relations) to FighterWithEvents from lib/types.
  * 
- * 此工具函數處理從 Prisma 的 Fighter（含 eventsAsFighter 關聯）
+ * 此工具函數處理從 Prisma 的 Fighter（含 fightsAsFighter 關聯）
  * 到 lib/types 中的 FighterWithEvents 的類型轉換。
  */
 export function toFighterWithEvents(
   fighter: Prisma.FighterGetPayload<{
     include: {
-      eventsAsFighter: {
+      fightsAsFighter: {
         include: {
           event: true;
           opponent: true;
@@ -178,7 +178,7 @@ export function toFighterWithEvents(
     last_synced_at: fighter.last_synced_at,
     createdAt: fighter.createdAt,
     updatedAt: fighter.updatedAt,
-    eventsAsFighter: fighter.eventsAsFighter.map((fe) => ({
+    fightsAsFighter: fighter.fightsAsFighter.map((fe) => ({
       id: fe.id,
       fighter_id: fe.fighter_id,
       event_id: fe.event_id,
@@ -190,7 +190,7 @@ export function toFighterWithEvents(
       weight_class: fe.weight_class,
       createdAt: fe.createdAt,
       updatedAt: fe.updatedAt,
-      event: fe.event as FighterWithEvents["eventsAsFighter"][0]["event"],
+      event: fe.event as FighterWithEvents["fightsAsFighter"][0]["event"],
       opponent: fe.opponent
         ? {
             id: fe.opponent.id,

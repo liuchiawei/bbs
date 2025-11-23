@@ -1,6 +1,10 @@
 // Profile Visibility Types
+// プロフィールの可視性タイプ
+// 個人資料欄位的隱私級別設定
 export type ProfileVisibility = "public" | "friends" | "private";
 
+// プロフィールの可視性設定
+// Profile visibility settings for all fields
 export interface ProfileVisibilitySettings {
   name?: ProfileVisibility;
   nickname?: ProfileVisibility;
@@ -17,6 +21,8 @@ export interface ProfileVisibilitySettings {
 }
 
 // Profile Types
+// プロフィールタイプ
+// 完整的個人資料類型定義（包含所有欄位和可見性設定）
 export interface Profile {
   id: string;
   userId: string;
@@ -38,6 +44,8 @@ export interface Profile {
   updatedAt: Date | string;
 }
 
+// 公開顯示用プロフィール
+// Public profile for display (minimal fields)
 export interface ProfilePublic {
   id: string;
   userId: string;
@@ -46,6 +54,8 @@ export interface ProfilePublic {
   avatar?: string | null;
 }
 
+// プロフィール作成入力
+// Create profile input type
 export interface CreateProfileInput {
   userId: string;
   name: string;
@@ -63,6 +73,8 @@ export interface CreateProfileInput {
   visibility?: ProfileVisibilitySettings;
 }
 
+// プロフィール更新入力
+// Update profile input type
 export interface UpdateProfileInput {
   name?: string;
   nickname?: string | null;
@@ -79,12 +91,15 @@ export interface UpdateProfileInput {
   visibility?: ProfileVisibilitySettings;
 }
 
+// 可視性設定更新入力
+// Update visibility settings input type
 export interface UpdateVisibilityInput {
   visibility: ProfileVisibilitySettings;
 }
 
 // User Types
-// User簡化（僅登錄相關）
+// ユーザータイプ
+// User簡化（僅登錄相關）/ Simplified User (login-related only)
 export interface User {
   id: string;
   userId: string;
@@ -99,6 +114,7 @@ export interface User {
 }
 
 // User + Profile組合類型（最常用）
+// User with Profile (most commonly used)
 export interface UserWithProfile extends User {
   profile: Profile;
 }
@@ -120,6 +136,7 @@ export interface UserPublicExtended extends UserPublic {
 }
 
 // 使用者統計資料
+// User statistics (posts, comments, likes, followers, following)
 export interface UserStats {
   posts: number;
   comments: number;
@@ -130,11 +147,13 @@ export interface UserStats {
 }
 
 // 完整使用者資料 + 統計
+// User with complete statistics
 export interface UserWithStats extends User {
   _count: UserStats;
 }
 
 // 使用者資料 + 基本統計（用於向後兼容）
+// User with basic counts (for backward compatibility)
 export interface UserWithCounts extends User {
   _count?: {
     posts: number;
@@ -147,17 +166,21 @@ export interface UserWithCounts extends User {
 }
 
 // 使用者個人資料頁（包含最近貼文和完整統計）
+// User profile page (includes recent posts and complete statistics)
 export interface UserProfilePage extends UserWithProfile {
   posts: Post[];
   _count: UserStats;
 }
 
 // User + Profile + 統計
+// User with Profile and statistics
 export interface UserWithProfileAndStats extends UserWithProfile {
   _count: UserStats;
 }
 
 // Category Types
+// カテゴリータイプ
+// Category type (for post categorization)
 export interface Category {
   id: string;
   name: string;
@@ -170,6 +193,8 @@ export interface Category {
 }
 
 // Post Types
+// 投稿タイプ
+// Post type (forum post/article)
 export interface Post {
   id: string;
   title: string;
@@ -185,6 +210,8 @@ export interface Post {
   deletedAt?: Date | string | null; // ソフトデリート用のタイムスタンプ / Soft delete timestamp
 }
 
+// 投稿 + ユーザー情報
+// Post with user information and comment count
 export interface PostWithUser extends Post {
   user: UserPublicExtended;
   category?: Category | null;
@@ -193,11 +220,15 @@ export interface PostWithUser extends Post {
   };
 }
 
+// 投稿詳細（コメント含む）
+// Post with full details including comments
 export interface PostWithDetails extends PostWithUser {
   comments: CommentWithUser[];
 }
 
 // Comment Types
+// コメントタイプ
+// Comment type (reply to posts)
 export interface Comment {
   id: string;
   content: string;
@@ -211,11 +242,14 @@ export interface Comment {
   deletedAt?: Date | string | null; // ソフトデリート用のタイムスタンプ / Soft delete timestamp
 }
 
+// コメント + ユーザー情報
+// Comment with user information
 export interface CommentWithUser extends Comment {
   user: UserPublicExtended;
 }
 
 // Comment with user and post (for liked comments page)
+// コメント + ユーザー + 投稿情報（いいねしたコメントページ用）
 export interface CommentWithUserAndPost extends CommentWithUser {
   post: {
     id: string;
@@ -224,17 +258,23 @@ export interface CommentWithUserAndPost extends CommentWithUser {
 }
 
 // API Response Types
+// APIレスポンスタイプ
+// Generic API response wrapper
 export interface ApiResponse<T = any> {
   message?: string;
   error?: string;
   data?: T;
 }
 
+// APIエラーレスポンス
+// API error response with validation details
 export interface ApiErrorResponse {
   error: string;
   details?: Record<string, string[]>;
 }
 
+// ページネーションレスポンス
+// Paginated API response
 export interface PaginationResponse<T> {
   data: T[];
   pagination: {
@@ -246,23 +286,30 @@ export interface PaginationResponse<T> {
 }
 
 // Auth Types
+// 認証タイプ
+// Session payload (stored in JWT)
 export interface SessionPayload {
   userId: string;
   email: string;
 }
 
+// ユーザー登録入力
+// User registration input
 export interface RegisterInput {
   userId: string;
   email: string;
   password: string;
 }
 
+// ログイン入力
+// User login input
 export interface LoginInput {
   userId: string;
   password: string;
 }
 
 // Form Types (deprecated - use UpdateProfileInput instead)
+// フォームタイプ（非推奨 - UpdateProfileInputを使用）
 export interface EditProfileInput {
   name?: string;
   gender?: string | null;
@@ -270,6 +317,8 @@ export interface EditProfileInput {
   avatar?: string | null;
 }
 
+// 投稿作成入力
+// Create post input
 export interface CreatePostInput {
   title: string;
   content: string;
@@ -277,6 +326,8 @@ export interface CreatePostInput {
   categoryId?: string | null;
 }
 
+// 投稿更新入力
+// Update post input
 export interface UpdatePostInput {
   title?: string;
   content?: string;
@@ -284,6 +335,8 @@ export interface UpdatePostInput {
   categoryId?: string | null;
 }
 
+// コメント作成入力
+// Create comment input
 export interface CreateCommentInput {
   content: string;
   postId: string;
@@ -291,12 +344,16 @@ export interface CreateCommentInput {
 }
 
 // Upload Types
+// アップロードタイプ
+// File upload response
 export interface UploadResponse {
   message: string;
   url: string;
 }
 
 // Admin Types
+// 管理者タイプ
+// Admin user list item (flattened profile data)
 export interface AdminUserListItem {
   id: string;
   userId: string;
@@ -313,6 +370,8 @@ export interface AdminUserListItem {
   };
 }
 
+// 管理者投稿リスト項目
+// Admin post list item
 export interface AdminPostListItem {
   id: string;
   title: string;
@@ -326,6 +385,8 @@ export interface AdminPostListItem {
   };
 }
 
+// 管理者イベントリスト項目
+// Admin event list item
 export interface AdminEventListItem {
   id: string;
   name: string;
@@ -338,13 +399,15 @@ export interface AdminEventListItem {
   location?: string | null;
   createdAt: Date | string;
   _count: {
-    fighterEvents: number;
+    fights: number; // 修正：fighterEvents → fights
     bets: number;
     posts: number;
   };
 }
 
 // Betting Types
+// ベッティングタイプ
+// Betting log entry (user bet record)
 export interface BettingLog {
   id: string;
   userId: string;
@@ -357,7 +420,8 @@ export interface BettingLog {
 }
 
 // Betting Odds Interface
-// 投注賠率介面
+// 投注賠率介面 / ベッティングオッズ
+// Betting odds calculation result
 export interface BettingOdds {
   totalPool: number;
   netPool: number;
@@ -366,7 +430,8 @@ export interface BettingOdds {
 }
 
 // Settle Event Input Interface
-// 結算賽事輸入介面
+// 結算賽事輸入介面 / イベント決済入力
+// Input for settling event bets
 export interface SettleEventInput {
   winnerId: string;
   winMethod?: string;
@@ -375,14 +440,17 @@ export interface SettleEventInput {
 
 // External Event Source Types
 // 外部イベントソースタイプ
+// External API source identifier
 export type ExternalEventSource = "thesportsdb" | "espn" | "ufc" | "other";
 
 // Sport Type
 // スポーツタイプ
+// Combat sport type identifier
 export type SportType = "boxing" | "ufc" | "mma" | "other";
 
 // Unified Event Data (from external APIs)
 // 統一されたイベントデータ（外部APIから）
+// Standardized event data format from external APIs
 export interface UnifiedEventData {
   external_id: string;
   name: string;
@@ -400,12 +468,12 @@ export interface UnifiedEventData {
 
 // Sync Status
 // 同期ステータス
+// Event synchronization status
 export type SyncStatus = "pending" | "syncing" | "completed" | "failed";
 
 // Event Match Result
-// 賽事匹配結果
+// 賽事匹配結果 / イベントマッチ結果
 // Used for fuzzy matching during event deduplication
-// 用於賽事去重時的模糊匹配
 export interface EventMatchResult {
   event: Event;
   similarityScore: number;
@@ -413,9 +481,8 @@ export interface EventMatchResult {
 }
 
 // Merge Event Options
-// 合併賽事選項
+// 合併賽事選項 / イベントマージオプション
 // Configuration for merging external API data with existing manual event
-// 用於合併外部 API 資料與現有手動賽事的配置
 export interface MergeEventOptions {
   // Preserve manual fields (do not overwrite)
   // 保留手動欄位（不覆蓋）
@@ -428,6 +495,8 @@ export interface MergeEventOptions {
   minSimilarity?: number;
 }
 
+// イベントタイプ
+// Event type (combat sports event/match)
 export interface Event {
   id: string;
   name: string;
@@ -451,6 +520,56 @@ export interface Event {
   updatedAt: Date | string;
 }
 
+// Event with fights (from database with relations)
+// 包含對戰列表的賽事（從資料庫帶關聯） / 対戦リストを含むイベント
+// Event with full fight details and relations
+export interface EventWithFights extends Event {
+  fights: Array<{
+    id: string;
+    event_id: string;
+    fighter_id: string;
+    opponent_id?: string | null;
+    fight_type: "MAIN" | "CO_MAIN" | "PRELIMS" | "EARLY_PRELIMS";
+    fight_order: number;
+    weight_class?: string | null;
+    result?: string | null;
+    method?: string | null;
+    round?: number | null;
+    time?: string | null;
+    is_bettable: boolean;
+    status: "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+    createdAt: Date | string;
+    updatedAt: Date | string;
+    fighter: {
+      id: string;
+      slug: string;
+      name: string;
+      thumb?: string | null;
+      cutout?: string | null;
+      sport_type?: SportType | null;
+      nationality?: string | null;
+    };
+    opponent: {
+      id: string;
+      slug: string;
+      name: string;
+      thumb?: string | null;
+      cutout?: string | null;
+      sport_type?: SportType | null;
+      nationality?: string | null;
+    } | null;
+    _count: {
+      bets: number;
+    };
+  }>;
+  _count: {
+    bets: number;
+    posts: number;
+  };
+}
+
+// ユーザーベッティング統計
+// User betting statistics and performance metrics
 export interface UserBettingStats {
   totalBets: number;
   wins: number;
@@ -465,7 +584,8 @@ export interface UserBettingStats {
 }
 
 // Fighter Types
-// 選手類型
+// 選手類型 / ファイタータイプ
+// Fighter type (combat sports athlete)
 export interface Fighter {
   id: string;
   slug: string;
@@ -488,7 +608,8 @@ export interface Fighter {
 }
 
 // Fighter for public display (used in components)
-// 用於公開顯示的選手類型（用於組件）
+// 用於公開顯示的選手類型（用於組件） / 公開表示用ファイター
+// Fighter data for public display in components
 export interface FighterPublic {
   id: string;
   name: string;
@@ -506,14 +627,16 @@ export interface FighterPublic {
 }
 
 // Fighter with events (from database with relations)
-// 包含賽事的選手（從資料庫帶關聯）
+// 包含賽事的選手（從資料庫帶關聯） / イベントを含むファイター
+// Fighter with fight history relations
 export interface FighterWithEvents extends Fighter {
-  eventsAsFighter: FighterEventWithDetails[];
+  fightsAsFighter: FightWithDetails[];
 }
 
-// FighterEvent with event and opponent details
-// 包含賽事和對手詳情的 FighterEvent
-export interface FighterEventWithDetails {
+// Fight with event and opponent details
+// 包含賽事和對手詳情的 Fight / イベントと対戦相手の詳細を含む対戦
+// Fight record with full event and opponent information
+export interface FightWithDetails {
   id: string;
   fighter_id: string;
   event_id: string;

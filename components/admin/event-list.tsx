@@ -282,12 +282,12 @@ export function EventList() {
                   <TableCell className="text-sm text-muted-foreground">
                     {event.sport_type || "-"}
                   </TableCell>
-                  <TableCell className="text-center">{event._count.fighterEvents}</TableCell>
+                  <TableCell className="text-center">{event._count.fights}</TableCell>
                   <TableCell className="text-center">{event._count.bets}</TableCell>
                   <TableCell className="text-center">{event._count.posts}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" asChild>
-                      <Link href={`/events/${event.id}`} target="_blank">
+                      <Link href={`/event/${event.id}`} target="_blank">
                         <ExternalLink className="h-4 w-4" />
                       </Link>
                     </Button>

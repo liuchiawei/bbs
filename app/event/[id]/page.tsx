@@ -18,7 +18,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { EventDetailCard } from "@/components/events/event-detail-card";
 import { EventFightCard } from "@/components/events/event-fight-card";
-import type { Event, ExternalEventSource } from "@/lib/types";
+import type { Event, EventWithFights, ExternalEventSource } from "@/lib/types";
 
 /**
  * Event Detail Page
@@ -93,7 +93,7 @@ export default async function EventDetailPage({
 
   // Type assertion for event with fights
   // 類型斷言：包含對戰列表的賽事
-  const eventWithFights = event as any;
+  const eventWithFights = event as EventWithFights;
 
   // 外部APIデータを取得
   // Get external API data
@@ -184,20 +184,20 @@ export default async function EventDetailPage({
         </div>
 
         {/* Fights Section */}
-        {eventWithFights.fighterEvents &&
-        eventWithFights.fighterEvents.length > 0 ? (
+        {eventWithFights.fights &&
+        eventWithFights.fights.length > 0 ? (
           <div className="mb-8 space-y-6">
             <h2 className="text-2xl font-bold">對戰列表 / Fight Card</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {eventWithFights.fighterEvents.map((fight: any) => {
+              {eventWithFights.fights.map((fight) => {
                 // 只顯示每個對戰一次（使用 fighter_id 和 fight_order 組合）
                 // Only show each fight once (using fighter_id and fight_order combination)
                 if (!fight.opponent_id || !fight.opponent) return null;
 
                 // 只顯示 fighter_id 較小的記錄（避免重複顯示）
                 // Only show records where fighter_id is smaller (avoid duplicate display)
-                const otherFight = eventWithFights.fighterEvents.find(
-                  (f: any) =>
+                const otherFight = eventWithFights.fights.find(
+                  (f) =>
                     f.fight_order === fight.fight_order &&
                     f.fighter_id === fight.opponent_id &&
                     f.opponent_id === fight.fighter_id
@@ -301,7 +301,7 @@ export default async function EventDetailPage({
                 <div>
                   <p className="text-sm text-muted-foreground">Total Fights</p>
                   <p className="text-2xl font-bold">
-                    {eventWithFights.fighterEvents?.length || 0}
+                    {eventWithFights.fights?.length || 0}
                   </p>
                 </div>
               </div>
@@ -363,3 +363,4 @@ export default async function EventDetailPage({
     </div>
   );
 }
+

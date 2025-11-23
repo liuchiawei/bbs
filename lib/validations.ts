@@ -302,11 +302,11 @@ export const createCommentSchema = z.object({
 // 投注驗證 schemas
 
 /**
- * Place bet schema (updated to use fighterEventId)
- * 投注驗證 schema（更新為使用 fighterEventId）
+ * Place bet schema (updated to use fightId)
+ * 投注驗證 schema（更新為使用 fightId）
  */
 export const placeBetSchema = z.object({
-  fighterEventId: z.string().min(1, "FighterEvent ID is required"), // 對戰ID（必填）
+  fightId: z.string().min(1, "Fight ID is required"), // 對戰ID（必填）
   target_winner_id: z.string().min(1, "Target winner ID is required"), // 目標勝者ID（必填）
   amount: z
     .number()

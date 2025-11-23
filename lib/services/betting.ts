@@ -16,7 +16,7 @@ import type { BettingOdds } from "@/lib/types";
  * 對特定對戰下注
  * 
  * @param userId User ID
- * @param fighterEventId FighterEvent ID (對戰ID)
+ * @param fightId Fight ID (對戰ID)
  * @param targetWinnerId Target winner ID (fighter_id或opponent_id)
  * @param amount Bet amount
  * @param ipAddress IP address for audit log
@@ -27,7 +27,7 @@ import type { BettingOdds } from "@/lib/types";
  */
 export async function placeBet(
   userId: string,
-  fighterEventId: string,
+  fightId: string,
   targetWinnerId: string,
   amount: number,
   ipAddress: string
@@ -51,10 +51,10 @@ export async function placeBet(
       throw new Error("Insufficient funds");
     }
 
-    // 3. Get FighterEvent (對戰資訊)
-    // 取得FighterEvent（對戰資訊）
-    const fighterEvent = await tx.fighterEvent.findUnique({
-      where: { id: fighterEventId },
+    // 3. Get Fight (對戰資訊)
+    // 取得Fight（對戰資訊）
+    const fight = await tx.fight.findUnique({
+      where: { id: fightId },
       include: {
         event: true,
         fighter: true,
@@ -62,34 +62,34 @@ export async function placeBet(
       },
     });
 
-    if (!fighterEvent) {
+    if (!fight) {
       throw new Error("Fight not found");
     }
 
     // 4. Validate fight is bettable
     // 驗證對戰可投注
-    if (!fighterEvent.is_bettable) {
+    if (!fight.is_bettable) {
       throw new Error("Betting is not available for this fight");
     }
 
     // 5. Validate fight status
     // 驗證對戰狀態
-    if (fighterEvent.status === "CANCELLED" || fighterEvent.status === "COMPLETED") {
+    if (fight.status === "CANCELLED" || fight.status === "COMPLETED") {
       throw new Error("Betting is closed for this fight");
     }
 
     // 6. Validate target winner matches fight fighters
     // 驗證目標勝者匹配對戰選手
     if (
-      targetWinnerId !== fighterEvent.fighter_id &&
-      targetWinnerId !== fighterEvent.opponent_id
+      targetWinnerId !== fight.fighter_id &&
+      targetWinnerId !== fight.opponent_id
     ) {
       throw new Error("Target winner must be one of the fight fighters");
     }
 
     // 7. Check Event Status
     // イベントステータスを確認
-    const event = fighterEvent.event;
+    const event = fight.event;
     if (event.status !== "OPEN" && event.status !== "PENDING") {
       throw new Error("Betting is closed for this event");
     }
@@ -98,7 +98,7 @@ export async function placeBet(
     // 計算當前賠率快照
     // Note: calculateFightOdds accepts optional tx parameter for use within transactions
     // 注意：calculateFightOdds 接受可選的 tx 參數，用於在事務中使用
-    const currentOdds = await calculateFightOdds(fighterEventId, tx);
+    const currentOdds = await calculateFightOdds(fightId, tx);
     const oddsSnapshot = new Decimal(currentOdds.odds[targetWinnerId] || 0);
 
     // 9. Deduct Points
@@ -116,7 +116,7 @@ export async function placeBet(
       data: {
         userId,
         eventId: event.id,
-        fighterEventId,
+        fightId,
         bet_amount: betAmount,
         target_winner_id: targetWinnerId,
         odds_snapshot: oddsSnapshot,
@@ -129,7 +129,7 @@ export async function placeBet(
     await createAuditLog(
       userId,
       "PLACE_BET",
-      `User ${userId} placed bet of ${betAmount.toString()} on fight ${fighterEventId} (event ${event.id}) for winner ${targetWinnerId}`,
+      `User ${userId} placed bet of ${betAmount.toString()} on fight ${fightId} (event ${event.id}) for winner ${targetWinnerId}`,
       ipAddress
     );
 
@@ -141,20 +141,20 @@ export async function placeBet(
  * Get betting odds for a specific fight (with cache)
  * 獲取特定對戰的投注賠率（快取）
  * 
- * @param fighterEventId FighterEvent ID
+ * @param fightId Fight ID
  * @returns BettingOdds for the fight
  * 
  * 使用快取優化效能，5秒revalidate
  * Uses cache for performance optimization, 5 second revalidate
  */
-export async function getFightOdds(fighterEventId: string): Promise<BettingOdds> {
+export async function getFightOdds(fightId: string): Promise<BettingOdds> {
   return unstable_cache(
     async () => {
-      return await calculateFightOdds(fighterEventId);
+      return await calculateFightOdds(fightId);
     },
-    [`fight-odds-${fighterEventId}`],
+    [`fight-odds-${fightId}`],
     {
-      tags: [`fight-odds-${fighterEventId}`, `event-fights-${fighterEventId}`],
+      tags: [`fight-odds-${fightId}`, `event-fights-${fightId}`],
       revalidate: 5, // 5秒ごとに再検証 / Revalidate every 5 seconds
     }
   )();
@@ -175,7 +175,7 @@ export async function getEventBettingSummary(eventId: string) {
     async () => {
       // 獲取賽事所有對戰
       // Get all fights for the event
-      const fights = await prisma.fighterEvent.findMany({
+      const fights = await prisma.fight.findMany({
         where: { event_id: eventId },
         include: {
           fighter: true,
@@ -220,12 +220,12 @@ export async function getEventBettingSummary(eventId: string) {
 /**
  * Get betting odds for an event (deprecated, use getFightOdds instead)
  * イベントのオッズを取得（已棄用，請使用getFightOdds）
- * @deprecated Use getFightOdds(fighterEventId) instead
+ * @deprecated Use getFightOdds(fightId) instead
  */
 export async function getBettingOdds(eventId: string): Promise<BettingOdds> {
   // 向後兼容：返回第一個對戰的賠率（如果存在）
   // Backward compatibility: return odds for first fight if exists
-  const firstFight = await prisma.fighterEvent.findFirst({
+  const firstFight = await prisma.fight.findFirst({
     where: { event_id: eventId },
     orderBy: { fight_order: "asc" },
   });
@@ -388,14 +388,12 @@ export async function rollbackEvent(
     const eventDate = new Date(event.fight_date);
     const newStatus = eventDate < now ? "CLOSED" : "OPEN";
 
+    // 注意：winner_id、win_method、win_round、is_manual_override 已從 Event 模型中移除
+    // Note: winner_id, win_method, win_round, is_manual_override have been removed from Event model
     await tx.event.update({
       where: { id: eventId },
       data: {
         status: newStatus,
-        winner_id: null,
-        win_method: null,
-        win_round: null,
-        is_manual_override: false,
       },
     });
 

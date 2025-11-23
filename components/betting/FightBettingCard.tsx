@@ -136,7 +136,7 @@ export function FightBettingCard({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fighterEventId: fight.id,
+          fightId: fight.id,
           target_winner_id: selectedWinner,
           amount: betAmount,
         }),

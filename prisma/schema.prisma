@@ -198,8 +198,8 @@ model Event {
 
   // Relationships
   posts         Post[]
-  bets          BettingLog[] // 保留用於查詢，實際關聯到FighterEvent
-  fighterEvents FighterEvent[] // 對戰組合列表
+  bets          BettingLog[] // 保留用於查詢，實際關聯到Fight
+  fights       Fight[] // 對戰組合列表
 
   @@unique([external_id, external_source]) // 外部イベントの一意制約 / Unique constraint for external events
   @@index([external_id, external_source]) // 外部イベントの高速検索 / Fast lookup for external events
@@ -221,7 +221,7 @@ model BettingLog {
   id                String    @id @default(uuid()) // 主鍵
   userId            String // 用戶ID
   eventId           String // 賽事ID（保留用於快速查詢和統計）
-  fighterEventId    String // 對戰ID（關聯到具體對戰，必填）
+  fightId           String // 對戰ID（關聯到具體對戰，必填）
   bet_amount        Decimal // 投注總金額
   target_winner_id  String // 投注目標勝者ID（fighter_id或opponent_id）
   odds_snapshot     Decimal // 投注時的即時賠率快照（用於未來爭議或審計）
@@ -232,11 +232,11 @@ model BettingLog {
 
   user         User         @relation(fields: [userId], references: [userId])
   event        Event        @relation(fields: [eventId], references: [id])
-  fighterEvent FighterEvent @relation(fields: [fighterEventId], references: [id])
+  fight        Fight        @relation(fields: [fightId], references: [id])
 
   @@index([userId]) // 用戶投注查詢 / User betting queries
   @@index([eventId]) // 賽事投注查詢 / Event betting queries
-  @@index([fighterEventId]) // 對戰投注查詢 / Fight betting queries
+  @@index([fightId]) // 對戰投注查詢 / Fight betting queries
   @@index([settlement_status]) // 結算狀態查詢優化 / Optimize settlement status queries
 }
 
@@ -277,15 +277,15 @@ model Fighter {
   updatedAt       DateTime  @updatedAt
 
   // Relationships
-  eventsAsFighter  FighterEvent[] @relation("Fighter")
-  eventsAsOpponent FighterEvent[] @relation("Opponent")
+  fightsAsFighter  Fight[] @relation("Fighter")
+  fightsAsOpponent Fight[] @relation("Opponent")
 
   @@index([external_id, external_source]) // Fast lookup for external fighters
   @@index([sport_type]) // Filter by sport type
   @@index([slug]) // Fast slug lookup
 }
 
-model FighterEvent {
+model Fight {
   id          String  @id @default(uuid())
   event_id    String // FK to Event
   fighter_id  String // FK to Fighter (選手1)
