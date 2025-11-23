@@ -2,6 +2,115 @@
 
 ## 2025-01-22
 
+### feat/fight-page-and-fighter-hover-card
+
+**難度**: ★★★★☆
+
+**描述**: 實作新的 Fight Page 和 Fighter Profile Hover Card 組件，優化 Event Page 設計，提升用戶體驗和資料展示完整性
+
+**問題分析**:
+
+1. **缺少 Fight 詳細頁面**: 用戶無法查看單一對戰的完整資訊，包括賽事資料、賠率、選手詳細資料和過往戰績
+2. **Event Page 資訊不足**: FightBettingCard 中缺少 Fight Page 連結和選手 Avatar，用戶體驗不佳
+3. **選手資訊展示不完整**: 在 Event Page 和 Fight Page 中，選手名字和 Avatar 缺少懸停查看詳細資料的功能
+
+**解決方案**:
+
+1. **新建 Fight Page** (`app/fight/[id]/page.tsx`):
+   - 顯示該場 Fight 所屬 Event 資料（名稱、日期、地點）
+   - 顯示該賽事賠率（兩位選手的賠率和投注池）
+   - 顯示兩位對戰選手的詳細資料和過往戰績
+   - 使用 shadcn 元件（Card、Badge、Avatar 等）
+   - 整合 Fighter Profile Hover Card 組件
+   - 支援動態 metadata 生成
+
+2. **新建 Fights Service** (`lib/services/fights.ts`):
+   - `getFightWithDetails()`: 獲取對戰完整詳情（包含 Event、Fighter、統計）
+   - `getFighterRecentFights()`: 獲取選手最近對戰（支援 limit 參數）
+   - `calculateFighterStats()`: 計算選手統計（勝負平總）
+   - 使用 `unstable_cache` 快取機制（60秒 revalidate）
+   - 優化資料庫查詢，減少 N+1 問題
+
+3. **新建 Fighter Profile Hover Card** (`components/fighters/fighter-profile-hover-card.tsx`):
+   - 使用 shadcn HoverCard 元件
+   - 顯示選手頭像、名字、國籍、運動類型
+   - 顯示戰績統計（勝負平總）
+   - 顯示最近對戰記錄（最多3場）
+   - 支援預載入資料以減少 API 呼叫
+   - 支援 slug 或 ID 查詢（自動判斷 UUID 或 slug）
+   - 提供連結到完整選手頁面
+
+4. **新建 API 路由**:
+   - `/api/fighters/[slug]/stats` (`app/api/fighters/[slug]/stats/route.ts`):
+     - 獲取選手統計（勝負平總）
+     - 支援 UUID（ID）和 slug 兩種查詢方式
+   - `/api/fighters/[slug]/recent-fights` (`app/api/fighters/[slug]/recent-fights/route.ts`):
+     - 獲取選手最近對戰（支援 limit 參數）
+     - 支援 UUID（ID）和 slug 兩種查詢方式
+
+5. **更新 FightBettingCard** (`components/betting/FightBettingCard.tsx`):
+   - 添加 Fight Page 連結（右上角「查看詳情 / View Details」）
+   - 添加參賽選手 Avatar 顯示（使用 FighterAvatar 組件）
+   - 整合 Fighter Profile Hover Card（選手名字可懸停查看詳情）
+   - 更新 Fighter 介面定義，添加 thumb、cutout、nationality、sport_type 欄位
+
+6. **Event Page 整合** (`app/event/[id]/page.tsx`):
+   - 導入 Fighter Profile Hover Card 組件
+   - 通過 FightBettingCard 組件自動使用 Hover Card 功能
+
+**設計特點**:
+
+1. **資料庫操作優化**:
+   - 使用 `unstable_cache` 進行快取，減少資料庫查詢
+   - 預載入資料支援，避免不必要的 API 呼叫
+   - 批量查詢選手統計和最近對戰
+
+2. **響應式設計**:
+   - 使用 Tailwind CSS 和 shadcn 元件，支援各種螢幕尺寸
+   - Hover Card 自動調整位置（side="right", align="start"）
+
+3. **雙語支援**:
+   - 所有文字都提供繁體中文和英文
+   - 符合專案整體風格
+
+4. **優雅的 UI**:
+   - 使用 shadcn 元件，符合專案整體風格
+   - Hover Card 提供流暢的懸停體驗
+   - Fight Page 使用清晰的卡片佈局
+
+**效能優化**:
+
+- **快取策略**: 使用 `unstable_cache` 快取查詢結果（60秒 revalidate）
+- **預載入資料**: Hover Card 支援預載入統計和最近對戰，避免不必要的 API 呼叫
+- **批量查詢**: 並行查詢兩位選手的統計和最近對戰
+- **資料庫索引**: 利用現有的 fighter_id、event_id 索引優化查詢
+
+**技術細節**:
+
+- **shadcn/ui 組件**: 使用已安裝的 HoverCard、Card、Badge、Avatar 組件
+- **類型安全**: 所有組件使用 TypeScript 介面定義 props
+- **錯誤處理**: API 路由包含完善的錯誤處理
+- **向後兼容**: 支援 UUID（ID）和 slug 兩種查詢方式，確保向後兼容
+
+**主要修改文件**:
+
+1. `app/fight/[id]/page.tsx` - 新建 Fight Page
+2. `lib/services/fights.ts` - 新建 Fights Service
+3. `components/fighters/fighter-profile-hover-card.tsx` - 新建 Fighter Profile Hover Card 組件
+4. `app/api/fighters/[slug]/stats/route.ts` - 新建選手統計 API
+5. `app/api/fighters/[slug]/recent-fights/route.ts` - 新建選手最近對戰 API
+6. `components/betting/FightBettingCard.tsx` - 更新添加 Fight Page link 和 Avatar
+7. `app/event/[id]/page.tsx` - 導入 Hover Card 組件
+
+**注意事項**:
+
+- Hover Card 支援預載入資料，建議在可能的情況下預載入統計和最近對戰以減少 API 呼叫
+- API 路由支援 UUID（ID）和 slug 兩種查詢方式，自動判斷查詢類型
+- 所有組件已通過 linter 檢查，沒有錯誤
+- 快取策略使用 60 秒 revalidate，確保資料及時更新
+
+## 2025-01-22
+
 ### fix/admin-cache-revalidation-nextjs16
 
 **難度**: ★★★☆☆

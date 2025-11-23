@@ -15,7 +15,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Loader2, Trophy, Users } from "lucide-react";
+import { Loader2, Trophy, Users, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { FighterAvatar } from "@/components/fighters/fighter-avatar";
+import { FighterProfileHoverCard } from "@/components/fighters/fighter-profile-hover-card";
 
 interface BettingOdds {
   totalPool: number;
@@ -28,6 +31,10 @@ interface Fighter {
   id: string;
   name: string;
   slug?: string;
+  thumb?: string | null;
+  cutout?: string | null;
+  nationality?: string | null;
+  sport_type?: string | null;
 }
 
 interface Fight {
@@ -203,10 +210,19 @@ export function FightBettingCard({
             </Badge>
           )}
         </div>
-        <CardTitle className="flex items-center justify-center gap-2 uppercase tracking-widest text-lg font-black">
-          <Trophy className="w-5 h-5 text-accent" />
-          Official Bet Slip
-        </CardTitle>
+        <div className="flex items-center justify-between mb-2">
+          <CardTitle className="flex items-center justify-center gap-2 uppercase tracking-widest text-lg font-black">
+            <Trophy className="w-5 h-5 text-accent" />
+            Official Bet Slip
+          </CardTitle>
+          <Link
+            href={`/fight/${fight.id}`}
+            className="text-xs text-primary hover:underline flex items-center gap-1"
+          >
+            查看詳情 / View Details
+            <ExternalLink className="w-3 h-3" />
+          </Link>
+        </div>
         <CardDescription className="font-mono text-xs">
           FIGHT #{fight.fightOrder}
           <br />
@@ -223,34 +239,58 @@ export function FightBettingCard({
         <div className="space-y-6">
           {/* Fighters */}
           <div className="grid grid-cols-2 gap-4">
-            {outcomes.map((outcome) => (
-              <div
-                key={outcome.id}
-                onClick={() => canBet && setSelectedWinner(outcome.id)}
-                className={`cursor-pointer border-2 rounded-none p-4 text-center transition-all relative overflow-hidden group ${
-                  selectedWinner === outcome.id
-                    ? "border-primary bg-primary/5"
-                    : canBet
-                      ? "border-muted hover:border-primary/30"
-                      : "border-muted opacity-50 cursor-not-allowed"
-                }`}
-              >
-                {selectedWinner === outcome.id && (
-                  <div className="absolute top-0 right-0 w-3 h-3 bg-primary transform rotate-45 translate-x-1.5 -translate-y-1.5" />
-                )}
-                <div className="font-black text-lg uppercase italic">
-                  {outcome.name}
+            {outcomes.map((outcome) => {
+              const fighterData =
+                outcome.id === fight.fighter.id ? fight.fighter : fight.opponent;
+              return (
+                <div
+                  key={outcome.id}
+                  onClick={() => canBet && setSelectedWinner(outcome.id)}
+                  className={`cursor-pointer border-2 rounded-none p-4 text-center transition-all relative overflow-hidden group ${
+                    selectedWinner === outcome.id
+                      ? "border-primary bg-primary/5"
+                      : canBet
+                        ? "border-muted hover:border-primary/30"
+                        : "border-muted opacity-50 cursor-not-allowed"
+                  }`}
+                >
+                  {selectedWinner === outcome.id && (
+                    <div className="absolute top-0 right-0 w-3 h-3 bg-primary transform rotate-45 translate-x-1.5 -translate-y-1.5" />
+                  )}
+                  {/* Fighter Avatar */}
+                  <div className="flex justify-center mb-2">
+                    <FighterAvatar
+                      thumb={fighterData?.cutout || fighterData?.thumb}
+                      name={outcome.name}
+                      size="md"
+                    />
+                  </div>
+                  <div className="font-black text-lg uppercase italic">
+                    <FighterProfileHoverCard
+                      fighterId={outcome.id}
+                      fighterName={outcome.name}
+                      fighterSlug={fighterData?.slug}
+                      fighterThumb={fighterData?.thumb}
+                      fighterNationality={fighterData?.nationality}
+                      fighterSportType={fighterData?.sport_type || undefined}
+                      trigger={
+                        <span className="hover:text-primary transition-colors">
+                          {outcome.name}
+                        </span>
+                      }
+                    />
+                  </div>
+                  <div className="text-sm font-mono text-muted-foreground mt-1">
+                    <span className="text-accent-foreground bg-accent px-1 rounded text-xs font-bold">
+                      {loadingOdds ? "..." : `${getOdds(outcome.id)}x`}
+                    </span>
+                  </div>
+                  {fight.result && fight.result === (outcome.id === fight.fighter.id ? "Win" : "Loss") && (
+                    <Badge className="mt-2 bg-green-500">勝 / Winner</Badge>
+                  )}
                 </div>
-                <div className="text-sm font-mono text-muted-foreground mt-1">
-                  <span className="text-accent-foreground bg-accent px-1 rounded text-xs font-bold">
-                    {loadingOdds ? "..." : `${getOdds(outcome.id)}x`}
-                  </span>
-                </div>
-                {fight.result && fight.result === (outcome.id === fight.fighter.id ? "Win" : "Loss") && (
-                  <Badge className="mt-2 bg-green-500">勝 / Winner</Badge>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Betting Amount Input */}

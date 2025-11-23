@@ -18,6 +18,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { EventDetailCard } from "@/components/events/event-detail-card";
 import { EventFightCard } from "@/components/events/event-fight-card";
+import { FighterProfileHoverCard } from "@/components/fighters/fighter-profile-hover-card";
 import type { Event, EventWithFights, ExternalEventSource } from "@/lib/types";
 
 /**
@@ -184,8 +185,7 @@ export default async function EventDetailPage({
         </div>
 
         {/* Fights Section */}
-        {eventWithFights.fights &&
-        eventWithFights.fights.length > 0 ? (
+        {eventWithFights.fights && eventWithFights.fights.length > 0 ? (
           <div className="mb-8 space-y-6">
             <h2 className="text-2xl font-bold">對戰列表 / Fight Card</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -363,4 +363,3 @@ export default async function EventDetailPage({
     </div>
   );
 }
-
