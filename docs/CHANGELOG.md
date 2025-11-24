@@ -2,6 +2,78 @@
 
 ## 2025-11-24
 
+### feat/loading-components-and-suspense-fallback
+
+**難度**: ★★☆☆☆
+
+**描述**: 檢視整體專案，為所有 Suspense 邊界提供適當的 fallback，使用 shadcn 元件製作合適的 loading 動畫組件，提升用戶載入體驗
+
+**問題分析**:
+
+1. **Suspense fallback 不完善**:
+   - `app/layout.tsx` 中 Navbar 的 Suspense fallback 為 `null`，載入時沒有視覺反饋
+   - `app/fighter/page.tsx` 中 FighterFilters 的 fallback 為簡單的 `<div className="h-24 mb-8" />`，缺乏視覺設計
+   - `app/event/page.tsx` 中 EventFilters 的 fallback 為簡單的 `<div className="h-12 mb-8" />`，缺乏視覺設計
+
+2. **缺少可重用的 loading 組件**:
+   - 專案中已有多個 `loading.tsx` 檔案，但缺少可重用的 loading 組件
+   - 現有的 loading 組件主要使用 Skeleton 元件，但 Suspense fallback 沒有使用這些組件
+
+**解決方案**:
+
+1. **創建可重用的 Loading 組件** (`components/ui/loading.tsx`):
+   - 通用 loading 組件，支援多種變體：`spinner`、`skeleton`、`inline`、`fullscreen`
+   - 支援自訂大小（sm、md、lg）和樣式
+   - 使用 shadcn/ui 的 `Spinner` 和 `Skeleton` 元件
+   - 提供統一的 loading 顯示介面
+
+2. **創建 Navbar Loading 組件** (`components/ui/navbar-loading.tsx`):
+   - Navbar 專用 loading 組件
+   - 模擬 Navbar 的結構（AppSideBar、Logo、UserMenu）
+   - 使用 Skeleton 元件顯示各個部分的佔位符
+   - 保持與實際 Navbar 相同的佈局和樣式
+
+3. **創建 Filter Loading 組件** (`components/ui/filter-loading.tsx`):
+   - Filter 專用 loading 組件
+   - 支援兩種變體：`default` 和 `with-search`
+   - 模擬 Filter 組件的結構（filter label、select buttons）
+   - 使用 Skeleton 元件顯示 filter 按鈕和選單的佔位符
+
+4. **更新 Suspense Fallback**:
+   - **`app/layout.tsx`**: 將 Navbar 的 Suspense fallback 從 `null` 改為 `<NavbarLoading />`
+   - **`app/fighter/page.tsx`**: 將 FighterFilters 的 Suspense fallback 改為 `<FilterLoading variant="with-search" />`
+   - **`app/event/page.tsx`**: 將 EventFilters 的 Suspense fallback 改為 `<FilterLoading />`
+
+**技術細節**:
+
+- **shadcn/ui 元件**: 使用已安裝的 `Skeleton` 和 `Spinner` 元件
+- **設計系統**: 遵循專案的設計系統（new-york style）
+- **響應式設計**: 所有 loading 組件保持響應式設計
+- **類型安全**: 所有組件使用 TypeScript 介面定義 props
+- **組件註解**: 使用日本語註解說明組件用途
+
+**用戶體驗改進**:
+
+- **視覺反饋**: 所有 Suspense 邊界現在都有適當的 loading 動畫，提供清晰的視覺反饋
+- **一致性**: 使用統一的 loading 組件，確保整個應用程式的 loading 體驗一致
+- **專業感**: 使用 shadcn/ui 元件製作的 loading 動畫，提升整體 UI 的專業感
+
+**主要修改文件**:
+
+1. `components/ui/loading.tsx` - 新建通用 loading 組件
+2. `components/ui/navbar-loading.tsx` - 新建 Navbar loading 組件
+3. `components/ui/filter-loading.tsx` - 新建 Filter loading 組件
+4. `app/layout.tsx` - 更新 Navbar Suspense fallback
+5. `app/fighter/page.tsx` - 更新 FighterFilters Suspense fallback
+6. `app/event/page.tsx` - 更新 EventFilters Suspense fallback
+
+**注意事項**:
+
+- 所有 loading 組件已通過 linter 檢查，沒有錯誤
+- Loading 組件使用 shadcn/ui 元件，符合專案設計系統
+- Suspense fallback 現在提供適當的視覺反饋，改善用戶體驗
+- 所有組件保持響應式設計，適配不同螢幕尺寸
+
 ### fix/build-prerender-errors
 
 **難度**: ★★☆☆☆

@@ -6,6 +6,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { NavbarLoading } from "@/components/ui/navbar-loading";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,7 +41,7 @@ export default function RootLayout({
       >
         {/* SuspenseでNavbarをラップして、PPRが正しく動作するようにする */}
         {/* Wrap Navbar with Suspense to allow PPR to work correctly */}
-        <Suspense fallback={null}>
+        <Suspense fallback={<NavbarLoading />}>
           <Navbar />
         </Suspense>
         <main className="w-full max-w-3xl h-full min-h-screen mx-auto px-2 pt-12">

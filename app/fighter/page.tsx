@@ -14,6 +14,7 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/components/ui/pagination";
+import { FilterLoading } from "@/components/ui/filter-loading";
 
 /**
  * Fighters Page
@@ -222,7 +223,7 @@ export default async function FightersPage({ searchParams }: FightersPageProps) 
       </div>
 
       {/* Filters */}
-      <Suspense fallback={<div className="h-24 mb-8" />}>
+      <Suspense fallback={<FilterLoading variant="with-search" />}>
         <FighterFilters />
       </Suspense>
 
