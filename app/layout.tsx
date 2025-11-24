@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -37,7 +38,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Navbar />
+        {/* SuspenseでNavbarをラップして、PPRが正しく動作するようにする */}
+        {/* Wrap Navbar with Suspense to allow PPR to work correctly */}
+        <Suspense fallback={null}>
+          <Navbar />
+        </Suspense>
         <main className="w-full max-w-3xl h-full min-h-screen mx-auto px-2 pt-12">
           {children}
         </main>

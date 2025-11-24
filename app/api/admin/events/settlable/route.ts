@@ -10,6 +10,10 @@ import { getCurrentUser } from "@/lib/auth";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 
+// API ルートを動的レンダリングに強制（prerenderを無効化）
+// Force API route to dynamic rendering (disable prerender)
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/admin/events/settlable
  * Get events that can be settled (OPEN or CLOSED status) with main fight info

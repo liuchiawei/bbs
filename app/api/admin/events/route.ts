@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getAllEvents } from "@/lib/services/events";
 
+// API ルートを動的レンダリングに強制（prerenderを無効化）
+// Force API route to dynamic rendering (disable prerender)
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser();

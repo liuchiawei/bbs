@@ -1,5 +1,67 @@
 # 開發日誌 / Development Log
 
+## 2025-11-24
+
+### fix/build-prerender-errors
+
+**難度**: ★★☆☆☆
+
+**描述**: 修復 Vercel build 時的 prerender 錯誤，解決 API 路由的 `cookies()` 錯誤和 AppSideBar 的 `usePathname()` 未緩存數據錯誤，優化用戶載入體驗
+
+**問題分析**:
+
+1. **API 路由的 `cookies()` prerender 錯誤**: 
+   - 三個管理員 API 路由（`/api/admin/events`, `/api/admin/events/settlable`, `/api/admin/posts`）在 build 時被 prerender
+   - 這些路由使用 `getCurrentUser()` → `getSession()` → `cookies()`，但 `cookies()` 只能在請求時使用
+   - 導致 build 時出現 "During prerendering, `cookies()` rejects when the prerender is complete" 錯誤
+
+2. **AppSideBar 的 `usePathname()` 未緩存數據錯誤**:
+   - `AppSideBar` 組件在 `Navbar` 中使用，而 `Navbar` 在 `app/layout.tsx` 中被直接渲染
+   - `usePathname()` 在 prerender 階段無法訪問路徑數據
+   - 導致 `/category/[slug]` 頁面出現 "Uncached data was accessed outside of <Suspense>" 錯誤
+
+**修復內容**:
+
+1. **修復 API 路由 prerender 問題**:
+   - 在三個管理員 API 路由文件中添加 `export const dynamic = 'force-dynamic'`
+   - 禁用這些路由的 prerendering，確保它們只在請求時執行
+   - 文件：
+     - `app/api/admin/events/route.ts`
+     - `app/api/admin/events/settlable/route.ts`
+     - `app/api/admin/posts/route.ts`
+
+2. **優化 AppSideBar 渲染（使用 Suspense）**:
+   - 在 `app/layout.tsx` 中導入 `Suspense` from `react`
+   - 用 `<Suspense fallback={null}>` 包裹 `<Navbar />` 組件
+   - 符合 Next.js 16 的 Partial Prerendering (PPR) 最佳實踐
+   - 允許 PPR 正確處理客戶端組件，避免 prerender 階段錯誤
+
+**技術細節**:
+
+- **API 路由動態渲染**: 使用 `export const dynamic = 'force-dynamic'` 明確標記需要動態渲染的路由
+- **Suspense 邊界**: 在 layout 中使用 Suspense 包裹客戶端組件，允許 Next.js 16 的 PPR 正確處理
+- **用戶體驗優化**: 
+  - API 路由修復不影響公開頁面載入速度（這些是管理員專用 API）
+  - Suspense 方案避免初始渲染閃爍，保持最佳載入性能
+  - 符合 Next.js 16 最佳實踐，充分利用 PPR 功能
+
+**主要修改文件**:
+
+1. `app/api/admin/events/route.ts` - 添加 `export const dynamic = 'force-dynamic'`
+2. `app/api/admin/events/settlable/route.ts` - 添加 `export const dynamic = 'force-dynamic'`
+3. `app/api/admin/posts/route.ts` - 添加 `export const dynamic = 'force-dynamic'`
+4. `app/layout.tsx` - 用 Suspense 包裹 Navbar 組件
+
+**注意事項**:
+
+- 所有修改通過 linter 檢查，無錯誤
+- API 路由修復不影響運行時性能，僅禁用不必要的 prerendering
+- Suspense 方案優於使用 `useState` + `useEffect` 延遲訪問，因為：
+  - 避免初始渲染時 active 狀態不正確
+  - 避免客戶端掛載後的閃爍更新
+  - 符合 Next.js 16 最佳實踐，充分利用 PPR 功能
+- 這些修復確保 build 過程順利完成，同時保持最佳用戶體驗
+
 ## 2025-01-23
 
 ### fix/typescript-type-safety-improvements
