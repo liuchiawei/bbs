@@ -12,7 +12,8 @@ import { prisma } from "@/lib/db";
 
 // API ルートを動的レンダリングに強制（prerenderを無効化）
 // Force API route to dynamic rendering (disable prerender)
-export const dynamic = 'force-dynamic';
+// Note: このルートは getCurrentUser() 内で cookies() を使用するため、自動的に動的になります
+// Note: This route automatically becomes dynamic because getCurrentUser() uses cookies() internally
 
 /**
  * GET /api/admin/events/settlable

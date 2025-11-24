@@ -134,6 +134,60 @@
   - 符合 Next.js 16 最佳實踐，充分利用 PPR 功能
 - 這些修復確保 build 過程順利完成，同時保持最佳用戶體驗
 
+### fix/nextjs-16-cachecomponents-dynamic-conflict
+
+**難度**: ★★☆☆☆
+
+**描述**: 修復 Next.js 16 中 `cacheComponents` 配置與 `dynamic = 'force-dynamic'` 的衝突錯誤，移除不必要的動態路由配置，利用 `cookies()` 自動動態化特性
+
+**問題分析**:
+
+1. **Next.js 16 cacheComponents 衝突**:
+   - `next.config.ts` 中啟用了 `cacheComponents: true`
+   - 三個管理員 API 路由使用了 `export const dynamic = 'force-dynamic'`
+   - Next.js 16 中，`cacheComponents: true` 與 `dynamic = 'force-dynamic'` 不兼容
+   - 導致 build 時出現 "Route segment config 'dynamic' is not compatible with `nextConfig.cacheComponents`" 錯誤
+
+2. **不必要的配置**:
+   - 這些 API 路由都使用 `getCurrentUser()` → `getSession()` → `cookies()`
+   - Next.js 15+ 中，使用 `cookies()` 會自動讓路由變成動態的
+   - 因此不需要明確設置 `dynamic = 'force-dynamic'`
+
+**解決方案**:
+
+1. **移除衝突的 dynamic 配置**:
+   - 從三個管理員 API 路由文件中移除 `export const dynamic = 'force-dynamic'`
+   - 保留註釋說明路由會自動變成動態的（因為使用了 `cookies()`）
+   - 文件：
+     - `app/api/admin/events/route.ts`
+     - `app/api/admin/events/settlable/route.ts`
+     - `app/api/admin/posts/route.ts`
+
+2. **添加說明註釋**:
+   - 在每個文件中添加註釋，說明路由會因為 `getCurrentUser()` 內使用 `cookies()` 而自動變成動態的
+   - 使用日本語和英語雙語註釋
+
+**技術細節**:
+
+- **自動動態化**: Next.js 15+ 中，API 路由使用 `cookies()` 會自動標記為動態路由
+- **cacheComponents 兼容**: 移除 `dynamic = 'force-dynamic'` 後，路由與 `cacheComponents: true` 配置兼容
+- **行為不變**: 移除配置後，路由仍然保持動態行為，因為 `cookies()` 的使用
+- **建置驗證**: 建置成功完成，三個路由正確顯示為 `ƒ (Dynamic)`
+
+**主要修改文件**:
+
+1. `app/api/admin/events/route.ts` - 移除 `export const dynamic = 'force-dynamic'`，添加說明註釋
+2. `app/api/admin/events/settlable/route.ts` - 移除 `export const dynamic = 'force-dynamic'`，添加說明註釋
+3. `app/api/admin/posts/route.ts` - 移除 `export const dynamic = 'force-dynamic'`，添加說明註釋
+
+**注意事項**:
+
+- 所有修改通過 linter 檢查，無錯誤
+- 建置成功完成，沒有 cacheComponents 衝突錯誤
+- 路由行為保持不變，仍然正確地作為動態路由運行
+- 此修復符合 Next.js 16 最佳實踐，充分利用框架的自動動態化特性
+- 建置過程中的警告訊息是預期的，因為 Next.js 會嘗試預渲染所有路由，但這些路由會自動變成動態的
+
 ## 2025-01-23
 
 ### fix/typescript-type-safety-improvements
