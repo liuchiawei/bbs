@@ -173,8 +173,18 @@ export function CategoryManagement() {
     setEditingCategory(category);
     setFormData({
       name: category.name,
-      slug: category.slug || "",
-      description: category.description || "",
+      slug:
+        typeof category.slug === "string"
+          ? category.slug
+          : category.slug
+          ? String(category.slug)
+          : "",
+      description:
+        typeof category.description === "string"
+          ? category.description
+          : category.description
+          ? String(category.description)
+          : "",
       displayOrder: category.displayOrder,
     });
     setFormErrors({});
@@ -305,11 +315,19 @@ export function CategoryManagement() {
                 <TableRow key={category.id}>
                   <TableCell className="font-medium">{category.name}</TableCell>
                   <TableCell className="text-muted-foreground">
-                    {category.slug || "-"}
+                    {typeof category.slug === "string"
+                      ? category.slug
+                      : category.slug
+                      ? String(category.slug)
+                      : "-"}
                   </TableCell>
                   <TableCell>{category.displayOrder}</TableCell>
                   <TableCell className="max-w-md truncate">
-                    {category.description || "-"}
+                    {typeof category.description === "string"
+                      ? category.description
+                      : category.description
+                      ? String(category.description)
+                      : "-"}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">

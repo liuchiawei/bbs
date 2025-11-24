@@ -6,6 +6,7 @@ import { getCombatEvents } from "@/lib/services/events";
 import type { SportType } from "@/lib/types";
 import type { Event } from "@/lib/types";
 import { Metadata } from "next";
+import { FilterLoading } from "@/components/ui/filter-loading";
 
 /**
  * Events Page
@@ -65,7 +66,7 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
       </div>
 
       {/* Filters */}
-      <Suspense fallback={<div className="h-12 mb-8" />}>
+      <Suspense fallback={<FilterLoading />}>
         <EventFilters />
       </Suspense>
 

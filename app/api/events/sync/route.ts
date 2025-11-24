@@ -88,21 +88,24 @@ export async function POST(request: NextRequest) {
       source,
     };
 
-    // キャッシュを無効化して最新データを取得できるようにする
-    // Invalidate cache to fetch latest data
+    // キャッシュを無効化して最新データを取得できるようにする（符合 Next.js 16 規範，使用 'max' 參數）
+    // Invalidate cache to fetch latest data (following Next.js 16 standards, using 'max' parameter)
     revalidateTag("events", "max");
+    revalidateTag("admin-settlable-events", "max"); // 更新管理員可結算事件列表快取
+    revalidateTag("admin-events", "max"); // 更新管理員賽事列表快取
 
     return NextResponse.json({
       success: true,
       message:
-        result.created + result.updated === 0
-          ? "Sync completed but no events were created or updated. Check server logs for details."
+        result.created + result.updated + result.merged === 0
+          ? "Sync completed but no events were created, updated, or merged. Check server logs for details."
           : "Events synchronized successfully",
       result: {
         created: result.created,
         updated: result.updated,
+        merged: result.merged,
         errors: result.errors,
-        total: result.created + result.updated,
+        total: result.created + result.updated + result.merged,
       },
       diagnostic: diagnosticInfo,
       timestamp: new Date().toISOString(),
@@ -134,3 +137,18 @@ export async function GET() {
     note: "This endpoint syncs events from external APIs (TheSportsDB)",
   });
 }
+
+// 在瀏覽器控制台或 Node.js 中執行(手動更新)
+// const response = await fetch("/api/events/sync", {
+//   method: "POST",
+//   headers: {
+//     "Content-Type": "application/json",
+//   },
+//   body: JSON.stringify({
+//     secret: "YOUR_SECRET", // 如果設定了 EVENTS_SYNC_SECRET
+//     source: "thesportsdb", // 可選，預設為 'thesportsdb'
+//   }),
+// });
+
+// const data = await response.json();
+// console.log(data);

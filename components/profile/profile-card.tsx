@@ -25,13 +25,34 @@ export default function ProfileCard({
     <Card className={cn(className)}>
       <CardHeader className="grid-cols-2 auto-rows-max auto-cols-max">
         <Avatar className="size-10 row-span-2">
-          <AvatarImage src={user.avatar || undefined} />
-          <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+          <AvatarImage
+            src={
+              (user as any).avatar ||
+              (user as any).profile?.avatar ||
+              undefined
+            }
+          />
+          <AvatarFallback>
+            {((user as any).name ||
+              (user as any).profile?.name ||
+              (user as any).userId ||
+              "U").charAt(0).toUpperCase()}
+          </AvatarFallback>
         </Avatar>
-        <CardTitle>{user.nickname || user.userId}</CardTitle>
+        <CardTitle>
+          {(user as any).nickname ||
+            (user as any).profile?.nickname ||
+            (user as any).userId ||
+            "Unknown"}
+        </CardTitle>
         <CardDescription>@{user.userId}</CardDescription>
       </CardHeader>
-      <CardContent>{user.name}</CardContent>
+      <CardContent>
+        {(user as any).name ||
+          (user as any).profile?.name ||
+          (user as any).userId ||
+          "Unknown"}
+      </CardContent>
     </Card>
   );
 }

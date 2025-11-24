@@ -7,6 +7,7 @@ import {
 import { updateVisibilitySchema } from "@/lib/validations";
 import { z } from "zod";
 import { revalidateTag } from "next/cache";
+import type { Profile } from "@/lib/types";
 
 export async function GET(
   request: NextRequest,
@@ -32,6 +33,8 @@ export async function GET(
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
+    // Access visibility directly - getProfileByUserIdForOwner already returns Profile type
+    // 直接訪問 visibility - getProfileByUserIdForOwner 已經返回 Profile 類型
     return NextResponse.json({ visibility: profile.visibility });
   } catch (error) {
     console.error("Get visibility error:", error);
@@ -70,6 +73,8 @@ export async function PATCH(
     revalidateTag(`profile-${userId}`, 'max');
     revalidateTag(`user-${userId}`, 'max');
 
+    // Access visibility directly - updateVisibility already returns Profile type
+    // 直接訪問 visibility - updateVisibility 已經返回 Profile 類型
     return NextResponse.json({
       message: "Visibility updated successfully",
       visibility: profile.visibility,

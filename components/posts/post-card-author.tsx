@@ -14,11 +14,27 @@ export default function PostCardAuthor({ user }: { user: UserPublic }) {
       <HoverCardTrigger asChild>
         <Link href={`/user/${user.userId}`} className="flex items-center gap-2 w-fit">
           <Avatar className="size-6">
-            <AvatarImage src={user.avatar || undefined} />
-            <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+            <AvatarImage
+              src={
+                (user as any).avatar ||
+                (user as any).profile?.avatar ||
+                undefined
+              }
+            />
+            <AvatarFallback>
+              {((user as any).name ||
+                (user as any).profile?.name ||
+                (user as any).userId ||
+                "U").charAt(0).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <span className="border-foreground hover:border-b-2 text-sm font-semibold transition-all">
-            {user.nickname || user.name}
+            {(user as any).nickname ||
+              (user as any).profile?.nickname ||
+              (user as any).name ||
+              (user as any).profile?.name ||
+              (user as any).userId ||
+              "Unknown"}
           </span>
         </Link>
       </HoverCardTrigger>

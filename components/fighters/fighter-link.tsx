@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 interface FighterLinkProps {
   name: string;
+  slug?: string; // Optional slug (if provided, use directly instead of generating)
   className?: string;
   onClick?: () => void;
 }
@@ -18,6 +19,7 @@ interface FighterLinkProps {
  */
 export function FighterLink({
   name,
+  slug: providedSlug,
   className,
   onClick,
 }: FighterLinkProps) {
@@ -25,7 +27,7 @@ export function FighterLink({
     return <span className={className}>Unknown Fighter</span>;
   }
 
-  const slug = generateSlug(name);
+  const slug = providedSlug || generateSlug(name);
 
   // If slug generation fails (empty string), show plain text
   // 如果 slug 生成失敗（空字串），顯示純文字

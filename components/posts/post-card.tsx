@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
-import type { PostWithUser } from "@/lib/types";
+import type { PostWithUser, Category } from "@/lib/types";
 import { APP_CONSTANTS, t } from "@/lib/constants";
 
 interface PostCardProps {
@@ -95,15 +95,17 @@ export function PostCard({ post }: PostCardProps) {
   return (
     <Card className="hover:shadow-lg">
       <CardContent className="flex space-x-4 space-y-1">
-        <PostCardHeader category={post.category} />
+        <PostCardHeader category={post.category as Category | null | undefined} />
         <Link href={`/posts/${post.id}`} className="flex-1 flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <h2 className="text-lg md:text-xl font-semibold">{post.title}</h2>
-            {post.category && (
-              <Badge variant="outline" className="text-xs">
-                {post.category.name}
-              </Badge>
-            )}
+            {post.category &&
+              typeof post.category === "object" &&
+              "name" in post.category && (
+                <Badge variant="outline" className="text-xs">
+                  {(post.category as Category).name}
+                </Badge>
+              )}
           </div>
           <p className="text-muted-foreground">{contentPreview}</p>
           {/* TODO: See More Button */}

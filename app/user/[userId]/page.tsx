@@ -132,12 +132,16 @@ export default async function UserPage({
   }
 
   // Prepare logs with event names for display
-  const logsWithNames = bettingLogs.map(log => ({
+  // Transform betting logs for display, preserving Decimal types
+  // 轉換投注記錄供顯示，保留 Decimal 類型
+  const logsWithNames = bettingLogs.map((log) => ({
     ...log,
     eventName: eventMap.get(log.eventId) || "Unknown Event",
-    bet_amount: Number(log.bet_amount), // Ensure number for display
-    odds_snapshot: Number(log.odds_snapshot),
-  }));
+    // Keep bet_amount and odds_snapshot as Decimal for type compatibility
+    // 保留 bet_amount 和 odds_snapshot 為 Decimal 以保持類型兼容性
+    bet_amount: log.bet_amount,
+    odds_snapshot: log.odds_snapshot,
+  })) as (BettingLog & { eventName?: string })[];
 
   return (
     <>
@@ -145,7 +149,15 @@ export default async function UserPage({
         <CardHeader>
           <div className="flex items-center gap-6">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={profile.avatar || undefined} />
+              <AvatarImage
+                src={
+                  typeof profile.avatar === "string"
+                    ? profile.avatar
+                    : profile.avatar
+                    ? String(profile.avatar)
+                    : undefined
+                }
+              />
               <AvatarFallback className="text-3xl">
                 {profile.name.charAt(0).toUpperCase()}
               </AvatarFallback>
@@ -154,7 +166,9 @@ export default async function UserPage({
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-2">
                 <h1 className="text-3xl font-bold">
-                  {profile.nickname ? profile.nickname : profile.name}
+                  {typeof profile.nickname === "string" && profile.nickname
+                    ? profile.nickname
+                    : profile.name}
                 </h1>
                 {user.isAdmin && <Badge variant="destructive">Admin</Badge>}
               </div>
@@ -261,49 +275,105 @@ export default async function UserPage({
               {profile.gender && (
                 <div>
                   <p className="text-sm text-muted-foreground">{t("GENDER")}</p>
-                  <p className="font-medium">{profile.gender}</p>
+                  <p className="font-medium">
+                    {typeof profile.gender === "string"
+                      ? profile.gender
+                      : profile.gender
+                      ? String(profile.gender)
+                      : ""}
+                  </p>
                 </div>
               )}
               {profile.height && (
                 <div>
                   <p className="text-sm text-muted-foreground">{t("HEIGHT")}</p>
-                  <p className="font-medium">{profile.height} cm</p>
+                  <p className="font-medium">
+                    {typeof profile.height === "number"
+                      ? profile.height
+                      : typeof profile.height === "string"
+                      ? profile.height
+                      : profile.height
+                      ? String(profile.height)
+                      : ""}{" "}
+                    cm
+                  </p>
                 </div>
               )}
               {profile.weight && (
                 <div>
                   <p className="text-sm text-muted-foreground">{t("WEIGHT")}</p>
-                  <p className="font-medium">{profile.weight} kg</p>
+                  <p className="font-medium">
+                    {typeof profile.weight === "number"
+                      ? profile.weight
+                      : typeof profile.weight === "string"
+                      ? profile.weight
+                      : profile.weight
+                      ? String(profile.weight)
+                      : ""}{" "}
+                    kg
+                  </p>
                 </div>
               )}
               {profile.description && (
                 <div>
                   <p className="text-sm text-muted-foreground">{t("DESCRIPTION")}</p>
-                  <p className="font-medium whitespace-pre-wrap">{profile.description}</p>
+                  <p className="font-medium whitespace-pre-wrap">
+                    {typeof profile.description === "string"
+                      ? profile.description
+                      : profile.description
+                      ? String(profile.description)
+                      : ""}
+                  </p>
                 </div>
               )}
               {profile.record && (
                 <div>
                   <p className="text-sm text-muted-foreground">{t("RECORD")}</p>
-                  <p className="font-medium">{profile.record}</p>
+                  <p className="font-medium">
+                    {typeof profile.record === "string"
+                      ? profile.record
+                      : profile.record
+                      ? String(profile.record)
+                      : ""}
+                  </p>
                 </div>
               )}
               {profile.train_start && (
                 <div>
                   <p className="text-sm text-muted-foreground">{t("TRAIN_START_YEAR")}</p>
-                  <p className="font-medium">{profile.train_start}</p>
+                  <p className="font-medium">
+                    {typeof profile.train_start === "number"
+                      ? profile.train_start
+                      : typeof profile.train_start === "string"
+                      ? profile.train_start
+                      : profile.train_start
+                      ? String(profile.train_start)
+                      : ""}
+                  </p>
                 </div>
               )}
               {profile.stance && (
                 <div>
                   <p className="text-sm text-muted-foreground">{t("STANCE")}</p>
-                  <p className="font-medium">{profile.stance}</p>
+                  <p className="font-medium">
+                    {typeof profile.stance === "string"
+                      ? profile.stance
+                      : profile.stance
+                      ? String(profile.stance)
+                      : ""}
+                  </p>
                 </div>
               )}
               {profile.gym && (
                 <div>
                   <p className="text-sm text-muted-foreground">{t("GYM")}</p>
-                  <p className="font-medium">{profile.gym}</p>
+                  <p className="font-medium">
+                    {typeof profile.gym === "string"
+                      ? profile.gym
+                      : profile.gym
+                      ? String(profile.gym)
+                      : ""}
+                  </p>
                 </div>
               )}
               <div>

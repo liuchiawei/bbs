@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getAllPostsAdmin } from "@/lib/services/posts";
 
+// API ルートを動的レンダリングに強制（prerenderを無効化）
+// Force API route to dynamic rendering (disable prerender)
+// Note: このルートは getCurrentUser() 内で cookies() を使用するため、自動的に動的になります
+// Note: This route automatically becomes dynamic because getCurrentUser() uses cookies() internally
+
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser();
