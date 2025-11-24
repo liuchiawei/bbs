@@ -71,7 +71,13 @@ export function EventDetailCard({ event }: EventDetailCardProps) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={strLeagueBadge}
-                  alt={event.sport_type || "League"}
+                  alt={
+                    typeof event.sport_type === "string"
+                      ? event.sport_type
+                      : event.sport_type
+                      ? String(event.sport_type)
+                      : "League"
+                  }
                   width={60}
                   height={60}
                   className="object-contain"
@@ -82,7 +88,9 @@ export function EventDetailCard({ event }: EventDetailCardProps) {
             <div className="flex flex-wrap items-center gap-2 mb-2">
               {event.sport_type && (
                 <Badge variant="outline" className="capitalize">
-                  {event.sport_type}
+                  {typeof event.sport_type === "string"
+                    ? event.sport_type
+                    : String(event.sport_type)}
                 </Badge>
               )}
               {strStatus && (

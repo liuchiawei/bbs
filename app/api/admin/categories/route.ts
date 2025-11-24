@@ -46,8 +46,10 @@ export async function POST(request: NextRequest) {
       displayOrder: validatedData.displayOrder,
     });
 
-    // キャッシュを無効化 / Invalidate cache
+    // キャッシュを無効化（符合 Next.js 16 規範，使用 'max' 參數）
+    // Invalidate cache (符合 Next.js 16 規範，使用 'max' 參數)
     revalidateTag("categories", "max");
+    revalidateTag("posts", "max"); // 更新貼文快取以反映新分類
 
     return NextResponse.json({
       message: "Category created successfully",

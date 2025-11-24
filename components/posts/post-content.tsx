@@ -238,11 +238,13 @@ export function PostContent({ post, currentUserId, postId, userBets }: PostConte
                         comment={{
                           ...comment,
                           updatedAt: comment.createdAt,
+                          deletedAt: null,
                           user: {
                             ...comment.user,
                             email: "",
-                          },
-                        }}
+                            profile: null,
+                          } as any,
+                        } as any}
                         postId={post.id}
                         currentUserId={currentUserId}
                         bet={userBets?.[comment.userId]}

@@ -14,21 +14,21 @@ export function transformUser(user: {
   userId: string;
   email: string;
   profile?: {
+    id?: string | null;
+    userId?: string | null;
     name?: string | null;
     nickname?: string | null;
     avatar?: string | null;
   } | null;
 }): UserPublicExtended {
   if (!user.profile) {
-    // 如果沒有profile，使用userId作為預設值
-    // If no profile, use userId as default
+    // 如果沒有profile，返回 null profile
+    // If no profile, return null profile
     return {
       id: user.id,
       userId: user.userId,
       email: user.email,
-      name: user.userId,
-      nickname: null,
-      avatar: null,
+      profile: null, // Ensure profile is always present, even if null
     };
   }
   
@@ -38,9 +38,13 @@ export function transformUser(user: {
     id: user.id,
     userId: user.userId,
     email: user.email,
-    name: user.profile.name || user.userId,
-    nickname: user.profile.nickname ?? null, // 使用 ?? 確保 undefined 轉為 null
-    avatar: user.profile.avatar ?? null, // 使用 ?? 確保 undefined 轉為 null
+    profile: {
+      id: user.profile.id || "", // Profile id might not be available, use empty string as fallback
+      userId: user.profile.userId || user.userId,
+      name: user.profile.name || user.userId,
+      nickname: user.profile.nickname ?? null, // 使用 ?? 確保 undefined 轉為 null
+      avatar: user.profile.avatar ?? null, // 使用 ?? 確保 undefined 轉為 null
+    },
   };
 }
 

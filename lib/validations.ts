@@ -295,3 +295,46 @@ export const createCommentSchema = z.object({
   postId: z.string(),
   parentId: z.string().optional(),
 });
+
+// Betting Schemas
+// 投注相關 Schema
+// Betting validation schemas
+// 投注驗證 schemas
+
+/**
+ * Place bet schema (updated to use fightId)
+ * 投注驗證 schema（更新為使用 fightId）
+ */
+export const placeBetSchema = z.object({
+  fightId: z.string().min(1, "Fight ID is required"), // 對戰ID（必填）
+  target_winner_id: z.string().min(1, "Target winner ID is required"), // 目標勝者ID（必填）
+  amount: z
+    .number()
+    .min(50, "Minimum bet is 50 points") // 最小投注50點
+    .refine((val) => val % 10 === 0, {
+      message: "Amount must be multiple of 10", // 必須是10的倍數
+    }),
+});
+
+// Settle Fight Schema
+// 結算對戰 Schema
+export const settleFightSchema = z.object({
+  winnerId: z.string().min(1, "Winner ID is required"), // 勝者ID（必填）
+  winMethod: z.string().optional(), // 勝利方式（可選）
+  winRound: z.number().int().positive().optional(), // 勝利回合（可選，正整數）
+});
+
+// Settle Event Schema (deprecated, use settleFightSchema)
+// 結算賽事 Schema（已棄用，請使用 settleFightSchema）
+export const settleEventSchema = z.object({
+  winnerId: z.string(),
+  winMethod: z.string().optional(),
+  winRound: z.number().int().positive().optional(),
+  eventId: z.string(),
+  target_winner_id: z.string(),
+  amount: z
+    .number()
+    .min(50, "Minimum bet is 50 points")
+    .refine((val) => val % 10 === 0, "Amount must be multiple of 10"),
+});
+

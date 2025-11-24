@@ -9,19 +9,266 @@ import { prisma } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { getOrCreateFighterByName } from "./fighters";
 import { linkFightToEvent } from "./fighter-events";
+import { linkFighterToEvent } from "./fighter-events";
 import { parseFightCard } from "@/lib/utils/fight-card-parser";
 import type {
   Event,
   UnifiedEventData,
   ExternalEventSource,
   SportType,
+  AdminEventListItem,
 } from "@/lib/types";
 import { TheSportsDBClient } from "@/lib/adapters/thesportsdb";
 import { generateEventId } from "@/lib/utils/id-generator";
+import { findMatchingEvent } from "@/lib/utils/event-matcher";
+import type { MergeEventOptions } from "@/lib/types";
+import { createAuditLog } from "./audit";
 
 /**
- * Get weekly combat events (boxing, UFC, MMA)
- * 今週の格闘技イベントを取得（ボクシング、UFC、MMA）
+ * Create event with multiple fights (Transaction)
+ * 創建賽事及所有對戰（Transaction）
+ * 
+ * @param eventData Event基本資訊
+ * @param fights 對戰列表
+ * @returns Created event with fights
+ * 
+ * 使用Transaction確保資料一致性，一次性創建Event和所有Fight記錄
+ * Uses Transaction to ensure data consistency, creates Event and all Fight records in one operation
+ */
+export async function createEventWithFights(
+  eventData: {
+    name: string;
+    fight_date: Date;
+    sport_type?: string;
+    promoter?: string;
+    organization?: string;
+    venue?: string;
+    location?: string;
+    description?: string;
+    poster_url?: string;
+    status?: "PENDING" | "OPEN" | "CLOSED" | "SETTLED" | "CANCELLED";
+    external_id?: string;
+    external_source?: string;
+    external_data?: Prisma.InputJsonValue;
+  },
+  fights: Array<{
+    fighterId: string;
+    opponentId: string;
+    fightType: "MAIN" | "CO_MAIN" | "PRELIMS" | "EARLY_PRELIMS";
+    fightOrder: number;
+    weightClass?: string;
+    isBettable?: boolean;
+  }>
+) {
+  // 生成Event ID
+  // Generate Event ID
+  const eventId = await generateEventId();
+
+  return await prisma.$transaction(async (tx) => {
+    // 效能優化：批量驗證所有 Fighter ID（避免 N+1 查詢）
+    // Performance optimization: Batch validate all Fighter IDs (avoid N+1 queries)
+    const fighterIds = [...new Set(fights.flatMap((f) => [f.fighterId, f.opponentId]))];
+    const existingFighters = await tx.fighter.findMany({
+      where: { id: { in: fighterIds } },
+      select: { id: true },
+    });
+    const existingIds = new Set(existingFighters.map((f) => f.id));
+
+    // 驗證所有 Fighter 都存在
+    // Validate all Fighters exist
+    const missingFighters = fighterIds.filter((id) => !existingIds.has(id));
+    if (missingFighters.length > 0) {
+      throw new Error(
+        `Fighter(s) not found: ${missingFighters.join(", ")}`
+      );
+    }
+
+    // 預先驗證 fight_order 唯一性（避免資料庫約束錯誤）
+    // Pre-validate fight_order uniqueness (avoid database constraint errors)
+    const fightOrders = fights.map((f) => f.fightOrder);
+    const uniqueOrders = new Set(fightOrders);
+    if (fightOrders.length !== uniqueOrders.size) {
+      const duplicates = fightOrders.filter(
+        (order, index) => fightOrders.indexOf(order) !== index
+      );
+      throw new Error(
+        `Duplicate fight_order values: ${[...new Set(duplicates)].join(", ")}`
+      );
+    }
+
+    // 創建Event
+    // Create Event
+    const event = await tx.event.create({
+      data: {
+        id: eventId,
+        name: eventData.name,
+        fight_date: eventData.fight_date,
+        status: eventData.status || "PENDING",
+        sport_type: eventData.sport_type || null,
+        promoter: eventData.promoter || null,
+        organization: eventData.organization || null,
+        venue: eventData.venue || null,
+        location: eventData.location || null,
+        description: eventData.description || null,
+        poster_url: eventData.poster_url || null,
+        external_id: eventData.external_id || null,
+        external_source: eventData.external_source || null,
+        external_data: eventData.external_data ? (eventData.external_data as any) : null,
+        last_synced_at: eventData.external_id ? new Date() : null,
+        sync_status: eventData.external_id ? "completed" : "pending",
+      },
+    });
+
+    // 批量創建Fight記錄（雙向記錄，確保兩位選手都能查詢到對戰）
+    // Batch create Fight records (bidirectional records, ensure both fighters can query fights)
+    const fightsCreated = await Promise.all(
+      fights.flatMap((fight) => [
+        // 創建fighter1的Fight記錄
+        // Create Fight record for fighter1
+        tx.fight.create({
+          data: {
+            event_id: event.id,
+            fighter_id: fight.fighterId,
+            opponent_id: fight.opponentId,
+            fight_type: fight.fightType,
+            fight_order: fight.fightOrder,
+            weight_class: fight.weightClass || null,
+            is_bettable: fight.isBettable !== false, // 預設true
+            status: "CONFIRMED",
+          },
+        }),
+        // 創建fighter2的Fight記錄（使用相同的對戰順序）
+        // Create Fight record for fighter2 (using same fight order)
+        tx.fight.create({
+          data: {
+            event_id: event.id,
+            fighter_id: fight.opponentId,
+            opponent_id: fight.fighterId,
+            fight_type: fight.fightType,
+            fight_order: fight.fightOrder,
+            weight_class: fight.weightClass || null,
+            is_bettable: fight.isBettable !== false, // 預設true
+            status: "CONFIRMED",
+          },
+        }),
+      ])
+    );
+
+    return {
+      event,
+      fights: fightsCreated,
+    };
+  });
+}
+
+/**
+ * Get event with all fights (完整對戰卡)
+ * 獲取賽事及完整對戰卡
+ * 
+ * @param eventId Event ID
+ * @returns Event with fights, fighters, and betting stats
+ * 
+ * 使用include一次性獲取所有相關資料，避免N+1查詢問題
+ * Uses include to fetch all related data in one query, avoiding N+1 query problem
+ */
+export async function getEventWithFights(eventId: string) {
+  return unstable_cache(
+    async () => {
+      // 參考 admin page 的寫法，使用明確的 select/include 指定需要的欄位
+      // Reference admin page pattern, use explicit select/include to specify required fields
+      const event = await prisma.event.findUnique({
+        where: { id: eventId },
+        select: {
+          id: true,
+          name: true,
+          fight_date: true,
+          status: true,
+          sport_type: true,
+          promoter: true,
+          organization: true,
+          venue: true,
+          location: true,
+          description: true,
+          poster_url: true,
+          external_id: true,
+          external_source: true,
+          external_data: true,
+          last_synced_at: true,
+          sync_status: true,
+          createdAt: true,
+          updatedAt: true,
+          fights: {
+            select: {
+              id: true,
+              event_id: true,
+              fighter_id: true,
+              opponent_id: true,
+              fight_type: true,
+              fight_order: true,
+              weight_class: true,
+              result: true,
+              method: true,
+              round: true,
+              time: true,
+              is_bettable: true,
+              status: true,
+              createdAt: true,
+              updatedAt: true,
+              fighter: {
+                select: {
+                  id: true,
+                  slug: true,
+                  name: true,
+                  thumb: true,
+                  cutout: true,
+                  sport_type: true,
+                  nationality: true,
+                },
+              },
+              opponent: {
+                select: {
+                  id: true,
+                  slug: true,
+                  name: true,
+                  thumb: true,
+                  cutout: true,
+                  sport_type: true,
+                  nationality: true,
+                },
+              },
+              _count: {
+                select: {
+                  bets: true,
+                },
+              },
+            },
+            orderBy: {
+              fight_order: "asc",
+            },
+          },
+          _count: {
+            select: {
+              bets: true,
+              posts: true,
+              fights: true,
+            },
+          },
+        },
+      });
+
+      return event;
+    },
+    [`event-with-fights-${eventId}`],
+    {
+      tags: ["events", `event-${eventId}`, `event-fights-${eventId}`],
+      revalidate: 60, // 60秒ごとに再検証 / Revalidate every 60 seconds
+    }
+  )();
+}
+
+/**
+ * Get weekly combat events (boxing, UFC, MMA) with fights
+ * 今週の格闘技イベントを取得（ボクシング、UFC、MMA），包含對戰列表
  */
 export async function getWeeklyCombatEvents(): Promise<Event[]> {
   return unstable_cache(
@@ -49,6 +296,15 @@ export async function getWeeklyCombatEvents(): Promise<Event[]> {
           fight_date: "asc",
         },
         include: {
+          fights: {
+            include: {
+              fighter: true,
+              opponent: true,
+            },
+            orderBy: {
+              fight_order: "asc",
+            },
+          },
           _count: {
             select: {
               bets: true,
@@ -174,14 +430,119 @@ export async function getCombatEvents(
 }
 
 /**
+ * Merge external API data with existing manual event
+ * 合併外部 API 資料與現有手動賽事
+ * Preserves manual fields (fighter IDs, winner, override flags) while updating external data
+ * 保留手動欄位（選手 ID、勝者、覆蓋標記），同時更新外部資料
+ *
+ * @param existingEvent Existing event from database
+ * @param unifiedEvent External API event data
+ * @param source External API source
+ * @param options Merge options (includes adminId for audit logging)
+ * @returns Updated event ID
+ *
+ * Merge rules:
+ * - Preserve: status (if manually set), manual event details (promoter, organization, venue, etc.)
+ * - Update: external_id, external_source, external_data, last_synced_at
+ * - Smart update: name (if external is more complete), sport_type (if empty), fight_date (if external is more precise)
+ */
+async function mergeEventData(
+  existingEvent: Event,
+  unifiedEvent: UnifiedEventData,
+  source: ExternalEventSource,
+  options: MergeEventOptions & { adminId?: string } = {}
+): Promise<string> {
+  const {
+    preserveManualFields = true,
+    forceUpdateExternalFields = false,
+  } = options;
+
+  // Prepare update data
+  // 準備更新資料
+  const updateData: Prisma.EventUpdateInput = {
+    // Always update external fields (if not preserving or forcing update)
+    // 始終更新外部欄位（如果不保留或強制更新）
+    external_id: unifiedEvent.external_id,
+    external_source: source,
+    external_data: unifiedEvent.external_data as Prisma.InputJsonValue,
+    last_synced_at: new Date(),
+    sync_status: "completed",
+  };
+
+  // Smart update: only update if field is empty or external is better
+  // 智能更新：僅在欄位為空或外部資料更好時更新
+  if (!existingEvent.sport_type && unifiedEvent.sport_type) {
+    updateData.sport_type = unifiedEvent.sport_type;
+  }
+
+  // Update name if external name is more complete (longer and contains more info)
+  // 如果外部名稱更完整（更長且包含更多資訊），則更新名稱
+  if (
+    unifiedEvent.name.length > existingEvent.name.length &&
+    unifiedEvent.name.length > existingEvent.name.length * 1.2
+  ) {
+    updateData.name = unifiedEvent.name;
+  }
+
+  // Update fight_date if external date is more precise (has time component)
+  // 如果外部日期更精確（包含時間成分），則更新日期
+  const externalDate = new Date(unifiedEvent.fight_date);
+  const existingDate = new Date(existingEvent.fight_date);
+  if (
+    externalDate.getHours() !== 0 ||
+    externalDate.getMinutes() !== 0 ||
+    (existingDate.getHours() === 0 && existingDate.getMinutes() === 0)
+  ) {
+    updateData.fight_date = unifiedEvent.fight_date;
+  }
+
+  // Preserve manual fields if option is enabled
+  // 如果選項啟用，保留手動欄位
+  if (preserveManualFields) {
+    // Do not overwrite manual fields - they are already set correctly
+    // 不覆蓋手動欄位 - 它們已經正確設定
+    // Manual event details (promoter, organization, venue, location, description, poster_url) are preserved automatically
+    // 手動賽事詳情（promoter, organization, venue, location, description, poster_url）會自動保留
+  }
+
+  // Update event
+  // 更新賽事
+  await prisma.event.update({
+    where: { id: existingEvent.id },
+    data: updateData,
+  });
+
+  // Log merge operation in audit log (if adminId provided)
+  // 在審計日誌中記錄合併操作（如果提供了 adminId）
+  if (options.adminId) {
+    try {
+      await createAuditLog(
+        options.adminId,
+        "MERGE_EVENT",
+        `Merged external event "${unifiedEvent.name}" (${unifiedEvent.external_id}) with manual event "${existingEvent.name}" (${existingEvent.id})`,
+        "system"
+      );
+    } catch (error) {
+      // Audit log failure should not interrupt merge operation
+      // 審計日誌失敗不應中斷合併操作
+      console.error("Failed to create audit log for event merge:", error);
+    }
+  }
+
+  return existingEvent.id;
+}
+
+/**
  * Sync events from external API (TheSportsDB)
  * 外部API（TheSportsDB）からイベントを同期
  */
 export async function syncEventsFromExternalAPI(
-  source: ExternalEventSource = "thesportsdb"
+  source: ExternalEventSource = "thesportsdb",
+  adminId?: string
 ): Promise<{
   created: number;
   updated: number;
+  merged: number;
   errors: number;
 }> {
   // V1 API: API key はオプション（デフォルトで無料キー "123" を使用）
@@ -202,6 +563,7 @@ export async function syncEventsFromExternalAPI(
 
   let created = 0;
   let updated = 0;
+  let merged = 0;
   let errors = 0;
 
   try {
@@ -230,10 +592,28 @@ export async function syncEventsFromExternalAPI(
       console.warn(`  Please check server logs for details.`);
     }
 
-    // トランザクションで一括upsert
-    // Batch upsert in transaction
+    // Batch query: Fetch all candidate events for fuzzy matching (events without external_id in date range)
+    // 批量查詢：獲取所有候選賽事用於模糊匹配（日期範圍內沒有 external_id 的賽事）
+    const candidateEvents = await prisma.event.findMany({
+      where: {
+        external_id: null, // Only manual events / 僅手動創建的賽事
+        fight_date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+    });
+
+    console.log(
+      `[Sync] Found ${candidateEvents.length} candidate events for fuzzy matching`
+    );
+
+    // Process each unified event
+    // 處理每個統一格式的賽事
     for (const unifiedEvent of unifiedEvents) {
       try {
+        // Phase 1: Exact match by external_id + external_source
+        // 階段 1：通過 external_id + external_source 精確匹配
         const existing = await prisma.event.findFirst({
           where: {
             external_id: unifiedEvent.external_id,
@@ -244,8 +624,8 @@ export async function syncEventsFromExternalAPI(
         let eventId: string;
 
         if (existing) {
-          // 既存イベントを更新
-          // Update existing event
+          // Exact match found - update existing event
+          // 找到精確匹配 - 更新現有賽事
           await prisma.event.update({
             where: { id: existing.id },
             data: {
@@ -262,29 +642,50 @@ export async function syncEventsFromExternalAPI(
           eventId = existing.id;
           updated++;
         } else {
-          // 新規イベントを作成
-          // Create new event
-          // 新しいIDを生成
-          // Generate new ID
-          const id = await generateEventId();
+          // Phase 2: Fuzzy matching for manual events
+          // 階段 2：對手動創建的賽事進行模糊匹配
+          const fuzzyMatch = findMatchingEvent(
+            unifiedEvent,
+            candidateEvents as Event[],
+            0.8 // 80% similarity threshold / 80% 相似度閾值
+          );
 
-          const newEvent = await prisma.event.create({
-            data: {
-              id,
-              name: unifiedEvent.name,
-              fight_date: unifiedEvent.fight_date,
-              status: determineEventStatus(unifiedEvent.fight_date),
-              external_id: unifiedEvent.external_id,
-              external_source: source,
-              external_data:
-                unifiedEvent.external_data as Prisma.InputJsonValue,
-              sport_type: unifiedEvent.sport_type,
-              last_synced_at: new Date(),
-              sync_status: "completed",
-            },
-          });
-          eventId = newEvent.id;
-          created++;
+          if (fuzzyMatch) {
+            // Fuzzy match found - merge with existing manual event
+            // 找到模糊匹配 - 與現有手動賽事合併
+            console.log(
+              `[Sync] Fuzzy match found: "${unifiedEvent.name}" matches "${fuzzyMatch.event.name}" (similarity: ${(fuzzyMatch.similarityScore * 100).toFixed(1)}%)`
+            );
+            eventId = await mergeEventData(
+              fuzzyMatch.event,
+              unifiedEvent,
+              source,
+              { preserveManualFields: true, adminId }
+            );
+            merged++;
+          } else {
+            // No match found - create new event
+            // 未找到匹配 - 創建新賽事
+            const id = await generateEventId();
+
+            const newEvent = await prisma.event.create({
+              data: {
+                id,
+                name: unifiedEvent.name,
+                fight_date: unifiedEvent.fight_date,
+                status: determineEventStatus(unifiedEvent.fight_date),
+                external_id: unifiedEvent.external_id,
+                external_source: source,
+                external_data:
+                  unifiedEvent.external_data as Prisma.InputJsonValue,
+                sport_type: unifiedEvent.sport_type,
+                last_synced_at: new Date(),
+                sync_status: "completed",
+              },
+            });
+            eventId = newEvent.id;
+            created++;
+          }
         }
 
         // 對戰卡を解析して選手をリンク
@@ -296,7 +697,10 @@ export async function syncEventsFromExternalAPI(
           if (strResult) {
             const fights = parseFightCard(strResult);
 
-            for (const fight of fights) {
+            // 批量處理對戰，第一個為主賽，其餘為預賽
+            // Batch process fights, first is main event, rest are prelims
+            for (let i = 0; i < fights.length; i++) {
+              const fight = fights[i];
               try {
                 // 選手を取得または作成
                 // Get or create fighters
@@ -310,13 +714,22 @@ export async function syncEventsFromExternalAPI(
                 );
 
                 if (fighter1 && fighter2) {
-                  // 選手をイベントにリンク
-                  // Link fighters to event
+                  // 決定對戰類型：第一個為主賽，其餘為預賽
+                  // Determine fight type: first is main event, rest are prelims
+                  const fightType =
+                    i === 0 ? "MAIN" : i === 1 ? "CO_MAIN" : "PRELIMS";
+
+                  // 選手をイベントにリンク（使用新的結構）
+                  // Link fighters to event (using new structure)
                   await linkFightToEvent(fighter1.id, fighter2.id, eventId, {
-                    weightClass: fight.weightClass,
+                    fightType,
+                    fightOrder: i + 1, // 從1開始
+                    weightClass: fight.weightClass || null,
                     method: fight.method || null,
                     round: fight.round ? parseInt(fight.round) : null,
                     time: fight.time || null,
+                    isBettable: true, // 預設可投注
+                    status: "CONFIRMED",
                     // 結果はまだ不明（未来のイベント）
                     // Result is unknown (future event)
                     fighter1Result: null,
@@ -355,7 +768,7 @@ export async function syncEventsFromExternalAPI(
     throw error;
   }
 
-  return { created, updated, errors };
+  return { created, updated, merged, errors };
 }
 
 /**
@@ -399,4 +812,96 @@ export async function getEventByExternalId(
   });
 
   return event as Event | null;
+}
+
+/**
+ * Admin: Get all events with pagination and counts
+ * 管理員：獲取所有賽事（分頁和計數）
+ * 
+ * Uses cache for performance optimization (60 second revalidate)
+ * 使用快取優化效能（60秒重新驗證）
+ * 
+ * Returns events ordered by fight_date DESC (most recent first)
+ * 返回按 fight_date DESC 排序的賽事（最新的在前）
+ */
+export async function getAllEvents(
+  options: { page?: number; limit?: number } = {}
+): Promise<{
+  events: AdminEventListItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}> {
+  const { page = 1, limit = 10 } = options;
+  const skip = (page - 1) * limit;
+
+  // キャッシュキーを生成（ページとリミットを含む）
+  // Generate cache key (including page and limit)
+  const cacheKey = `admin-events-${page}-${limit}`;
+
+  return unstable_cache(
+    async () => {
+      const [events, total] = await Promise.all([
+        prisma.event.findMany({
+          skip,
+          take: limit,
+          orderBy: { fight_date: "desc" }, // 最新的在前 / Most recent first
+          select: {
+            id: true,
+            name: true,
+            fight_date: true,
+            status: true,
+            sport_type: true,
+            promoter: true,
+            organization: true,
+            venue: true,
+            location: true,
+            createdAt: true,
+            _count: {
+              select: {
+                fights: true,
+                bets: true,
+                posts: true,
+              },
+            },
+          },
+        }),
+        prisma.event.count(),
+      ]);
+
+      // Transform events to AdminEventListItem format
+      // 將賽事轉換為 AdminEventListItem 格式
+      const transformedEvents: AdminEventListItem[] = events.map((event) => ({
+        id: event.id,
+        name: event.name,
+        fight_date: event.fight_date,
+        status: event.status as "PENDING" | "OPEN" | "CLOSED" | "SETTLED" | "CANCELLED",
+        sport_type: event.sport_type as SportType | null,
+        promoter: event.promoter,
+        organization: event.organization,
+        venue: event.venue,
+        location: event.location,
+        createdAt: event.createdAt,
+        _count: event._count,
+      }));
+
+      return {
+        events: transformedEvents,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    },
+    [cacheKey],
+    {
+      tags: ["admin-events"],
+      revalidate: 60, // 60秒ごとに再検証 / Revalidate every 60 seconds
+    }
+  )();
 }

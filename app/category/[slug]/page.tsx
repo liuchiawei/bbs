@@ -53,9 +53,15 @@ export default async function CategoryPage({
   // 取得該分類的貼文
   // Get posts for this category
   const posts = await getPosts({ limit: 20 });
-  const categoryPosts = posts.filter(
-    (post) => post.category?.id === category.id
-  );
+  // Type assertion needed due to PrismaToApp type transformation
+  // 由於 PrismaToApp 類型轉換，需要類型斷言
+  // Non-null assertion is safe here because we checked above
+  // 非空斷言在這裡是安全的，因為我們已經在上面檢查過了
+  const categoryId = (category as { id: string }).id;
+  const categoryPosts = posts.filter((post) => {
+    const postCategoryId = post.category ? (post.category as { id: string }).id : null;
+    return postCategoryId === categoryId;
+  });
 
   return (
     <div className="space-y-4">
@@ -63,7 +69,11 @@ export default async function CategoryPage({
         <CardHeader>
           <CardTitle>{category.name}</CardTitle>
           {category.description && (
-            <p className="text-muted-foreground">{category.description}</p>
+            <p className="text-muted-foreground">
+              {typeof category.description === "string"
+                ? category.description
+                : String(category.description)}
+            </p>
           )}
         </CardHeader>
         <CardContent>

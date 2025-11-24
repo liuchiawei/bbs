@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { banUser } from "@/lib/services/users";
+import { revalidateTag } from "next/cache";
 
 export async function PATCH(
   request: NextRequest,
@@ -24,6 +25,10 @@ export async function PATCH(
     }
 
     const bannedUser = await banUser(id);
+
+    // Clear admin users cache after banning
+    // 封禁後清除管理員用戶快取
+    revalidateTag("admin-users", "max");
 
     return NextResponse.json({
       message: "User banned successfully",

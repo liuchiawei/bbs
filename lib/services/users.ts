@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { unstable_cache } from "next/cache";
 import type {
   User,
   UserWithCounts,
@@ -8,6 +9,7 @@ import type {
   PostWithUser,
   CommentWithUser,
   CommentWithUserAndPost,
+  AdminUserListItem,
 } from "@/lib/types";
 import {
   userSelectFull,
@@ -17,6 +19,7 @@ import {
   categorySelect,
 } from "@/lib/validations";
 import { transformUser } from "@/lib/utils";
+import { transformAdminUserListItem } from "@/lib/utils/admin";
 
 /**
  * Check if a userId is available
@@ -131,6 +134,9 @@ export async function getUserProfilePage(
           createdAt: true,
           updatedAt: true,
           userId: true,
+          categoryId: true,
+          eventId: true,
+          deletedAt: true,
           user: {
             select: {
               id: true,
@@ -308,54 +314,86 @@ export async function getUserComments(userId: string) {
 
 /**
  * Admin: Get all users with pagination and counts
+ * 管理員：獲取所有用戶（分頁和計數）
+ * 
+ * Uses cache for performance optimization (60 second revalidate)
+ * 使用快取優化效能（60秒重新驗證）
+ * 
+ * Transforms Prisma query results to AdminUserListItem format
+ * 將 Prisma 查詢結果轉換為 AdminUserListItem 格式
  */
 export async function getAllUsers(
   options: { page?: number; limit?: number } = {}
-) {
+): Promise<{
+  users: AdminUserListItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}> {
   const { page = 1, limit = 20 } = options;
   const skip = (page - 1) * limit;
 
-  const [users, total] = await Promise.all([
-    prisma.user.findMany({
-      skip,
-      take: limit,
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        userId: true,
-        email: true,
-        isAdmin: true,
-        isBanned: true,
-        points: true,
-        createdAt: true,
-        profile: {
-          where: { deletedAt: null },
-          select: {
-            name: true,
-            nickname: true,
-            avatar: true,
-          },
-        },
-        _count: {
-          select: {
-            posts: true,
-            comments: true,
-          },
-        },
-      },
-    }),
-    prisma.user.count(),
-  ]);
+  // キャッシュキーを生成（ページとリミットを含む）
+  // Generate cache key (including page and limit)
+  const cacheKey = `admin-users-${page}-${limit}`;
 
-  return {
-    users,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
+  return unstable_cache(
+    async () => {
+      const [users, total] = await Promise.all([
+        prisma.user.findMany({
+          skip,
+          take: limit,
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            userId: true,
+            email: true,
+            isAdmin: true,
+            isBanned: true,
+            points: true,
+            createdAt: true,
+            profile: {
+              where: { deletedAt: null },
+              select: {
+                name: true,
+                nickname: true,
+                avatar: true,
+              },
+            },
+            _count: {
+              select: {
+                posts: true,
+                comments: true,
+              },
+            },
+          },
+        }),
+        prisma.user.count(),
+      ]);
+
+      // Transform users to AdminUserListItem format
+      // 將用戶轉換為 AdminUserListItem 格式
+      const transformedUsers = users.map(transformAdminUserListItem);
+
+      return {
+        users: transformedUsers,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
     },
-  };
+    [cacheKey],
+    {
+      tags: ["admin-users"],
+      revalidate: 60, // 60秒ごとに再検証 / Revalidate every 60 seconds
+    }
+  )();
 }
 
 /**

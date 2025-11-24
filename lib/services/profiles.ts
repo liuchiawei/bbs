@@ -27,7 +27,7 @@ export function checkFieldVisibility(
   }
 
   const fieldVisibility = visibility[field as keyof ProfileVisibilitySettings];
-  
+
   // 如果沒有設定可見性，預設為public
   // If no visibility setting, default to public
   if (!fieldVisibility) {
@@ -70,7 +70,13 @@ export function filterProfileByVisibility(
     return profile;
   }
 
-  const visibility = profile.visibility || {};
+  const visibility =
+    profile.visibility &&
+    typeof profile.visibility === "object" &&
+    !Array.isArray(profile.visibility) &&
+    profile.visibility !== null
+      ? (profile.visibility as ProfileVisibilitySettings)
+      : {};
   const filteredProfile = { ...profile };
 
   // 檢查每個欄位的可見性
@@ -91,7 +97,9 @@ export function filterProfileByVisibility(
   ];
 
   for (const field of fieldsToCheck) {
-    if (!checkFieldVisibility(field, visibility, viewerUserId, profile.userId)) {
+    if (
+      !checkFieldVisibility(field, visibility, viewerUserId, profile.userId)
+    ) {
       // 隱藏欄位設為null
       // Set hidden fields to null
       (filteredProfile as any)[field] = null;
@@ -208,18 +216,19 @@ export async function createProfile(
       train_start: data.train_start || null,
       stance: data.stance || null,
       gym: data.gym || null,
-      visibility: data.visibility || defaultVisibility as any,
+      visibility: data.visibility || (defaultVisibility as any),
     },
     select: profileSelectFull,
   });
 
   // 清除快取
   // Clear cache
-  revalidateTag(`profile-${userId}`, 'max');
+  revalidateTag(`profile-${userId}`, "max");
 
   return {
     ...profile,
-    visibility: (profile.visibility as ProfileVisibilitySettings) || defaultVisibility,
+    visibility:
+      (profile.visibility as ProfileVisibilitySettings) || defaultVisibility,
   } as Profile;
 }
 
@@ -242,9 +251,11 @@ export async function updateProfile(
   if (data.avatar !== undefined) updateData.avatar = data.avatar || null;
   if (data.height !== undefined) updateData.height = data.height || null;
   if (data.weight !== undefined) updateData.weight = data.weight || null;
-  if (data.description !== undefined) updateData.description = data.description || null;
+  if (data.description !== undefined)
+    updateData.description = data.description || null;
   if (data.record !== undefined) updateData.record = data.record || null;
-  if (data.train_start !== undefined) updateData.train_start = data.train_start || null;
+  if (data.train_start !== undefined)
+    updateData.train_start = data.train_start || null;
   if (data.stance !== undefined) updateData.stance = data.stance || null;
   if (data.gym !== undefined) updateData.gym = data.gym || null;
   if (data.visibility !== undefined) updateData.visibility = data.visibility;
@@ -257,7 +268,7 @@ export async function updateProfile(
 
   // 清除快取
   // Clear cache
-  revalidateTag(`profile-${userId}`, 'max');
+  revalidateTag(`profile-${userId}`, "max");
 
   return {
     ...profile,
@@ -281,7 +292,7 @@ export async function updateVisibility(
 
   // 清除快取
   // Clear cache
-  revalidateTag(`profile-${userId}`, 'max');
+  revalidateTag(`profile-${userId}`, "max");
 
   return {
     ...profile,
@@ -302,7 +313,7 @@ export async function softDeleteProfile(userId: string): Promise<Profile> {
 
   // 清除快取
   // Clear cache
-  revalidateTag(`profile-${userId}`, 'max');
+  revalidateTag(`profile-${userId}`, "max");
 
   return {
     ...profile,
@@ -323,7 +334,7 @@ export async function restoreProfile(userId: string): Promise<Profile> {
 
   // 清除快取
   // Clear cache
-  revalidateTag(`profile-${userId}`, 'max');
+  revalidateTag(`profile-${userId}`, "max");
 
   return {
     ...profile,
@@ -377,4 +388,3 @@ export async function getProfileWithUser(
     profile: filteredProfile,
   } as UserWithProfile;
 }
-

@@ -16,7 +16,7 @@ export default async function AdminPage() {
       <div className="mb-8">
         <h1 className="text-4xl font-bold">{t("ADMIN_DASHBOARD")}</h1>
         <p className="text-muted-foreground mt-2">
-          {t("MANAGE_CATEGORIES_POSTS_USERS")}
+          管理討論區、用戶與資料 / Manage forum, users, and data
         </p>
       </div>
 

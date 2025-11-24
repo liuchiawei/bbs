@@ -46,7 +46,7 @@ export function EventFilters() {
     params.delete("page");
 
     startTransition(() => {
-      router.push(`/events?${params.toString()}`);
+      router.push(`/event?${params.toString()}`);
     });
   };
 
@@ -54,7 +54,7 @@ export function EventFilters() {
   // Clear all filters
   const clearFilters = () => {
     startTransition(() => {
-      router.push("/events");
+      router.push("/event");
     });
   };
 

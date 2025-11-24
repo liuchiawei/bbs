@@ -1,6 +1,59 @@
+/**
+ * Type Definitions
+ * 類型定義
+ *
+ * 此文件使用 Prisma 生成的類型作為基礎，同時保留向後兼容的類型別名
+ * This file uses Prisma-generated types as base, while maintaining backward-compatible type aliases
+ */
+
+// Import Prisma-generated types
+// 導入 Prisma 生成的類型
+import type {
+  ProfilePublic as PrismaProfilePublic,
+  ProfileFull as PrismaProfileFull,
+  UserPublic as PrismaUserPublic,
+  UserPublicExtended as PrismaUserPublicExtended,
+  UserFull as PrismaUserFull,
+  Category as PrismaCategory,
+  EventPublic as PrismaEventPublic,
+  EventFull as PrismaEventFull,
+  EventWithFights as PrismaEventWithFights,
+  FightPublic as PrismaFightPublic,
+  FightFull as PrismaFightFull,
+  FightWithRelations as PrismaFightWithRelations,
+  FighterPublic as PrismaFighterPublic,
+  FighterFull as PrismaFighterFull,
+  FighterWithEvents as PrismaFighterWithEvents,
+  PostPublic as PrismaPostPublic,
+  PostFull as PrismaPostFull,
+  PostWithUser as PrismaPostWithUser,
+  PostWithDetails as PrismaPostWithDetails,
+  CommentPublic as PrismaCommentPublic,
+  CommentFull as PrismaCommentFull,
+  CommentWithUser as PrismaCommentWithUser,
+  CommentWithUserAndPost as PrismaCommentWithUserAndPost,
+  BettingLogFull as PrismaBettingLogFull,
+} from "@/lib/types/prisma-generated";
+
+// Re-export utility types
+// 重新導出工具類型
+export type {
+  Paginated,
+  PaginatedResponse,
+  ApiResponse,
+  ApiErrorResponse,
+  WithRelations,
+  WithCount,
+  PrismaToApp,
+} from "@/lib/types/utilities";
+
 // Profile Visibility Types
+// プロフィールの可視性タイプ
+// 個人資料欄位的隱私級別設定
 export type ProfileVisibility = "public" | "friends" | "private";
 
+// プロフィールの可視性設定
+// Profile visibility settings for all fields
 export interface ProfileVisibilitySettings {
   name?: ProfileVisibility;
   nickname?: ProfileVisibility;
@@ -17,35 +70,19 @@ export interface ProfileVisibilitySettings {
 }
 
 // Profile Types
-export interface Profile {
-  id: string;
-  userId: string;
-  name: string;
-  nickname?: string | null;
-  gender?: string | null;
-  birthDate?: Date | string | null;
-  avatar?: string | null;
-  height?: number | null;
-  weight?: number | null;
-  description?: string | null;
-  record?: string | null;
-  train_start?: number | null;
-  stance?: string | null;
-  gym?: string | null;
-  visibility: ProfileVisibilitySettings;
-  deletedAt?: Date | string | null;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-}
+// プロフィールタイプ
+// 完整的個人資料類型定義（包含所有欄位和可見性設定）
+// Using Prisma-generated type as base
+export type Profile = PrismaProfileFull;
 
-export interface ProfilePublic {
-  id: string;
-  userId: string;
-  name: string;
-  nickname?: string | null;
-  avatar?: string | null;
-}
+// 公開顯示用プロフィール
+// Public profile for display (minimal fields)
+// 使用 Prisma 生成的類型，保留向後兼容
+// Using Prisma-generated type, maintaining backward compatibility
+export type ProfilePublic = PrismaProfilePublic;
 
+// プロフィール作成入力
+// Create profile input type
 export interface CreateProfileInput {
   userId: string;
   name: string;
@@ -63,6 +100,8 @@ export interface CreateProfileInput {
   visibility?: ProfileVisibilitySettings;
 }
 
+// プロフィール更新入力
+// Update profile input type
 export interface UpdateProfileInput {
   name?: string;
   nickname?: string | null;
@@ -79,12 +118,15 @@ export interface UpdateProfileInput {
   visibility?: ProfileVisibilitySettings;
 }
 
+// 可視性設定更新入力
+// Update visibility settings input type
 export interface UpdateVisibilityInput {
   visibility: ProfileVisibilitySettings;
 }
 
 // User Types
-// User簡化（僅登錄相關）
+// ユーザータイプ
+// User簡化（僅登錄相關）/ Simplified User (login-related only)
 export interface User {
   id: string;
   userId: string;
@@ -99,6 +141,7 @@ export interface User {
 }
 
 // User + Profile組合類型（最常用）
+// User with Profile (most commonly used)
 export interface UserWithProfile extends User {
   profile: Profile;
 }
@@ -106,20 +149,16 @@ export interface UserWithProfile extends User {
 // 公開顯示用使用者資料（從Profile讀取顯示資料）
 // 注意：nickname 和 avatar 嚴格為 string | null（不允許 undefined）
 // Note: nickname and avatar are strictly string | null (undefined not allowed)
-export interface UserPublic {
-  id: string;
-  userId: string;
-  name: string; // 從profile.name讀取
-  nickname: string | null; // 從profile.nickname讀取（null 表示未設定）
-  avatar: string | null; // 從profile.avatar讀取（null 表示未設定）
-}
+// 使用 Prisma 生成的類型，保留向後兼容
+// Using Prisma-generated type, maintaining backward compatibility
+export type UserPublic = PrismaUserPublic;
 
 // 公開顯示用使用者資料（擴展版，包含 email）
-export interface UserPublicExtended extends UserPublic {
-  email: string;
-}
+// Using Prisma-generated type, maintaining backward compatibility
+export type UserPublicExtended = PrismaUserPublicExtended;
 
 // 使用者統計資料
+// User statistics (posts, comments, likes, followers, following)
 export interface UserStats {
   posts: number;
   comments: number;
@@ -130,11 +169,13 @@ export interface UserStats {
 }
 
 // 完整使用者資料 + 統計
+// User with complete statistics
 export interface UserWithStats extends User {
   _count: UserStats;
 }
 
 // 使用者資料 + 基本統計（用於向後兼容）
+// User with basic counts (for backward compatibility)
 export interface UserWithCounts extends User {
   _count?: {
     posts: number;
@@ -147,122 +188,95 @@ export interface UserWithCounts extends User {
 }
 
 // 使用者個人資料頁（包含最近貼文和完整統計）
+// User profile page (includes recent posts and complete statistics)
 export interface UserProfilePage extends UserWithProfile {
   posts: Post[];
   _count: UserStats;
 }
 
 // User + Profile + 統計
+// User with Profile and statistics
 export interface UserWithProfileAndStats extends UserWithProfile {
   _count: UserStats;
 }
 
 // Category Types
-export interface Category {
-  id: string;
-  name: string;
-  slug?: string | null;
-  description?: string | null;
-  displayOrder: number; // 表示順序 / Display order
-  createdAt: Date | string;
-  updatedAt: Date | string;
-  deletedAt?: Date | string | null; // ソフトデリート用のタイムスタンプ / Soft delete timestamp
-}
+// カテゴリータイプ
+// Category type (for post categorization)
+// Using Prisma-generated type, maintaining backward compatibility
+export type Category = PrismaCategory;
 
 // Post Types
-export interface Post {
-  id: string;
-  title: string;
-  content: string;
-  userId: string;
-  tags: string[];
-  categoryId?: string | null;
-  eventId?: string | null; // 関連するイベントID / Related Event ID
-  views: number;
-  likes: number;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-  deletedAt?: Date | string | null; // ソフトデリート用のタイムスタンプ / Soft delete timestamp
-}
+// 投稿タイプ
+// Post type (forum post/article)
+// Using Prisma-generated type, maintaining backward compatibility
+export type Post = PrismaPostPublic;
 
-export interface PostWithUser extends Post {
-  user: UserPublicExtended;
-  category?: Category | null;
-  _count: {
-    comments: number;
-  };
-}
+// 投稿 + ユーザー情報
+// Post with user information and comment count
+// Using Prisma-generated type, maintaining backward compatibility
+export type PostWithUser = PrismaPostWithUser;
 
-export interface PostWithDetails extends PostWithUser {
-  comments: CommentWithUser[];
-}
+// 投稿詳細（コメント含む）
+// Post with full details including comments
+// Using Prisma-generated type, maintaining backward compatibility
+export type PostWithDetails = PrismaPostWithDetails;
 
 // Comment Types
-export interface Comment {
-  id: string;
-  content: string;
-  userId: string;
-  postId: string;
-  parentId?: string | null;
-  likes: number;
-  replies: number;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-  deletedAt?: Date | string | null; // ソフトデリート用のタイムスタンプ / Soft delete timestamp
-}
+// コメントタイプ
+// Comment type (reply to posts)
+// Using Prisma-generated type, maintaining backward compatibility
+export type Comment = PrismaCommentPublic;
 
-export interface CommentWithUser extends Comment {
-  user: UserPublicExtended;
-}
+// コメント + ユーザー情報
+// Comment with user information
+// Using Prisma-generated type, maintaining backward compatibility
+export type CommentWithUser = PrismaCommentWithUser;
 
 // Comment with user and post (for liked comments page)
-export interface CommentWithUserAndPost extends CommentWithUser {
-  post: {
-    id: string;
-    title: string;
-  };
-}
+// コメント + ユーザー + 投稿情報（いいねしたコメントページ用）
+// Using Prisma-generated type, maintaining backward compatibility
+export type CommentWithUserAndPost = PrismaCommentWithUserAndPost;
 
 // API Response Types
-export interface ApiResponse<T = any> {
-  message?: string;
-  error?: string;
-  data?: T;
-}
+// APIレスポンスタイプ
+// Generic API response wrapper
+// Re-exported from utilities for convenience
+// PaginatedResponse is already exported above from utilities
+// PaginatedResponse 已經在上面從 utilities 導出
 
-export interface ApiErrorResponse {
-  error: string;
-  details?: Record<string, string[]>;
-}
-
-export interface PaginationResponse<T> {
-  data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
+// ページネーションレスポンス
+// Paginated API response
+// Alias for backward compatibility
+// 向後兼容別名
+import type { PaginatedResponse } from "@/lib/types/utilities";
+export type PaginationResponse<T> = PaginatedResponse<T>;
 
 // Auth Types
+// 認証タイプ
+// Session payload (stored in JWT)
 export interface SessionPayload {
   userId: string;
   email: string;
 }
 
+// ユーザー登録入力
+// User registration input
 export interface RegisterInput {
   userId: string;
   email: string;
   password: string;
 }
 
+// ログイン入力
+// User login input
 export interface LoginInput {
   userId: string;
   password: string;
 }
 
 // Form Types (deprecated - use UpdateProfileInput instead)
+// フォームタイプ（非推奨 - UpdateProfileInputを使用）
 export interface EditProfileInput {
   name?: string;
   gender?: string | null;
@@ -270,6 +284,8 @@ export interface EditProfileInput {
   avatar?: string | null;
 }
 
+// 投稿作成入力
+// Create post input
 export interface CreatePostInput {
   title: string;
   content: string;
@@ -277,6 +293,8 @@ export interface CreatePostInput {
   categoryId?: string | null;
 }
 
+// 投稿更新入力
+// Update post input
 export interface UpdatePostInput {
   title?: string;
   content?: string;
@@ -284,6 +302,8 @@ export interface UpdatePostInput {
   categoryId?: string | null;
 }
 
+// コメント作成入力
+// Create comment input
 export interface CreateCommentInput {
   content: string;
   postId: string;
@@ -291,12 +311,16 @@ export interface CreateCommentInput {
 }
 
 // Upload Types
+// アップロードタイプ
+// File upload response
 export interface UploadResponse {
   message: string;
   url: string;
 }
 
 // Admin Types
+// 管理者タイプ
+// Admin user list item (flattened profile data)
 export interface AdminUserListItem {
   id: string;
   userId: string;
@@ -313,6 +337,8 @@ export interface AdminUserListItem {
   };
 }
 
+// 管理者投稿リスト項目
+// Admin post list item
 export interface AdminPostListItem {
   id: string;
   title: string;
@@ -326,28 +352,64 @@ export interface AdminPostListItem {
   };
 }
 
-// Betting Types
-export interface BettingLog {
+// 管理者イベントリスト項目
+// Admin event list item
+export interface AdminEventListItem {
   id: string;
-  userId: string;
-  eventId: string;
-  bet_amount: number | string; // Decimal handling
-  target_winner_id: string;
-  odds_snapshot: number | string;
-  settlement_status: "PENDING" | "WON" | "LOST" | "VOID";
+  name: string;
+  fight_date: Date | string;
+  status: "PENDING" | "OPEN" | "CLOSED" | "SETTLED" | "CANCELLED";
+  sport_type?: SportType | null;
+  promoter?: string | null;
+  organization?: string | null;
+  venue?: string | null;
+  location?: string | null;
   createdAt: Date | string;
+  _count: {
+    fights: number; // 修正：fighterEvents → fights
+    bets: number;
+    posts: number;
+  };
+}
+
+// Betting Types
+// ベッティングタイプ
+// Betting log entry (user bet record)
+// Using Prisma-generated type, maintaining backward compatibility
+export type BettingLog = PrismaBettingLogFull;
+
+// Betting Odds Interface
+// 投注賠率介面 / ベッティングオッズ
+// Betting odds calculation result
+export interface BettingOdds {
+  totalPool: number;
+  netPool: number;
+  odds: Record<string, number>;
+  betsByOutcome: Record<string, number>;
+}
+
+// Settle Event Input Interface
+// 結算賽事輸入介面 / イベント決済入力
+// Input for settling event bets
+export interface SettleEventInput {
+  winnerId: string;
+  winMethod?: string;
+  winRound?: number;
 }
 
 // External Event Source Types
 // 外部イベントソースタイプ
+// External API source identifier
 export type ExternalEventSource = "thesportsdb" | "espn" | "ufc" | "other";
 
 // Sport Type
 // スポーツタイプ
+// Combat sport type identifier
 export type SportType = "boxing" | "ufc" | "mma" | "other";
 
 // Unified Event Data (from external APIs)
 // 統一されたイベントデータ（外部APIから）
+// Standardized event data format from external APIs
 export interface UnifiedEventData {
   external_id: string;
   name: string;
@@ -365,26 +427,46 @@ export interface UnifiedEventData {
 
 // Sync Status
 // 同期ステータス
+// Event synchronization status
 export type SyncStatus = "pending" | "syncing" | "completed" | "failed";
 
-export interface Event {
-  id: string;
-  name: string;
-  fight_date: Date | string;
-  status: "PENDING" | "OPEN" | "CLOSED" | "SETTLED" | "CANCELLED";
-  winner_id?: string | null;
-  is_manual_override: boolean;
-  // External API integration fields
-  external_id?: string | null;
-  external_source?: ExternalEventSource | null;
-  external_data?: Record<string, unknown> | null;
-  sport_type?: SportType | null;
-  last_synced_at?: Date | string | null;
-  sync_status?: SyncStatus | string;
-  createdAt: Date | string;
-  updatedAt: Date | string;
+// Event Match Result
+// 賽事匹配結果 / イベントマッチ結果
+// Used for fuzzy matching during event deduplication
+export interface EventMatchResult {
+  event: Event;
+  similarityScore: number;
+  matchType: "exact" | "fuzzy";
 }
 
+// Merge Event Options
+// 合併賽事選項 / イベントマージオプション
+// Configuration for merging external API data with existing manual event
+export interface MergeEventOptions {
+  // Preserve manual fields (do not overwrite)
+  // 保留手動欄位（不覆蓋）
+  preserveManualFields?: boolean;
+  // Update external fields even if they exist
+  // 即使存在也更新外部欄位
+  forceUpdateExternalFields?: boolean;
+  // Minimum similarity score for fuzzy matching
+  // 模糊匹配的最小相似度分數
+  minSimilarity?: number;
+}
+
+// イベントタイプ
+// Event type (combat sports event/match)
+// Using Prisma-generated type, maintaining backward compatibility
+export type Event = PrismaEventPublic;
+
+// Event with fights (from database with relations)
+// 包含對戰列表的賽事（從資料庫帶關聯） / 対戦リストを含むイベント
+// Event with full fight details and relations
+// Using Prisma-generated type, maintaining backward compatibility
+export type EventWithFights = PrismaEventWithFights;
+
+// ユーザーベッティング統計
+// User betting statistics and performance metrics
 export interface UserBettingStats {
   totalBets: number;
   wins: number;
@@ -399,67 +481,25 @@ export interface UserBettingStats {
 }
 
 // Fighter Types
-// 選手類型
-export interface Fighter {
-  id: string;
-  slug: string;
-  name: string;
-  external_id?: string | null;
-  external_source?: string | null;
-  external_data?: Record<string, unknown> | null;
-  sport_type?: SportType | null;
-  nationality?: string | null;
-  date_born?: Date | string | null;
-  height?: string | null;
-  weight?: string | null;
-  position?: string | null;
-  description?: string | null;
-  thumb?: string | null;
-  cutout?: string | null;
-  last_synced_at?: Date | string | null;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-}
+// 選手類型 / ファイタータイプ
+// Fighter type (combat sports athlete)
+// Using Prisma-generated type, maintaining backward compatibility
+export type Fighter = PrismaFighterFull;
 
 // Fighter for public display (used in components)
-// 用於公開顯示的選手類型（用於組件）
-export interface FighterPublic {
-  id: string;
-  name: string;
-  slug: string;
-  nationality?: string | null;
-  date_born?: Date | string | null;
-  height?: string | null;
-  weight?: string | null;
-  position?: string | null;
-  description?: string | null;
-  thumb?: string | null;
-  cutout?: string | null;
-  sport_type?: SportType | null;
-  external_data?: Record<string, unknown> | null;
-}
+// 用於公開顯示的選手類型（用於組件） / 公開表示用ファイター
+// Fighter data for public display in components
+// Using Prisma-generated type, maintaining backward compatibility
+export type FighterPublic = PrismaFighterPublic;
 
 // Fighter with events (from database with relations)
-// 包含賽事的選手（從資料庫帶關聯）
-export interface FighterWithEvents extends Fighter {
-  eventsAsFighter: FighterEventWithDetails[];
-}
+// 包含賽事的選手（從資料庫帶關聯） / イベントを含むファイター
+// Fighter with fight history relations
+// Using Prisma-generated type, maintaining backward compatibility
+export type FighterWithEvents = PrismaFighterWithEvents;
 
-// FighterEvent with event and opponent details
-// 包含賽事和對手詳情的 FighterEvent
-export interface FighterEventWithDetails {
-  id: string;
-  fighter_id: string;
-  event_id: string;
-  opponent_id?: string | null;
-  result?: string | null;
-  method?: string | null;
-  round?: number | null;
-  time?: string | null;
-  weight_class?: string | null;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-  event: Event;
-  opponent?: Fighter | null;
-}
-
+// Fight with event and opponent details
+// 包含賽事和對手詳情的 Fight / イベントと対戦相手の詳細を含む対戦
+// Fight record with full event and opponent information
+// Using Prisma-generated type, maintaining backward compatibility
+export type FightWithDetails = PrismaFightWithRelations;

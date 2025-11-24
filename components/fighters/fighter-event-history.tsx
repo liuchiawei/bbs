@@ -103,7 +103,7 @@ export function FighterEventHistory({ events }: FighterEventHistoryProps) {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <Link
-                    href={`/events/${fighterEvent.event.id}`}
+                    href={`/event/${fighterEvent.event.id}`}
                     className="font-semibold text-primary hover:underline"
                   >
                     {fighterEvent.event.name}

@@ -76,7 +76,11 @@ export function FighterProfileCard({ fighter }: FighterProfileCardProps) {
           <div className="flex items-start gap-4 flex-1">
             {/* Fighter Avatar */}
             <FighterAvatar
-              thumb={fighter.cutout || fighter.thumb}
+              thumb={
+                (typeof fighter.cutout === "string" ? fighter.cutout : null) ||
+                (typeof fighter.thumb === "string" ? fighter.thumb : null) ||
+                undefined
+              }
               name={fighter.name}
               size="lg"
               className="shrink-0 bg-primary"
@@ -88,16 +92,25 @@ export function FighterProfileCard({ fighter }: FighterProfileCardProps) {
                   <Badge
                     variant="outline"
                     className={`${
-                      sportTypeColors[fighter.sport_type] ||
-                      sportTypeColors.other
+                      sportTypeColors[
+                        typeof fighter.sport_type === "string"
+                          ? fighter.sport_type
+                          : String(fighter.sport_type)
+                      ] || sportTypeColors.other
                     } border capitalize`}
                   >
-                    {fighter.sport_type || "Unknown"}
+                    {typeof fighter.sport_type === "string"
+                      ? fighter.sport_type
+                      : String(fighter.sport_type)}
                   </Badge>
                 )}
                 {fighter.position && (
                   <Badge variant="outline" className="text-xs">
-                    {fighter.position || "Unknown"}
+                    {typeof fighter.position === "string"
+                      ? fighter.position
+                      : fighter.position
+                      ? String(fighter.position)
+                      : "Unknown"}
                   </Badge>
                 )}
               </div>
@@ -106,7 +119,13 @@ export function FighterProfileCard({ fighter }: FighterProfileCardProps) {
                 {fighter.name}
               </CardTitle>
               <CardDescription className="text-sm text-muted-foreground">
-                {fighter.weight || "Unknown"}
+                {typeof fighter.weight === "number"
+                  ? fighter.weight
+                  : typeof fighter.weight === "string"
+                  ? fighter.weight
+                  : fighter.weight
+                  ? String(fighter.weight)
+                  : "Unknown"}
               </CardDescription>
             </div>
           </div>
@@ -116,7 +135,13 @@ export function FighterProfileCard({ fighter }: FighterProfileCardProps) {
         <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Globe className="w-4 h-4" />
-            <span>{fighter.nationality || "Unknown"}</span>
+            <span>
+              {typeof fighter.nationality === "string"
+                ? fighter.nationality
+                : fighter.nationality
+                ? String(fighter.nationality)
+                : "Unknown"}
+            </span>
           </div>
           {formattedBirthDate && (
             <div className="flex items-center gap-2">
@@ -137,11 +162,27 @@ export function FighterProfileCard({ fighter }: FighterProfileCardProps) {
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mt-2">
             <div className="flex items-center gap-2">
               <Ruler className="w-4 h-4" />
-              <span>{fighter.height || "Unknown"}</span>
+              <span>
+                {typeof fighter.height === "number"
+                  ? fighter.height
+                  : typeof fighter.height === "string"
+                  ? fighter.height
+                  : fighter.height
+                  ? String(fighter.height)
+                  : "Unknown"}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <Weight className="w-4 h-4" />
-              <span>{fighter.weight || "Unknown"}</span>
+              <span>
+                {typeof fighter.weight === "number"
+                  ? fighter.weight
+                  : typeof fighter.weight === "string"
+                  ? fighter.weight
+                  : fighter.weight
+                  ? String(fighter.weight)
+                  : "Unknown"}
+              </span>
             </div>
           </div>
         )}
@@ -153,7 +194,11 @@ export function FighterProfileCard({ fighter }: FighterProfileCardProps) {
           <div>
             <h3 className="font-semibold mb-2">About</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {fighter.description || "No description available"}
+              {typeof fighter.description === "string"
+                ? fighter.description
+                : fighter.description
+                ? String(fighter.description)
+                : "No description available"}
             </p>
           </div>
         )}
