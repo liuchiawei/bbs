@@ -78,6 +78,10 @@ export async function linkFighterToEvent(
       // 如果有opponentId，創建雙向記錄；否則只創建單向記錄（單人賽事）
       // If opponentId exists, create bidirectional records; otherwise create single record (single fighter event)
       if (options?.opponentId) {
+        // 提取 opponentId 為非空變數，確保類型安全
+        // Extract opponentId as non-null variable for type safety
+        const opponentId = options.opponentId;
+        
         // 使用transaction確保原子性
         // Use transaction to ensure atomicity
         const result = await prisma.$transaction(async (tx) => {
@@ -87,7 +91,7 @@ export async function linkFighterToEvent(
             data: {
               fighter_id: fighterId,
               event_id: eventId,
-              opponent_id: options.opponentId,
+              opponent_id: opponentId,
               fight_type: options?.fightType || "MAIN",
               fight_order: fightOrder!,
               weight_class: options?.weightClass || null,
@@ -104,7 +108,7 @@ export async function linkFighterToEvent(
           // Create Fight record for opponent (using same fight order)
           await tx.fight.create({
             data: {
-              fighter_id: options.opponentId,
+              fighter_id: opponentId,
               event_id: eventId,
               opponent_id: fighterId,
               fight_type: options?.fightType || "MAIN",

@@ -38,11 +38,20 @@ export default async function UserLikesPage({
 
   // 明確轉換每個 comment 的 user 欄位，確保符合 CommentWithUserAndPost 類型
   // Explicitly transform each comment's user field to ensure it matches CommentWithUserAndPost type
+  // getUserLikedComments 已經使用了 transformUser，但類型推斷可能有問題
+  // getUserLikedComments already uses transformUser, but type inference may have issues
   const likedComments: CommentWithUserAndPost[] = likedCommentsData.map(
-    (comment: any) => ({
-      ...comment,
-      user: transformUser(comment.user),
-    })
+    (comment: any) => {
+      // 確保 user 已經被正確轉換
+      // Ensure user has been correctly transformed
+      const user = comment.user && typeof comment.user === "object" && "profile" in comment.user
+        ? transformUser(comment.user)
+        : comment.user;
+      return {
+        ...comment,
+        user,
+      };
+    }
   );
 
   return (
@@ -94,17 +103,28 @@ export default async function UserLikesPage({
                   <CardHeader>
                     <div className="flex items-center gap-3 mb-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={comment.user.avatar || undefined} />
+                        <AvatarImage
+                          src={
+                            (comment.user as any).avatar ||
+                            (comment.user as any).profile?.avatar ||
+                            undefined
+                          }
+                        />
                         <AvatarFallback>
-                          {comment.user.name.charAt(0).toUpperCase()}
+                          {((comment.user as any).name ||
+                            (comment.user as any).profile?.name ||
+                            (comment.user as any).userId ||
+                            "U").charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <Link
-                          href={`/user/${comment.user.userId}`}
+                          href={`/user/${(comment.user as any).userId}`}
                           className="font-semibold hover:underline"
                         >
-                          {comment.user.name}
+                          {(comment.user as any).name ||
+                            (comment.user as any).profile?.name ||
+                            (comment.user as any).userId}
                         </Link>
                         <p className="text-xs text-muted-foreground">
                           {t("ON")}{" "}

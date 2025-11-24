@@ -283,17 +283,41 @@ export interface UserPublic {
 
 **定義**:
 ```typescript
-export interface UserPublicExtended extends UserPublic {
+export type UserPublicExtended = PrismaToApp<
+  Prisma.UserGetPayload<{
+    select: typeof userSelectPublicExtended;
+  }>
+>;
+```
+
+**實際結構**:
+```typescript
+{
+  id: string;
+  userId: string;
   email: string;
+  profile: {
+    id: string;
+    userId: string;
+    name: string;
+    nickname: string | null;
+    avatar: string | null;
+  } | null;
 }
 ```
 
-**用途**: 擴展的公開用戶資訊（包含email）
+**用途**: 擴展的公開用戶資訊（包含email和profile）
 
 **使用位置**:
-- `lib/types.ts` - 類型定義
+- `lib/types.ts` - 類型定義（從 Prisma 生成）
+- `lib/utils.ts` - `transformUser` 函數用於轉換嵌套的 profile 結構
 - `lib/services/posts.ts` - Post服務層
+- `lib/services/comments.ts` - Comment服務層
 - `components/posts/post-card.tsx` - 貼文卡片
+
+**重要變更** (2025-01-23):
+- ✅ 修正: `transformUser` 函數確保 `profile` 屬性始終存在（即使為 `null`），符合類型定義
+- ✅ 更新: 函數參數類型包含完整的 `profile` 結構（包括 `id` 和 `userId`）
 
 ---
 
@@ -865,17 +889,68 @@ export interface FighterPublic {
 
 **定義**:
 ```typescript
-export interface FighterWithEvents extends Fighter {
-  eventsAsFighter: FighterEventWithDetails[];
+export type FighterWithEvents = PrismaToApp<
+  Prisma.FighterGetPayload<{
+    select: typeof fighterSelectWithEvents;
+  }>
+>;
+```
+
+**實際結構**:
+```typescript
+{
+  // Fighter 基本欄位
+  id: string;
+  slug: string;
+  name: string;
+  external_id: string | null;
+  external_source: string | null;
+  external_data: Record<string, unknown> | null;
+  sport_type: string | null;
+  nationality: string | null;
+  date_born: Date | string | null;
+  height: string | null;
+  weight: string | null;
+  position: string | null;
+  description: string | null;
+  thumb: string | null;
+  cutout: string | null;
+  last_synced_at: Date | string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  // 對戰歷史
+  fightsAsFighter: Array<{
+    id: string;
+    fighter_id: string;
+    event_id: string;
+    opponent_id: string | null;
+    result: string | null;
+    method: string | null;
+    round: number | null;
+    time: string | null;
+    weight_class: string | null;
+    createdAt: Date | string;
+    updatedAt: Date | string;
+    event: EventPublic;
+    fighter: FighterPublic | null; // 當前選手資訊
+    opponent: FighterPublic | null; // 對手資訊
+  }>;
+  fightsAsOpponent: Array<{...}>; // 結構與 fightsAsFighter 相同
 }
 ```
 
-**用途**: 選手包含賽事歷史的類型
+**用途**: 選手包含完整對戰歷史的類型（包含雙向對戰記錄）
 
 **使用位置**:
-- `lib/types.ts` - 類型定義
+- `lib/types.ts` - 類型定義（從 Prisma 生成）
+- `lib/utils/fighter.ts` - `toFighterWithEvents` 函數用於轉換 Prisma 結果
 - `lib/services/fighters.ts` - Fighter服務層
-- `app/fighters/[slug]/page.tsx` - 選手詳情頁面
+- `app/fighter/[slug]/page.tsx` - 選手詳情頁面
+
+**重要變更** (2025-01-23):
+- ✅ 修正: `toFighterWithEvents` 函數確保 `fightsAsFighter` 中的每個 fight 都包含 `fighter` 和 `opponent` 屬性
+- ✅ 修正: 返回對象包含 `fightsAsOpponent` 屬性（即使為空數組）
+- ✅ 修正: `external_data` 類型轉換使用類型斷言確保類型匹配
 
 ---
 
@@ -1366,6 +1441,28 @@ export interface AdminEventListItem {
 
 **影響文件**:
 - `lib/types.ts` - 所有類型定義都已添加註釋
+
+---
+
+### 2025-01-23: TypeScript 類型安全性修復
+
+**變更內容**:
+- ✅ 修復 `transformUser` 函數：確保 `profile` 屬性始終存在（即使為 `null`），符合 `UserPublicExtended` 類型定義
+- ✅ 修復 `event-matcher.ts`：使用類型斷言訪問 `external_id` 字段（因為 `Event` 類型可能不包含該字段）
+- ✅ 修復 `fighter.ts` 中的多個類型錯誤：
+  - `toFighterPublic` 和 `toFighterWithEvents` 中的 `external_data` 類型轉換
+  - `fightsAsFighter` 中添加 `fighter` 屬性
+  - 返回對象添加 `fightsAsOpponent` 屬性
+
+**影響文件**:
+- `lib/utils.ts` - `transformUser` 函數類型修復
+- `lib/utils/event-matcher.ts` - `external_id` 訪問修復
+- `lib/utils/fighter.ts` - 多個類型錯誤修復
+
+**技術說明**:
+- 使用類型斷言 `as Type` 解決 Prisma 生成的類型與應用類型之間的差異
+- 確保所有可能為 `null` 的屬性都正確處理
+- 所有修復不影響運行時行為，僅改善類型安全性
 
 ---
 

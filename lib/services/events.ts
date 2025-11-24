@@ -250,6 +250,7 @@ export async function getEventWithFights(eventId: string) {
             select: {
               bets: true,
               posts: true,
+              fights: true,
             },
           },
         },

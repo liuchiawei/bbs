@@ -28,7 +28,13 @@ type EditProfileFormData = z.infer<typeof updateProfileSchema>;
 export function EditProfileForm({ user }: { user: UserWithProfile }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState(user.profile.avatar);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(
+    typeof user.profile.avatar === "string"
+      ? user.profile.avatar
+      : user.profile.avatar
+      ? String(user.profile.avatar)
+      : null
+  );
   const profile = user.profile;
 
   const {
@@ -41,20 +47,89 @@ export function EditProfileForm({ user }: { user: UserWithProfile }) {
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
       name: profile.name,
-      nickname: profile.nickname || "",
-      gender: profile.gender || "",
+      nickname:
+        typeof profile.nickname === "string"
+          ? profile.nickname
+          : profile.nickname
+          ? String(profile.nickname)
+          : "",
+      gender:
+        typeof profile.gender === "string"
+          ? profile.gender
+          : profile.gender
+          ? String(profile.gender)
+          : "",
       birthDate: profile.birthDate
         ? new Date(profile.birthDate).toISOString().split("T")[0]
         : "",
-      avatar: profile.avatar || "",
-      height: profile.height || undefined,
-      weight: profile.weight || undefined,
-      description: profile.description || "",
-      record: profile.record || "",
-      train_start: profile.train_start || undefined,
-      stance: profile.stance || "",
-      gym: profile.gym || "",
-      visibility: profile.visibility || {},
+      avatar:
+        typeof profile.avatar === "string"
+          ? profile.avatar
+          : profile.avatar
+          ? String(profile.avatar)
+          : "",
+      height:
+        typeof profile.height === "number"
+          ? profile.height
+          : profile.height
+          ? Number(profile.height) || undefined
+          : undefined,
+      weight:
+        typeof profile.weight === "number"
+          ? profile.weight
+          : profile.weight
+          ? Number(profile.weight) || undefined
+          : undefined,
+      description:
+        typeof profile.description === "string"
+          ? profile.description
+          : profile.description
+          ? String(profile.description)
+          : "",
+      record:
+        typeof profile.record === "string"
+          ? profile.record
+          : profile.record
+          ? String(profile.record)
+          : "",
+      train_start:
+        typeof profile.train_start === "number"
+          ? profile.train_start
+          : profile.train_start
+          ? Number(profile.train_start) || undefined
+          : undefined,
+      stance:
+        typeof profile.stance === "string"
+          ? profile.stance
+          : profile.stance
+          ? String(profile.stance)
+          : "",
+      gym:
+        typeof profile.gym === "string"
+          ? profile.gym
+          : profile.gym
+          ? String(profile.gym)
+          : "",
+      visibility:
+        profile.visibility &&
+        typeof profile.visibility === "object" &&
+        !Array.isArray(profile.visibility) &&
+        profile.visibility !== null
+          ? (profile.visibility as {
+              name?: "public" | "friends" | "private";
+              nickname?: "public" | "friends" | "private";
+              gender?: "public" | "friends" | "private";
+              birthDate?: "public" | "friends" | "private";
+              avatar?: "public" | "friends" | "private";
+              height?: "public" | "friends" | "private";
+              weight?: "public" | "friends" | "private";
+              description?: "public" | "friends" | "private";
+              record?: "public" | "friends" | "private";
+              train_start?: "public" | "friends" | "private";
+              stance?: "public" | "friends" | "private";
+              gym?: "public" | "friends" | "private";
+            })
+          : {},
     },
   });
 

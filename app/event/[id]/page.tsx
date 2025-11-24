@@ -212,17 +212,65 @@ export default async function EventDetailPage({
                     key={fight.id}
                     fight={{
                       id: fight.id,
-                      fighter: fight.fighter,
-                      opponent: fight.opponent,
+                      fighter: (() => {
+                        const f = fight.fighter as {
+                          id: string;
+                          name: string;
+                          slug: string;
+                          sport_type: string | Date | null;
+                          nationality: string | Date | null;
+                          thumb: string | Date | null;
+                          cutout: string | Date | null;
+                        };
+                        return {
+                          id: f.id,
+                          name: f.name,
+                          slug: f.slug,
+                          sport_type:
+                            typeof f.sport_type === "string" ? f.sport_type : null,
+                          nationality:
+                            typeof f.nationality === "string" ? f.nationality : null,
+                          thumb: typeof f.thumb === "string" ? f.thumb : null,
+                          cutout: typeof f.cutout === "string" ? f.cutout : null,
+                        };
+                      })(),
+                      opponent: fight.opponent
+                        ? (() => {
+                            const o = fight.opponent as {
+                              id: string;
+                              name: string;
+                              slug: string;
+                              sport_type: string | Date | null;
+                              nationality: string | Date | null;
+                              thumb: string | Date | null;
+                              cutout: string | Date | null;
+                            };
+                            return {
+                              id: o.id,
+                              name: o.name,
+                              slug: o.slug,
+                              sport_type:
+                                typeof o.sport_type === "string" ? o.sport_type : null,
+                              nationality:
+                                typeof o.nationality === "string" ? o.nationality : null,
+                              thumb: typeof o.thumb === "string" ? o.thumb : null,
+                              cutout: typeof o.cutout === "string" ? o.cutout : null,
+                            };
+                          })()
+                        : null,
                       fightType: fight.fight_type,
                       fightOrder: fight.fight_order,
-                      weightClass: fight.weight_class,
+                      weightClass:
+                        typeof fight.weight_class === "string"
+                          ? fight.weight_class
+                          : null,
                       isBettable: fight.is_bettable,
                       status: fight.status,
-                      result: fight.result,
-                      method: fight.method,
-                      round: fight.round,
-                      time: fight.time,
+                      result:
+                        typeof fight.result === "string" ? fight.result : null,
+                      method: typeof fight.method === "string" ? fight.method : null,
+                      round: typeof fight.round === "number" ? fight.round : null,
+                      time: typeof fight.time === "string" ? fight.time : null,
                       _count: fight._count,
                     }}
                     userPoints={user ? Number(user.virtual_score) : 0}

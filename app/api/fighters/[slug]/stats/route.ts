@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getFighterBySlug } from "@/lib/services/fighters";
+import type { FighterWithEvents } from "@/lib/types";
 
 export async function GET(
   request: NextRequest,
@@ -19,27 +20,36 @@ export async function GET(
     // Check if it's a UUID (ID) or slug
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
     
-    let fighter;
+    let fighter: FighterWithEvents | null = null;
+    let fighterId: string;
+    
     if (isUUID) {
       // 如果是 UUID，直接查詢 ID
       // If UUID, query by ID directly
-      fighter = await prisma.fighter.findUnique({
+      const fighterRecord = await prisma.fighter.findUnique({
         where: { id: slug },
+        select: { id: true },
       });
+      if (!fighterRecord) {
+        return NextResponse.json({ error: "Fighter not found" }, { status: 404 });
+      }
+      fighterId = slug;
     } else {
       // 否則使用 slug 查詢
       // Otherwise use slug query
       fighter = await getFighterBySlug(slug);
-    }
-
-    if (!fighter) {
-      return NextResponse.json({ error: "Fighter not found" }, { status: 404 });
+      if (!fighter) {
+        return NextResponse.json({ error: "Fighter not found" }, { status: 404 });
+      }
+      // Type assertion needed due to PrismaToApp type transformation
+      // 由於 PrismaToApp 類型轉換，需要類型斷言
+      fighterId = (fighter as FighterWithEvents & { id: string }).id;
     }
 
     // 計算選手統計
     // Calculate fighter statistics
     const fights = await prisma.fight.findMany({
-      where: { fighter_id: fighter.id },
+      where: { fighter_id: fighterId },
       select: { result: true },
     });
 

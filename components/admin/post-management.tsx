@@ -129,7 +129,12 @@ export function PostManagement() {
                   <TableCell className="font-medium max-w-md truncate">
                     {post.title}
                   </TableCell>
-                  <TableCell>{post.user.name}</TableCell>
+                  <TableCell>
+                    {(post.user as any).name ||
+                      (post.user as any).profile?.name ||
+                      (post.user as any).userId ||
+                      "Unknown"}
+                  </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-1">
                       <Eye className="h-3 w-3" />

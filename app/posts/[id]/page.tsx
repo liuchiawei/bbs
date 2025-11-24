@@ -37,7 +37,8 @@ export default async function PostPage({
     if (commentUserIds.length > 0) {
       const bets = await prisma.bettingLog.findMany({
         where: {
-          eventId: post.eventId,
+          eventId:
+            typeof post.eventId === "string" ? post.eventId : String(post.eventId),
           userId: { in: commentUserIds },
           settlement_status: { not: "VOID" },
         },
@@ -63,43 +64,94 @@ export default async function PostPage({
           <PostContent
             post={{
               ...post,
-              createdAt: post.createdAt.toString(),
-              deletedAt: post.deletedAt?.toString() || null,
+              createdAt:
+                typeof post.createdAt === "string"
+                  ? post.createdAt
+                  : post.createdAt.toString(),
+              deletedAt:
+                post.deletedAt && typeof post.deletedAt !== "string"
+                  ? post.deletedAt.toString()
+                  : post.deletedAt || null,
+              eventId:
+                typeof post.eventId === "string"
+                  ? post.eventId
+                  : post.eventId
+                  ? String(post.eventId)
+                  : null,
               category: post.category
-                ? {
-                    id: post.category.id,
-                    name: post.category.name,
-                    slug: post.category.slug || null,
-                  }
+                ? (() => {
+                    const cat = post.category as {
+                      id: string;
+                      name: string;
+                      slug: string | null;
+                    };
+                    return {
+                      id: cat.id,
+                      name: cat.name,
+                      slug: cat.slug || null,
+                    };
+                  })()
                 : null,
               // 明確確保 user 類型正確，移除 email 欄位（PostContent 不需要）
               // Explicitly ensure user type is correct, remove email field (PostContent doesn't need it)
-              user: {
-                id: post.user.id,
-                userId: post.user.userId,
-                name: post.user.name,
-                nickname: post.user.nickname ?? null, // 確保 undefined 轉為 null
-                avatar: post.user.avatar ?? null, // 確保 undefined 轉為 null
-              },
-              comments: post.comments.map((comment) => ({
-                id: comment.id,
-                content: comment.content,
-                likes: comment.likes,
-                replies: comment.replies,
-                createdAt: comment.createdAt.toString(),
-                userId: comment.userId,
-                postId: comment.postId,
-                parentId: comment.parentId ?? null, // 確保 undefined 轉為 null
-                // 明確確保 comment.user 類型正確，移除 email 欄位
-                // Explicitly ensure comment.user type is correct, remove email field
-                user: {
-                  id: comment.user.id,
-                  userId: comment.user.userId,
-                  name: comment.user.name,
-                  nickname: comment.user.nickname ?? null, // 確保 undefined 轉為 null
-                  avatar: comment.user.avatar ?? null, // 確保 undefined 轉為 null
-                },
-              })),
+              // Use transformUser utility function to handle type conversion
+              // 使用 transformUser 工具函數處理類型轉換
+              user: (() => {
+                const u = post.user as {
+                  id: string;
+                  userId: string;
+                  email: string;
+                  profile: {
+                    name: string;
+                    nickname: string | null;
+                    avatar: string | null;
+                  } | null;
+                };
+                return {
+                  id: u.id,
+                  userId: u.userId,
+                  name: u.profile?.name || "",
+                  nickname: u.profile?.nickname ?? null,
+                  avatar: u.profile?.avatar ?? null,
+                };
+              })(),
+              comments: post.comments.map((comment) => {
+                const commentUser = comment.user as {
+                  id: string;
+                  userId: string;
+                  email: string;
+                  profile: {
+                    name: string;
+                    nickname: string | null;
+                    avatar: string | null;
+                  } | null;
+                };
+                return {
+                  id: comment.id,
+                  content: comment.content,
+                  likes: comment.likes,
+                  replies: comment.replies,
+                  createdAt:
+                    typeof comment.createdAt === "string"
+                      ? comment.createdAt
+                      : comment.createdAt.toString(),
+                  userId: comment.userId,
+                  postId: comment.postId,
+                  parentId:
+                    typeof comment.parentId === "string"
+                      ? comment.parentId
+                      : comment.parentId
+                      ? String(comment.parentId)
+                      : null,
+                  user: {
+                    id: commentUser.id,
+                    userId: commentUser.userId,
+                    name: commentUser.profile?.name || commentUser.userId,
+                    nickname: commentUser.profile?.nickname ?? null,
+                    avatar: commentUser.profile?.avatar ?? null,
+                  },
+                };
+              }),
             }}
             currentUserId={user?.id}
             postId={post.id}

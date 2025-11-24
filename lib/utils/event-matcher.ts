@@ -150,7 +150,9 @@ export function findMatchingEvent(
   for (const candidate of candidateEvents) {
     // Skip events that already have external_id (they should be matched by exact match)
     // 跳過已有 external_id 的賽事（它們應該通過精確匹配）
-    if (candidate.external_id) {
+    // Type assertion needed because Event type may not include external_id
+    // 類型斷言是必要的，因為 Event 類型可能不包含 external_id
+    if ((candidate as any).external_id) {
       continue;
     }
 

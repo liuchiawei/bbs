@@ -134,6 +134,9 @@ export async function getUserProfilePage(
           createdAt: true,
           updatedAt: true,
           userId: true,
+          categoryId: true,
+          eventId: true,
+          deletedAt: true,
           user: {
             select: {
               id: true,

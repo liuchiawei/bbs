@@ -1252,4 +1252,5 @@ export const AnonymousUser = {
   name: t("ANONYMOUS"),
   nickname: t("ANONYMOUS"),
   avatar: null,
+  profile: null,
 } as const;

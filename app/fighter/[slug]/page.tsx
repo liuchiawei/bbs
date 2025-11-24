@@ -88,16 +88,33 @@ export async function generateMetadata({
     title: `${fighter.name} | Fighter Profile`,
     description: `${
       fighter.name
-    } - ${fighter.sport_type?.toUpperCase()} fighter. Record: ${winCount}-${lossCount}-${
+    } - ${
+      typeof fighter.sport_type === "string"
+        ? fighter.sport_type.toUpperCase()
+        : "Unknown"
+    } fighter. Record: ${winCount}-${lossCount}-${
       totalFights - winCount - lossCount
     } (${totalFights} fights)`,
     openGraph: {
       title: fighter.name,
-      description: `${fighter.sport_type?.toUpperCase()} fighter${
-        fighter.nationality ? ` from ${fighter.nationality}` : ""
+      description: `${
+        typeof fighter.sport_type === "string"
+          ? fighter.sport_type.toUpperCase()
+          : "Unknown"
+      } fighter${
+        typeof fighter.nationality === "string"
+          ? ` from ${fighter.nationality}`
+          : ""
       }`,
       type: "profile",
-      images: fighter.thumb ? [{ url: fighter.thumb }] : undefined,
+      images: fighter.thumb
+        ? [
+            {
+              url:
+                typeof fighter.thumb === "string" ? fighter.thumb : String(fighter.thumb),
+            },
+          ]
+        : undefined,
     },
   };
 }
@@ -146,28 +163,54 @@ export default async function FighterPage({
   // 並且已經正確處理了結果反轉和角色交換
   // Note: fighter.fightsAsFighter has already been merged by toFighterWithEvents from both fightsAsFighter and fightsAsOpponent
   // and has already correctly handled result reversal and role swapping
-  const initialFights = fighter.fightsAsFighter.map((fe) => ({
-    id: fe.id,
-    result: fe.result ?? null,
-    method: fe.method ?? null,
-    round: fe.round ?? null,
-    time: fe.time ?? null,
-    weight_class: fe.weight_class ?? null,
-    event: {
-      id: fe.event.id,
-      name: fe.event.name,
-      fight_date: fe.event.fight_date,
-      status: fe.event.status,
-      sport_type: fe.event.sport_type ?? null,
-    },
-    opponent: fe.opponent
-      ? {
-          id: fe.opponent.id,
-          name: fe.opponent.name,
-          slug: fe.opponent.slug,
-        }
-      : null,
-  }));
+  // Transform initial fights for component (first 10)
+  // 轉換初始對戰數據供組件使用（前10場，包含作為fighter和opponent的所有對戰）
+  // Type assertion needed due to PrismaToApp type transformation
+  // 由於 PrismaToApp 類型轉換，需要類型斷言
+  const initialFights = fighter.fightsAsFighter.map((fe) => {
+    const opponent = fe.opponent
+      ? (() => {
+          const o = fe.opponent as {
+            id: string;
+            name: string;
+            slug: string;
+          };
+          return {
+            id: o.id,
+            name: o.name,
+            slug: o.slug,
+          };
+        })()
+      : null;
+    return {
+      id: fe.id,
+      result:
+        typeof fe.result === "string" ? fe.result : fe.result ? String(fe.result) : null,
+      method:
+        typeof fe.method === "string" ? fe.method : fe.method ? String(fe.method) : null,
+      round: typeof fe.round === "number" ? fe.round : null,
+      time: typeof fe.time === "string" ? fe.time : fe.time ? String(fe.time) : null,
+      weight_class:
+        typeof fe.weight_class === "string"
+          ? fe.weight_class
+          : fe.weight_class
+          ? String(fe.weight_class)
+          : null,
+      event: {
+        id: (fe.event as { id: string }).id,
+        name: (fe.event as { name: string }).name,
+        fight_date: fe.event.fight_date as Date | string,
+        status: fe.event.status as string,
+        sport_type:
+          typeof fe.event.sport_type === "string"
+            ? fe.event.sport_type
+            : fe.event.sport_type
+            ? String(fe.event.sport_type)
+            : null,
+      },
+      opponent,
+    };
+  });
 
   // Transform fighter data for component using utility function
   // 使用工具函數轉換選手數據供組件使用

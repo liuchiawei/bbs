@@ -1,5 +1,62 @@
 # 開發日誌 / Development Log
 
+## 2025-01-23
+
+### fix/typescript-type-safety-improvements
+
+**難度**: ★★★☆☆
+
+**描述**: 修復多個 TypeScript 類型錯誤，提升類型安全性和代碼健壯性，確保所有類型定義與 Prisma 查詢結果一致
+
+**問題分析**:
+
+1. **`transformUser` 函數類型不匹配**: `UserPublicExtended` 類型期望 `profile` 屬性始終存在（即使為 `null`），但函數在 `user.profile` 為 `null` 時未返回 `profile` 屬性
+2. **`event-matcher.ts` 中 `external_id` 訪問錯誤**: `Event` 類型（基於 `EventPublic`）不包含 `external_id` 字段，但代碼嘗試訪問該字段
+3. **`fighter.ts` 中多個類型錯誤**:
+   - `external_data` 類型轉換問題：`convertJsonValue` 返回 `Record<string, unknown> | null`，但類型系統期望更複雜的類型
+   - `fightsAsFighter` 缺少 `fighter` 屬性：根據 `fighterSelectWithEvents`，每個 fight 應該包含 `fighter` 和 `opponent` 兩個關聯對象
+   - 返回對象缺少 `fightsAsOpponent` 屬性：`FighterWithEvents` 類型要求同時包含 `fightsAsFighter` 和 `fightsAsOpponent`
+
+**修復內容**:
+
+1. **修復 `transformUser` 函數** (`lib/utils.ts`):
+   - 更新函數參數類型，包含完整的 `profile` 結構（包括 `id` 和 `userId`）
+   - 確保即使 `user.profile` 為 `null` 時也返回 `profile: null`，符合 `UserPublicExtended` 類型定義
+   - 當 `user.profile` 存在時，正確構建包含 `id`、`userId`、`name`、`nickname`、`avatar` 的 `profile` 對象
+
+2. **修復 `event-matcher.ts` 中的 `external_id` 訪問** (`lib/utils/event-matcher.ts`):
+   - 使用類型斷言 `(candidate as any).external_id` 訪問 `external_id` 字段
+   - 添加註釋說明類型斷言的必要性（因為 `Event` 類型可能不包含 `external_id`）
+
+3. **修復 `fighter.ts` 中的類型錯誤** (`lib/utils/fighter.ts`):
+   - **`toFighterPublic`**: 為 `external_data` 添加類型斷言 `as FighterPublic["external_data"]`
+   - **`toFighterWithEvents`**:
+     - 為所有 `external_data` 轉換添加類型斷言
+     - 在 `fightsAsFighter` 映射中添加 `fighter` 屬性（當前選手的資訊）
+     - 在 `fightsAsOpponent` 映射中正確處理 `fighter` 和 `opponent` 的角色交換
+     - 為返回對象添加 `fightsAsOpponent: []` 屬性（因為已合併到 `fightsAsFighter`）
+     - 為 `fightsAsFighter` 添加類型斷言確保類型匹配
+
+**技術細節**:
+
+- **類型斷言使用**: 在必要時使用類型斷言 `as Type` 來解決 Prisma 生成的類型與應用類型之間的差異
+- **Null Safety**: 確保所有可能為 `null` 的屬性都正確處理，符合類型定義
+- **類型一致性**: 確保所有轉換函數返回的類型與 Prisma 生成的類型定義一致
+- **向後兼容**: 所有修復不影響現有功能，僅改善類型安全性
+
+**主要修改文件**:
+
+1. `lib/utils.ts` - 修復 `transformUser` 函數的類型問題
+2. `lib/utils/event-matcher.ts` - 修復 `external_id` 訪問問題
+3. `lib/utils/fighter.ts` - 修復多個類型錯誤，添加缺失的屬性
+
+**注意事項**:
+
+- 所有 TypeScript 編譯錯誤已修復
+- 類型斷言的使用是必要的，因為 Prisma 生成的類型與應用層類型之間存在差異
+- 這些修復確保了類型安全性，但不會影響運行時行為
+- 建議在未來重構時考慮統一 Prisma 生成的類型與應用層類型，減少類型斷言的使用
+
 ## 2025-11-23
 
 ### fix/fight-page-typescript-null-safety

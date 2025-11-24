@@ -14,7 +14,15 @@ export default function PostCardHeader({
     >
       <Avatar className="size-8">
         {/* TODO: 補充Category圖片 */}
-        <AvatarImage src={category?.slug || "general"} />
+        <AvatarImage
+          src={
+            category?.slug && typeof category.slug === "string"
+              ? category.slug
+              : category?.slug
+              ? String(category.slug)
+              : "general"
+          }
+        />
         <AvatarFallback>
           {category?.name?.charAt(0).toUpperCase() || "G"}
         </AvatarFallback>

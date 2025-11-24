@@ -18,22 +18,38 @@
 
 ### `transformUser()`
 
-**功能**: 將嵌套的 profile 結構轉換為扁平結構
+**功能**: 將嵌套的 profile 結構轉換為符合 `UserPublicExtended` 類型的結構
 
 **參數**:
-- `user`: 包含 `id`, `userId`, `email`, `profile` 的對象
+```typescript
+user: {
+  id: string;
+  userId: string;
+  email: string;
+  profile?: {
+    id?: string | null;
+    userId?: string | null;
+    name?: string | null;
+    nickname?: string | null;
+    avatar?: string | null;
+  } | null;
+}
+```
 
-**返回值**: `UserPublicExtended`
+**返回值**: `UserPublicExtended` - 包含 `id`, `userId`, `email`, `profile` 的對象
 
 **使用範例**:
 ```typescript
 import { transformUser } from "@/lib/utils";
 
+// 有 profile 的情況
 const user = {
   id: "123",
   userId: "john_doe",
   email: "john@example.com",
   profile: {
+    id: "profile-123",
+    userId: "john_doe",
     name: "John Doe",
     nickname: "Johnny",
     avatar: "https://example.com/avatar.jpg"
@@ -41,12 +57,45 @@ const user = {
 };
 
 const transformed = transformUser(user);
-// Returns: { id, userId, email, name: "John Doe", nickname: "Johnny", avatar: "https://..." }
+// Returns: {
+//   id: "123",
+//   userId: "john_doe",
+//   email: "john@example.com",
+//   profile: {
+//     id: "profile-123",
+//     userId: "john_doe",
+//     name: "John Doe",
+//     nickname: "Johnny",
+//     avatar: "https://example.com/avatar.jpg"
+//   }
+// }
+
+// profile 為 null 的情況
+const userWithoutProfile = {
+  id: "456",
+  userId: "jane_doe",
+  email: "jane@example.com",
+  profile: null
+};
+
+const transformed2 = transformUser(userWithoutProfile);
+// Returns: {
+//   id: "456",
+//   userId: "jane_doe",
+//   email: "jane@example.com",
+//   profile: null
+// }
 ```
 
 **注意事項**:
-- 如果 `profile` 為 `null`，使用 `userId` 作為 `name` 的預設值
+- ✅ **重要**: 即使 `profile` 為 `null`，函數也會返回 `profile: null`，確保類型一致性
+- 如果 `profile` 存在但缺少 `id` 或 `userId`，會使用預設值（空字串或 `user.userId`）
 - 確保 `undefined` 轉為 `null`，符合類型定義
+- 使用 `??` 運算符確保 `undefined` 轉為 `null`
+
+**類型安全修復** (2025-01-23):
+- ✅ 修復類型不匹配問題：確保返回的對象始終包含 `profile` 屬性（即使為 `null`）
+- ✅ 更新參數類型：包含完整的 `profile` 結構（包括 `id` 和 `userId`）
 
 **使用位置**: 
 - `lib/services/posts.ts`
@@ -279,9 +328,9 @@ const converted = convertJsonValue(jsonData);
 **功能**: 將 Prisma Fighter 轉換為 `FighterPublic` 類型
 
 **參數**:
-- `fighter`: Prisma Fighter 對象
+- `fighter`: `Prisma.FighterGetPayload<Record<string, never>>` - Prisma Fighter 對象
 
-**返回值**: `FighterPublic`
+**返回值**: `FighterPublic` - 包含基本選手資訊的公開類型
 
 **使用範例**:
 ```typescript
@@ -291,6 +340,11 @@ const fighter = await prisma.fighter.findUnique({ where: { id } });
 const publicFighter = toFighterPublic(fighter);
 ```
 
+**注意事項**:
+- ✅ **類型安全修復** (2025-01-23): 為 `external_data` 添加類型斷言 `as FighterPublic["external_data"]` 確保類型匹配
+- 使用 `convertJsonValue` 轉換 `external_data` 字段
+- 確保所有字段類型正確轉換
+
 **使用位置**: 
 - `lib/services/fighters.ts`
 
@@ -298,12 +352,31 @@ const publicFighter = toFighterPublic(fighter);
 
 ### `toFighterWithEvents()`
 
-**功能**: 將帶關聯的 Prisma Fighter 轉換為 `FighterWithEvents` 類型
+**功能**: 將 Prisma Fighter（包含對戰歷史）轉換為 `FighterWithEvents` 類型，合併雙向對戰記錄
 
 **參數**:
-- `fighter`: Prisma Fighter（含 `eventsAsFighter` 關聯）
+```typescript
+fighter: Prisma.FighterGetPayload<{
+  include: {
+    fightsAsFighter: {
+      include: {
+        event: true;
+        fighter?: true;
+        opponent: true;
+      };
+    };
+    fightsAsOpponent?: {
+      include: {
+        event: true;
+        fighter: true;
+        opponent?: true;
+      };
+    };
+  };
+}>
+```
 
-**返回值**: `FighterWithEvents`
+**返回值**: `FighterWithEvents` - 包含完整對戰歷史的選手類型
 
 **使用範例**:
 ```typescript
@@ -311,10 +384,41 @@ import { toFighterWithEvents } from "@/lib/utils/fighter";
 
 const fighter = await prisma.fighter.findUnique({
   where: { slug },
-  include: { eventsAsFighter: { include: { event: true, opponent: true } } }
+  include: {
+    fightsAsFighter: {
+      include: {
+        event: true,
+        fighter: true,
+        opponent: true
+      }
+    },
+    fightsAsOpponent: {
+      include: {
+        event: true,
+        fighter: true,
+        opponent: true
+      }
+    }
+  }
 });
 const fighterWithEvents = toFighterWithEvents(fighter);
 ```
+
+**功能說明**:
+- 合併 `fightsAsFighter` 和 `fightsAsOpponent` 兩個關聯
+- 在 `fightsAsOpponent` 中交換 `fighter` 和 `opponent` 的角色
+- 反轉對戰結果（Win ↔ Loss，Draw/NC 不變）
+- 去重（基於 fight id）
+- 按日期排序（降序）
+- 只保留最近 10 場對戰
+
+**注意事項**:
+- ✅ **類型安全修復** (2025-01-23):
+  - 為所有 `external_data` 轉換添加類型斷言 `as FighterWithEvents["external_data"]`
+  - 確保 `fightsAsFighter` 中的每個 fight 都包含 `fighter` 和 `opponent` 屬性
+  - 返回對象包含 `fightsAsOpponent` 屬性（即使為空數組）
+- `fightsAsFighter` 中的 `fighter` 是當前選手的資訊
+- `fightsAsOpponent` 中的角色會交換，確保從當前選手角度顯示
 
 **使用位置**: 
 - `lib/services/fighters.ts`

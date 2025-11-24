@@ -118,7 +118,15 @@ export function ProfileManagement() {
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={profile.avatar || undefined} />
+                      <AvatarImage
+                        src={
+                          typeof profile.avatar === "string"
+                            ? profile.avatar
+                            : profile.avatar
+                            ? String(profile.avatar)
+                            : undefined
+                        }
+                      />
                       <AvatarFallback>
                         {profile.name.charAt(0).toUpperCase()}
                       </AvatarFallback>

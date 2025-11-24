@@ -73,8 +73,19 @@ export function EventCard({ event }: EventCardProps) {
                 {event.status}
               </Badge>
               {event.sport_type && (
-                <Badge variant="outline" className={`${sportTypeColors[event.sport_type] || sportTypeColors.other} border text-xs capitalize`}>
-                  {event.sport_type}
+                <Badge
+                  variant="outline"
+                  className={`${
+                    sportTypeColors[
+                      typeof event.sport_type === "string"
+                        ? event.sport_type
+                        : String(event.sport_type)
+                    ] || sportTypeColors.other
+                  } border text-xs capitalize`}
+                >
+                  {typeof event.sport_type === "string"
+                    ? event.sport_type
+                    : String(event.sport_type)}
                 </Badge>
               )}
             </div>
@@ -91,12 +102,18 @@ export function EventCard({ event }: EventCardProps) {
           <CardTitle className="mt-2 text-xl md:text-2xl font-black tracking-tight uppercase italic leading-tight group-hover:text-primary transition-colors">
             {event.name}
           </CardTitle>
-          {event.external_source && (
-            <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-              <ExternalLink className="w-3 h-3" />
-              <span className="capitalize">{event.external_source}</span>
-            </div>
-          )}
+          {(() => {
+            const eventWithSource = event as Event & {
+              external_source?: string | null;
+            };
+            return eventWithSource.external_source &&
+              typeof eventWithSource.external_source === "string" ? (
+              <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                <ExternalLink className="w-3 h-3" />
+                <span className="capitalize">{eventWithSource.external_source}</span>
+              </div>
+            ) : null;
+          })()}
         </CardHeader>
         <CardContent className="relative z-10 flex-1 flex flex-col justify-end">
           <div className="flex items-center justify-between text-sm text-muted-foreground mt-4 pt-4 border-t border-border/50">

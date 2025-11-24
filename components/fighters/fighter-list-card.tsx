@@ -95,3 +95,4 @@ export function FighterListCard({ fighter }: FighterListCardProps) {
   );
 }
 
+
