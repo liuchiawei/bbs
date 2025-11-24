@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { userSelectFull } from "@/lib/validations";
+import { userSelectFull } from "@/lib/types/prisma-selects";
 
 // ユーザーデータを取得する関数（キャッシュ用）
 async function getUserData(userId: string) {

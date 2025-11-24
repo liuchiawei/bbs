@@ -22,6 +22,7 @@
 ### ProfileVisibility
 
 **定義**:
+
 ```typescript
 export type ProfileVisibility = "public" | "friends" | "private";
 ```
@@ -29,15 +30,17 @@ export type ProfileVisibility = "public" | "friends" | "private";
 **用途**: 定義個人資料字段的隱私級別
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `components/profile/profile-visibility-settings.tsx` - 隱私設定組件
-- `lib/services/profiles.ts` - Profile服務層
+- `lib/services/profiles.ts` - Profile 服務層
 
 ---
 
 ### ProfileVisibilitySettings
 
 **定義**:
+
 ```typescript
 export interface ProfileVisibilitySettings {
   name?: ProfileVisibility;
@@ -58,16 +61,18 @@ export interface ProfileVisibilitySettings {
 **用途**: 定義所有個人資料字段的隱私設定
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `components/profile/profile-visibility-settings.tsx` - 隱私設定組件
-- `lib/services/profiles.ts` - Profile服務層
-- `app/api/profile/[userId]/visibility/route.ts` - API路由
+- `lib/services/profiles.ts` - Profile 服務層
+- `app/api/profile/[userId]/visibility/route.ts` - API 路由
 
 ---
 
 ### Profile
 
 **定義**:
+
 ```typescript
 export interface Profile {
   id: string;
@@ -94,10 +99,11 @@ export interface Profile {
 **用途**: 完整的個人資料類型定義
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/profiles.ts` - Profile服務層
-- `components/profile/*` - 所有Profile相關組件
-- `app/api/profile/*` - Profile API路由
+- `lib/services/profiles.ts` - Profile 服務層
+- `components/profile/*` - 所有 Profile 相關組件
+- `app/api/profile/*` - Profile API 路由
 
 **對應資料庫表**: `Profile`
 
@@ -106,6 +112,7 @@ export interface Profile {
 ### ProfilePublic
 
 **定義**:
+
 ```typescript
 export interface ProfilePublic {
   id: string;
@@ -119,15 +126,17 @@ export interface ProfilePublic {
 **用途**: 公開顯示用的簡化個人資料類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `components/profile/profile-hovercard.tsx` - 懸停卡片組件
-- `components/posts/post-profile-hovercard.tsx` - 貼文中的Profile懸停卡片
+- `components/posts/post-profile-hovercard.tsx` - 貼文中的 Profile 懸停卡片
 
 ---
 
 ### CreateProfileInput
 
 **定義**:
+
 ```typescript
 export interface CreateProfileInput {
   userId: string;
@@ -147,18 +156,20 @@ export interface CreateProfileInput {
 }
 ```
 
-**用途**: 創建Profile時的輸入類型
+**用途**: 創建 Profile 時的輸入類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/profiles.ts` - Profile服務層
-- `app/api/profile/route.ts` - 創建Profile API
+- `lib/services/profiles.ts` - Profile 服務層
+- `app/api/profile/route.ts` - 創建 Profile API
 
 ---
 
 ### UpdateProfileInput
 
 **定義**:
+
 ```typescript
 export interface UpdateProfileInput {
   name?: string;
@@ -177,12 +188,13 @@ export interface UpdateProfileInput {
 }
 ```
 
-**用途**: 更新Profile時的輸入類型
+**用途**: 更新 Profile 時的輸入類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/profiles.ts` - Profile服務層
-- `app/api/profile/[userId]/route.ts` - 更新Profile API
+- `lib/services/profiles.ts` - Profile 服務層
+- `app/api/profile/[userId]/route.ts` - 更新 Profile API
 - `components/profile/edit-profile-form.tsx` - 編輯表單組件
 
 ---
@@ -190,6 +202,7 @@ export interface UpdateProfileInput {
 ### UpdateVisibilityInput
 
 **定義**:
+
 ```typescript
 export interface UpdateVisibilityInput {
   visibility: ProfileVisibilitySettings;
@@ -199,8 +212,9 @@ export interface UpdateVisibilityInput {
 **用途**: 更新隱私設定時的輸入類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `app/api/profile/[userId]/visibility/route.ts` - 更新隱私設定API
+- `app/api/profile/[userId]/visibility/route.ts` - 更新隱私設定 API
 
 ---
 
@@ -209,6 +223,7 @@ export interface UpdateVisibilityInput {
 ### User
 
 **定義**:
+
 ```typescript
 export interface User {
   id: string;
@@ -224,12 +239,13 @@ export interface User {
 }
 ```
 
-**用途**: 用戶基本資訊類型（包含可選的Profile）
+**用途**: 用戶基本資訊類型（包含可選的 Profile）
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `lib/auth.ts` - 認證服務
-- `lib/services/users.ts` - User服務層
+- `lib/services/users.ts` - User 服務層
 - `components/auth/*` - 認證相關組件
 
 **對應資料庫表**: `User`
@@ -239,24 +255,27 @@ export interface User {
 ### UserWithProfile
 
 **定義**:
+
 ```typescript
 export interface UserWithProfile extends User {
   profile: Profile;
 }
 ```
 
-**用途**: 用戶資訊包含必填Profile的類型
+**用途**: 用戶資訊包含必填 Profile 的類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/users.ts` - User服務層
-- `lib/services/profiles.ts` - Profile服務層
+- `lib/services/users.ts` - User 服務層
+- `lib/services/profiles.ts` - Profile 服務層
 
 ---
 
 ### UserPublic
 
 **定義**:
+
 ```typescript
 export interface UserPublic {
   id: string;
@@ -267,9 +286,10 @@ export interface UserPublic {
 }
 ```
 
-**用途**: 公開顯示用的用戶資訊類型（從Profile讀取顯示資料）
+**用途**: 公開顯示用的用戶資訊類型（從 Profile 讀取顯示資料）
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `components/posts/post-card-header.tsx` - 貼文卡片標題
 - `components/posts/post-content.tsx` - 貼文內容
@@ -282,6 +302,7 @@ export interface UserPublic {
 ### UserPublicExtended
 
 **定義**:
+
 ```typescript
 export type UserPublicExtended = PrismaToApp<
   Prisma.UserGetPayload<{
@@ -291,6 +312,7 @@ export type UserPublicExtended = PrismaToApp<
 ```
 
 **實際結構**:
+
 ```typescript
 {
   id: string;
@@ -306,16 +328,18 @@ export type UserPublicExtended = PrismaToApp<
 }
 ```
 
-**用途**: 擴展的公開用戶資訊（包含email和profile）
+**用途**: 擴展的公開用戶資訊（包含 email 和 profile）
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義（從 Prisma 生成）
 - `lib/utils.ts` - `transformUser` 函數用於轉換嵌套的 profile 結構
-- `lib/services/posts.ts` - Post服務層
-- `lib/services/comments.ts` - Comment服務層
+- `lib/services/posts.ts` - Post 服務層
+- `lib/services/comments.ts` - Comment 服務層
 - `components/posts/post-card.tsx` - 貼文卡片
 
 **重要變更** (2025-01-23):
+
 - ✅ 修正: `transformUser` 函數確保 `profile` 屬性始終存在（即使為 `null`），符合類型定義
 - ✅ 更新: 函數參數類型包含完整的 `profile` 結構（包括 `id` 和 `userId`）
 
@@ -324,6 +348,7 @@ export type UserPublicExtended = PrismaToApp<
 ### UserStats
 
 **定義**:
+
 ```typescript
 export interface UserStats {
   posts: number;
@@ -338,14 +363,16 @@ export interface UserStats {
 **用途**: 用戶統計資料類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/users.ts` - User服務層
+- `lib/services/users.ts` - User 服務層
 
 ---
 
 ### UserWithStats
 
 **定義**:
+
 ```typescript
 export interface UserWithStats extends User {
   _count: UserStats;
@@ -355,14 +382,16 @@ export interface UserWithStats extends User {
 **用途**: 用戶資訊包含統計資料的類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/users.ts` - User服務層
+- `lib/services/users.ts` - User 服務層
 
 ---
 
 ### UserWithCounts
 
 **定義**:
+
 ```typescript
 export interface UserWithCounts extends User {
   _count?: {
@@ -379,14 +408,16 @@ export interface UserWithCounts extends User {
 **用途**: 用戶資訊包含基本統計（用於向後兼容）
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/users.ts` - User服務層（向後兼容）
+- `lib/services/users.ts` - User 服務層（向後兼容）
 
 ---
 
 ### UserProfilePage
 
 **定義**:
+
 ```typescript
 export interface UserProfilePage extends UserWithProfile {
   posts: Post[];
@@ -397,6 +428,7 @@ export interface UserProfilePage extends UserWithProfile {
 **用途**: 用戶個人資料頁類型（包含最近貼文和完整統計）
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `app/profile/[userId]/page.tsx` - 個人資料頁面
 
@@ -405,17 +437,19 @@ export interface UserProfilePage extends UserWithProfile {
 ### UserWithProfileAndStats
 
 **定義**:
+
 ```typescript
 export interface UserWithProfileAndStats extends UserWithProfile {
   _count: UserStats;
 }
 ```
 
-**用途**: 用戶資訊包含Profile和統計資料的類型
+**用途**: 用戶資訊包含 Profile 和統計資料的類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/users.ts` - User服務層
+- `lib/services/users.ts` - User 服務層
 
 ---
 
@@ -424,6 +458,7 @@ export interface UserWithProfileAndStats extends UserWithProfile {
 ### Category
 
 **定義**:
+
 ```typescript
 export interface Category {
   id: string;
@@ -440,10 +475,11 @@ export interface Category {
 **用途**: 分類類型定義
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/categories.ts` - Category服務層
+- `lib/services/categories.ts` - Category 服務層
 - `components/posts/post-form.tsx` - 貼文表單
-- `app/api/categories/*` - Category API路由
+- `app/api/categories/*` - Category API 路由
 
 **對應資料庫表**: `Category`
 
@@ -454,6 +490,7 @@ export interface Category {
 ### Post
 
 **定義**:
+
 ```typescript
 export interface Post {
   id: string;
@@ -474,9 +511,10 @@ export interface Post {
 **用途**: 貼文基本類型定義
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/posts.ts` - Post服務層
-- `components/posts/*` - 所有Post相關組件
+- `lib/services/posts.ts` - Post 服務層
+- `components/posts/*` - 所有 Post 相關組件
 
 **對應資料庫表**: `Post`
 
@@ -485,6 +523,7 @@ export interface Post {
 ### PostWithUser
 
 **定義**:
+
 ```typescript
 export interface PostWithUser extends Post {
   user: UserPublicExtended;
@@ -498,8 +537,9 @@ export interface PostWithUser extends Post {
 **用途**: 貼文包含用戶資訊的類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/posts.ts` - Post服務層
+- `lib/services/posts.ts` - Post 服務層
 - `components/posts/post-card.tsx` - 貼文卡片
 
 ---
@@ -507,6 +547,7 @@ export interface PostWithUser extends Post {
 ### PostWithDetails
 
 **定義**:
+
 ```typescript
 export interface PostWithDetails extends PostWithUser {
   comments: CommentWithUser[];
@@ -516,6 +557,7 @@ export interface PostWithDetails extends PostWithUser {
 **用途**: 貼文包含詳細資訊（含評論）的類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `app/posts/[id]/page.tsx` - 貼文詳情頁面
 
@@ -524,6 +566,7 @@ export interface PostWithDetails extends PostWithUser {
 ### CreatePostInput
 
 **定義**:
+
 ```typescript
 export interface CreatePostInput {
   title: string;
@@ -536,15 +579,17 @@ export interface CreatePostInput {
 **用途**: 創建貼文時的輸入類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `components/posts/post-form.tsx` - 貼文表單
-- `app/api/posts/route.ts` - 創建貼文API
+- `app/api/posts/route.ts` - 創建貼文 API
 
 ---
 
 ### UpdatePostInput
 
 **定義**:
+
 ```typescript
 export interface UpdatePostInput {
   title?: string;
@@ -557,9 +602,10 @@ export interface UpdatePostInput {
 **用途**: 更新貼文時的輸入類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `components/posts/post-edit-form.tsx` - 編輯貼文表單
-- `app/api/posts/[id]/route.ts` - 更新貼文API
+- `app/api/posts/[id]/route.ts` - 更新貼文 API
 
 ---
 
@@ -568,6 +614,7 @@ export interface UpdatePostInput {
 ### Comment
 
 **定義**:
+
 ```typescript
 export interface Comment {
   id: string;
@@ -586,9 +633,10 @@ export interface Comment {
 **用途**: 評論基本類型定義
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/comments.ts` - Comment服務層
-- `components/comments/*` - 所有Comment相關組件
+- `lib/services/comments.ts` - Comment 服務層
+- `components/comments/*` - 所有 Comment 相關組件
 
 **對應資料庫表**: `Comment`
 
@@ -597,6 +645,7 @@ export interface Comment {
 ### CommentWithUser
 
 **定義**:
+
 ```typescript
 export interface CommentWithUser extends Comment {
   user: UserPublicExtended;
@@ -606,8 +655,9 @@ export interface CommentWithUser extends Comment {
 **用途**: 評論包含用戶資訊的類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/comments.ts` - Comment服務層
+- `lib/services/comments.ts` - Comment 服務層
 - `components/comments/comment-item.tsx` - 評論項目
 
 ---
@@ -615,6 +665,7 @@ export interface CommentWithUser extends Comment {
 ### CommentWithUserAndPost
 
 **定義**:
+
 ```typescript
 export interface CommentWithUserAndPost extends CommentWithUser {
   post: {
@@ -627,6 +678,7 @@ export interface CommentWithUserAndPost extends CommentWithUser {
 **用途**: 評論包含用戶和貼文資訊的類型（用於點讚評論頁面）
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `app/profile/[userId]/liked-comments/page.tsx` - 點讚評論頁面
 
@@ -635,6 +687,7 @@ export interface CommentWithUserAndPost extends CommentWithUser {
 ### CreateCommentInput
 
 **定義**:
+
 ```typescript
 export interface CreateCommentInput {
   content: string;
@@ -646,9 +699,10 @@ export interface CreateCommentInput {
 **用途**: 創建評論時的輸入類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `components/comments/comment-form.tsx` - 評論表單
-- `app/api/comments/route.ts` - 創建評論API
+- `app/api/comments/route.ts` - 創建評論 API
 
 ---
 
@@ -657,6 +711,7 @@ export interface CreateCommentInput {
 ### Event
 
 **定義**:
+
 ```typescript
 export interface Event {
   id: string;
@@ -683,15 +738,17 @@ export interface Event {
 **用途**: 賽事類型定義
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/events.ts` - Event服務層
-- `app/api/events/*` - Event API路由
+- `lib/services/events.ts` - Event 服務層
+- `app/api/events/*` - Event API 路由
 - `components/admin/event-create-form.tsx` - 創建賽事表單
 - `app/events/[id]/page.tsx` - 賽事詳情頁面
 
 **對應資料庫表**: `Event`
 
 **重要變更** (2025-01-21):
+
 - ❌ 移除: `winner_id`, `is_manual_override`
 - ✅ 新增: `promoter`, `organization`, `venue`, `location`, `description`, `poster_url`
 
@@ -700,6 +757,7 @@ export interface Event {
 ### ExternalEventSource
 
 **定義**:
+
 ```typescript
 export type ExternalEventSource = "thesportsdb" | "espn" | "ufc" | "other";
 ```
@@ -707,16 +765,18 @@ export type ExternalEventSource = "thesportsdb" | "espn" | "ufc" | "other";
 **用途**: 外部事件來源類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/events.ts` - Event服務層
-- `app/api/events/sync/route.ts` - 同步API
-- `app/api/admin/events/sync/route.ts` - 管理員同步API
+- `lib/services/events.ts` - Event 服務層
+- `app/api/events/sync/route.ts` - 同步 API
+- `app/api/admin/events/sync/route.ts` - 管理員同步 API
 
 ---
 
 ### SportType
 
 **定義**:
+
 ```typescript
 export type SportType = "boxing" | "ufc" | "mma" | "other";
 ```
@@ -724,9 +784,10 @@ export type SportType = "boxing" | "ufc" | "mma" | "other";
 **用途**: 運動類型定義
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/events.ts` - Event服務層
-- `lib/services/fighters.ts` - Fighter服務層
+- `lib/services/events.ts` - Event 服務層
+- `lib/services/fighters.ts` - Fighter 服務層
 - `components/admin/event-create-form.tsx` - 創建賽事表單
 - `components/admin/fighter-create-form.tsx` - 創建選手表單
 
@@ -735,6 +796,7 @@ export type SportType = "boxing" | "ufc" | "mma" | "other";
 ### UnifiedEventData
 
 **定義**:
+
 ```typescript
 export interface UnifiedEventData {
   external_id: string;
@@ -752,18 +814,20 @@ export interface UnifiedEventData {
 }
 ```
 
-**用途**: 統一的外部API事件資料格式
+**用途**: 統一的外部 API 事件資料格式
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/events.ts` - Event服務層（同步功能）
-- `lib/adapters/thesportsdb.ts` - TheSportsDB適配器
+- `lib/services/events.ts` - Event 服務層（同步功能）
+- `lib/adapters/thesportsdb.ts` - TheSportsDB 適配器
 
 ---
 
 ### SyncStatus
 
 **定義**:
+
 ```typescript
 export type SyncStatus = "pending" | "syncing" | "completed" | "failed";
 ```
@@ -771,14 +835,16 @@ export type SyncStatus = "pending" | "syncing" | "completed" | "failed";
 **用途**: 同步狀態類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/events.ts` - Event服務層
+- `lib/services/events.ts` - Event 服務層
 
 ---
 
 ### EventMatchResult
 
 **定義**:
+
 ```typescript
 export interface EventMatchResult {
   event: Event;
@@ -790,15 +856,17 @@ export interface EventMatchResult {
 **用途**: 事件匹配結果（用於模糊匹配）
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `lib/utils/event-matcher.ts` - 事件匹配工具
-- `lib/services/events.ts` - Event服務層（智能合併）
+- `lib/services/events.ts` - Event 服務層（智能合併）
 
 ---
 
 ### MergeEventOptions
 
 **定義**:
+
 ```typescript
 export interface MergeEventOptions {
   preserveManualFields?: boolean;
@@ -810,8 +878,9 @@ export interface MergeEventOptions {
 **用途**: 合併事件選項配置
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/events.ts` - Event服務層（智能合併）
+- `lib/services/events.ts` - Event 服務層（智能合併）
 
 ---
 
@@ -820,6 +889,7 @@ export interface MergeEventOptions {
 ### Fighter
 
 **定義**:
+
 ```typescript
 export interface Fighter {
   id: string;
@@ -837,6 +907,8 @@ export interface Fighter {
   description?: string | null;
   thumb?: string | null;
   cutout?: string | null;
+  gender: "MALE" | "FEMALE" | "OTHER"; // 性別 / Gender
+  titles: string[]; // 頭銜列表 / Titles list
   last_synced_at?: Date | string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
@@ -846,9 +918,10 @@ export interface Fighter {
 **用途**: 選手完整類型定義
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/fighters.ts` - Fighter服務層
-- `app/api/fighters/*` - Fighter API路由
+- `lib/services/fighters.ts` - Fighter 服務層
+- `app/api/fighters/*` - Fighter API 路由
 - `components/admin/fighter-create-form.tsx` - 創建選手表單
 
 **對應資料庫表**: `Fighter`
@@ -858,6 +931,7 @@ export interface Fighter {
 ### FighterPublic
 
 **定義**:
+
 ```typescript
 export interface FighterPublic {
   id: string;
@@ -873,12 +947,15 @@ export interface FighterPublic {
   cutout?: string | null;
   sport_type?: SportType | null;
   external_data?: Record<string, unknown> | null;
+  gender: "MALE" | "FEMALE" | "OTHER"; // 性別 / Gender
+  titles: string[]; // 頭銜列表 / Titles list
 }
 ```
 
 **用途**: 用於公開顯示的選手類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `components/admin/fighter-select.tsx` - 選手選擇組件
 - `app/fighters/[slug]/page.tsx` - 選手詳情頁面
@@ -888,6 +965,7 @@ export interface FighterPublic {
 ### FighterWithEvents
 
 **定義**:
+
 ```typescript
 export type FighterWithEvents = PrismaToApp<
   Prisma.FighterGetPayload<{
@@ -897,6 +975,7 @@ export type FighterWithEvents = PrismaToApp<
 ```
 
 **實際結構**:
+
 ```typescript
 {
   // Fighter 基本欄位
@@ -942,47 +1021,46 @@ export type FighterWithEvents = PrismaToApp<
 **用途**: 選手包含完整對戰歷史的類型（包含雙向對戰記錄）
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義（從 Prisma 生成）
 - `lib/utils/fighter.ts` - `toFighterWithEvents` 函數用於轉換 Prisma 結果
-- `lib/services/fighters.ts` - Fighter服務層
+- `lib/services/fighters.ts` - Fighter 服務層
 - `app/fighter/[slug]/page.tsx` - 選手詳情頁面
 
 **重要變更** (2025-01-23):
+
 - ✅ 修正: `toFighterWithEvents` 函數確保 `fightsAsFighter` 中的每個 fight 都包含 `fighter` 和 `opponent` 屬性
 - ✅ 修正: 返回對象包含 `fightsAsOpponent` 屬性（即使為空數組）
 - ✅ 修正: `external_data` 類型轉換使用類型斷言確保類型匹配
 
 ---
 
-### FighterEventWithDetails
+### FightWithDetails
 
 **定義**:
+
 ```typescript
-export interface FighterEventWithDetails {
-  id: string;
-  fighter_id: string;
-  event_id: string;
-  opponent_id?: string | null;
-  result?: string | null;
-  method?: string | null;
-  round?: number | null;
-  time?: string | null;
-  weight_class?: string | null;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-  event: Event;
-  opponent?: Fighter | null;
-}
+export type FightWithDetails = PrismaFightWithRelations;
 ```
 
-**用途**: 對戰包含賽事和對手詳情的類型
+**用途**: 對戰包含賽事和對手詳情的類型（對應資料庫中的 `Fight` 表）
+
+**實際結構**:
+
+- 包含 `Fight` 表的所有基本欄位
+- `event`: EventPublic - 關聯的賽事
+- `fighter`: FighterPublic（基本欄位） - 對戰選手
+- `opponent`: FighterPublic（基本欄位） | null - 對手
+- `_count`: { bets: number } - 投注數量統計
 
 **使用位置**:
-- `lib/types.ts` - 類型定義
-- `lib/services/fighters.ts` - Fighter服務層
-- `app/fighters/[slug]/page.tsx` - 選手詳情頁面
 
-**對應資料庫表**: `FighterEvent`
+- `lib/types.ts` - 類型定義（使用 Prisma 生成的類型）
+- `lib/services/fighters.ts` - `getFights()` 函數返回此類型
+- `lib/services/fights.ts` - 對戰服務層
+- `app/fighter/[slug]/page.tsx` - 選手詳情頁面
+
+**對應資料庫表**: `Fight`（原 `FighterEvent` 表已更名為 `Fight`）
 
 ---
 
@@ -991,6 +1069,7 @@ export interface FighterEventWithDetails {
 ### BettingLog
 
 **定義**:
+
 ```typescript
 export interface BettingLog {
   id: string;
@@ -1007,8 +1086,9 @@ export interface BettingLog {
 **用途**: 投注記錄類型定義
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/betting.ts` - Betting服務層
+- `lib/services/betting.ts` - Betting 服務層
 - `components/profile/betting-history-list.tsx` - 投注歷史列表
 - `components/admin/rollback-panel.tsx` - 回滾面板
 
@@ -1021,6 +1101,7 @@ export interface BettingLog {
 ### BettingOdds
 
 **定義**:
+
 ```typescript
 export interface BettingOdds {
   totalPool: number;
@@ -1033,9 +1114,10 @@ export interface BettingOdds {
 **用途**: 投注賠率介面
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `lib/betting-system.ts` - 投注系統
-- `lib/services/betting.ts` - Betting服務層
+- `lib/services/betting.ts` - Betting 服務層
 - `components/betting/FightBettingCard.tsx` - 對戰投注卡片
 
 ---
@@ -1043,6 +1125,7 @@ export interface BettingOdds {
 ### SettleEventInput
 
 **定義**:
+
 ```typescript
 export interface SettleEventInput {
   winnerId: string;
@@ -1054,15 +1137,17 @@ export interface SettleEventInput {
 **用途**: 結算賽事輸入介面
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `lib/betting-system.ts` - 投注系統
-- `app/api/admin/fights/[id]/result/route.ts` - 結算對戰API
+- `app/api/admin/fights/[id]/result/route.ts` - 結算對戰 API
 
 ---
 
 ### UserBettingStats
 
 **定義**:
+
 ```typescript
 export interface UserBettingStats {
   totalBets: number;
@@ -1081,8 +1166,9 @@ export interface UserBettingStats {
 **用途**: 用戶投注統計資料
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/betting.ts` - Betting服務層
+- `lib/services/betting.ts` - Betting 服務層
 - `components/profile/betting-stats-card.tsx` - 投注統計卡片
 
 ---
@@ -1092,6 +1178,7 @@ export interface UserBettingStats {
 ### ApiResponse
 
 **定義**:
+
 ```typescript
 export interface ApiResponse<T = any> {
   message?: string;
@@ -1100,17 +1187,19 @@ export interface ApiResponse<T = any> {
 }
 ```
 
-**用途**: 通用API響應類型
+**用途**: 通用 API 響應類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- 多個API路由文件（通用響應格式）
+- 多個 API 路由文件（通用響應格式）
 
 ---
 
 ### ApiErrorResponse
 
 **定義**:
+
 ```typescript
 export interface ApiErrorResponse {
   error: string;
@@ -1118,17 +1207,19 @@ export interface ApiErrorResponse {
 }
 ```
 
-**用途**: API錯誤響應類型
+**用途**: API 錯誤響應類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- 多個API路由文件（錯誤處理）
+- 多個 API 路由文件（錯誤處理）
 
 ---
 
 ### PaginationResponse
 
 **定義**:
+
 ```typescript
 export interface PaginationResponse<T> {
   data: T[];
@@ -1144,14 +1235,16 @@ export interface PaginationResponse<T> {
 **用途**: 分頁響應類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/posts.ts` - Post服務層（未來擴充）
+- `lib/services/posts.ts` - Post 服務層（未來擴充）
 
 ---
 
 ### SessionPayload
 
 **定義**:
+
 ```typescript
 export interface SessionPayload {
   userId: string;
@@ -1159,9 +1252,10 @@ export interface SessionPayload {
 }
 ```
 
-**用途**: Session payload類型
+**用途**: Session payload 類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `lib/auth.ts` - 認證服務
 
@@ -1170,6 +1264,7 @@ export interface SessionPayload {
 ### RegisterInput
 
 **定義**:
+
 ```typescript
 export interface RegisterInput {
   userId: string;
@@ -1181,15 +1276,17 @@ export interface RegisterInput {
 **用途**: 註冊輸入類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `components/auth/register-form.tsx` - 註冊表單
-- `app/api/auth/register/route.ts` - 註冊API
+- `app/api/auth/register/route.ts` - 註冊 API
 
 ---
 
 ### LoginInput
 
 **定義**:
+
 ```typescript
 export interface LoginInput {
   userId: string;
@@ -1200,15 +1297,17 @@ export interface LoginInput {
 **用途**: 登入輸入類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `components/auth/login-form.tsx` - 登入表單
-- `app/api/auth/login/route.ts` - 登入API
+- `app/api/auth/login/route.ts` - 登入 API
 
 ---
 
 ### UploadResponse
 
 **定義**:
+
 ```typescript
 export interface UploadResponse {
   message: string;
@@ -1219,8 +1318,9 @@ export interface UploadResponse {
 **用途**: 上傳響應類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
-- `app/api/upload/route.ts` - 上傳API（如果存在）
+- `app/api/upload/route.ts` - 上傳 API（如果存在）
 
 ---
 
@@ -1229,6 +1329,7 @@ export interface UploadResponse {
 ### AdminUserListItem
 
 **定義**:
+
 ```typescript
 export interface AdminUserListItem {
   id: string;
@@ -1250,16 +1351,18 @@ export interface AdminUserListItem {
 **用途**: 管理員用戶列表項目類型（扁平化的 profile 資料）
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `components/admin/user-management.tsx` - 用戶管理組件
-- `app/api/admin/users/route.ts` - 管理員用戶API
-- `lib/services/users.ts` - User服務層
+- `app/api/admin/users/route.ts` - 管理員用戶 API
+- `lib/services/users.ts` - User 服務層
 
 ---
 
 ### AdminPostListItem
 
 **定義**:
+
 ```typescript
 export interface AdminPostListItem {
   id: string;
@@ -1278,15 +1381,17 @@ export interface AdminPostListItem {
 **用途**: 管理員貼文列表項目類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `components/admin/post-management.tsx` - 貼文管理組件
-- `app/api/admin/posts/route.ts` - 管理員貼文API
+- `app/api/admin/posts/route.ts` - 管理員貼文 API
 
 ---
 
 ### AdminEventListItem
 
 **定義**:
+
 ```typescript
 export interface AdminEventListItem {
   id: string;
@@ -1310,12 +1415,14 @@ export interface AdminEventListItem {
 **用途**: 管理員賽事列表項目類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `components/admin/event-list.tsx` - 賽事管理組件
-- `app/api/admin/events/route.ts` - 管理員賽事API
-- `lib/services/events.ts` - Event服務層
+- `app/api/admin/events/route.ts` - 管理員賽事 API
+- `lib/services/events.ts` - Event 服務層
 
 **重要變更** (2025-01-21):
+
 - ✅ 修正: `_count.fighterEvents` → `_count.fights`（與資料庫 schema 同步）
 
 ---
@@ -1323,6 +1430,7 @@ export interface AdminEventListItem {
 ## 類型使用統計 / Type Usage Statistics
 
 **定義**:
+
 ```typescript
 export interface AdminPostListItem {
   id: string;
@@ -1341,15 +1449,17 @@ export interface AdminPostListItem {
 **用途**: 管理員貼文列表項目類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `components/admin/post-management.tsx` - 貼文管理組件
-- `app/api/admin/posts/route.ts` - 管理員貼文API
+- `app/api/admin/posts/route.ts` - 管理員貼文 API
 
 ---
 
 ### AdminEventListItem
 
 **定義**:
+
 ```typescript
 export interface AdminEventListItem {
   id: string;
@@ -1373,12 +1483,14 @@ export interface AdminEventListItem {
 **用途**: 管理員賽事列表項目類型
 
 **使用位置**:
+
 - `lib/types.ts` - 類型定義
 - `components/admin/event-list.tsx` - 賽事管理組件
-- `app/api/admin/events/route.ts` - 管理員賽事API
-- `lib/services/events.ts` - Event服務層
+- `app/api/admin/events/route.ts` - 管理員賽事 API
+- `lib/services/events.ts` - Event 服務層
 
 **重要變更** (2025-01-21):
+
 - ✅ 修正: `_count.fighterEvents` → `_count.fights`（與資料庫 schema 同步）
 
 ---
@@ -1409,13 +1521,15 @@ export interface AdminEventListItem {
 ### 2025-01-21: Event 類型更新
 
 **變更內容**:
+
 - ❌ 移除: `winner_id`, `is_manual_override`
 - ✅ 新增: `promoter`, `organization`, `venue`, `location`, `description`, `poster_url`
 
 **影響文件**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/events.ts` - Event服務層
-- `app/api/events/*` - Event API路由
+- `lib/services/events.ts` - Event 服務層
+- `app/api/events/*` - Event API 路由
 - `components/admin/event-create-form.tsx` - 創建賽事表單
 - `app/event/[id]/page.tsx` - 賽事詳情頁面
 
@@ -1424,11 +1538,13 @@ export interface AdminEventListItem {
 ### 2025-01-21: AdminEventListItem 類型修正
 
 **變更內容**:
+
 - ✅ 修正: `_count.fighterEvents` → `_count.fights`（與資料庫 schema 同步，FighterEvent 已改名為 Fight）
 
 **影響文件**:
+
 - `lib/types.ts` - 類型定義
-- `lib/services/events.ts` - Event服務層
+- `lib/services/events.ts` - Event 服務層
 - `components/admin/event-list.tsx` - 賽事管理組件
 
 ---
@@ -1436,10 +1552,12 @@ export interface AdminEventListItem {
 ### 2025-01-21: 類型註釋完善
 
 **變更內容**:
+
 - ✅ 為所有類型添加了繁體中文和日文註釋說明
 - ✅ 確保類型定義與實際使用一致
 
 **影響文件**:
+
 - `lib/types.ts` - 所有類型定義都已添加註釋
 
 ---
@@ -1447,6 +1565,7 @@ export interface AdminEventListItem {
 ### 2025-01-23: TypeScript 類型安全性修復
 
 **變更內容**:
+
 - ✅ 修復 `transformUser` 函數：確保 `profile` 屬性始終存在（即使為 `null`），符合 `UserPublicExtended` 類型定義
 - ✅ 修復 `event-matcher.ts`：使用類型斷言訪問 `external_id` 字段（因為 `Event` 類型可能不包含該字段）
 - ✅ 修復 `fighter.ts` 中的多個類型錯誤：
@@ -1455,14 +1574,48 @@ export interface AdminEventListItem {
   - 返回對象添加 `fightsAsOpponent` 屬性
 
 **影響文件**:
+
 - `lib/utils.ts` - `transformUser` 函數類型修復
 - `lib/utils/event-matcher.ts` - `external_id` 訪問修復
 - `lib/utils/fighter.ts` - 多個類型錯誤修復
 
 **技術說明**:
+
 - 使用類型斷言 `as Type` 解決 Prisma 生成的類型與應用類型之間的差異
 - 確保所有可能為 `null` 的屬性都正確處理
 - 所有修復不影響運行時行為，僅改善類型安全性
+
+---
+
+### 2025-01-24: Fighter 性別與頭銜欄位新增
+
+**變更內容**:
+
+- ✅ 新增 `FighterGender` enum（MALE, FEMALE, OTHER）
+- ✅ 在 Fighter 模型中新增 `gender` 欄位（預設值：MALE）
+- ✅ 在 Fighter 模型中新增 `titles` 欄位（String[] 陣列，預設值：空陣列）
+- ✅ 更新所有相關的 Prisma selects 包含新欄位
+- ✅ 更新 API 路由支援新欄位
+- ✅ 更新服務層處理新欄位
+- ✅ 更新前端組件顯示新欄位
+
+**影響文件**:
+
+- `prisma/schema.prisma` - Prisma schema 更新
+- `lib/types/prisma-selects.ts` - Prisma selects 更新
+- `app/api/fighters/route.ts` - API 路由更新
+- `lib/services/fighters.ts` - 服務層更新
+- `components/admin/fighter-create-form.tsx` - 管理員創建表單更新
+- `components/fighters/fighter-profile-card.tsx` - 公開顯示組件更新
+- `docs/types/DATABASE_SCHEMA.md` - 資料庫結構文檔更新
+- `docs/types/TYPESCRIPT_TYPES.md` - TypeScript 類型文檔更新
+
+**技術說明**:
+
+- 性別使用 Enum 類型確保資料一致性
+- 頭銜使用 String[] 陣列支援複數頭銜
+- 所有現有 Fighter 記錄會自動獲得預設值（gender: MALE, titles: []）
+- 外部 API 同步時使用預設值（因為外部 API 通常不提供這些資訊）
 
 ---
 
@@ -1489,4 +1642,3 @@ export interface AdminEventListItem {
 - API Routes: `app/api/`
 - Service Layer: `lib/services/`
 - Components: `components/`
-

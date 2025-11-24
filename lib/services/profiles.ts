@@ -8,7 +8,7 @@ import type {
   UpdateProfileInput,
   UserWithProfile,
 } from "@/lib/types";
-import { profileSelectFull, profileSelectPublic } from "@/lib/validations";
+import { profileSelectFull } from "@/lib/types/prisma-selects";
 
 /**
  * 檢查欄位是否對查看者可見

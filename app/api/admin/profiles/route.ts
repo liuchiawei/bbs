@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { profileSelectFull } from "@/lib/validations";
+import { profileSelectFull } from "@/lib/types/prisma-selects";
 import type { ProfileVisibilitySettings } from "@/lib/types";
 
 export async function GET(request: NextRequest) {

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { TRANSLATIONS, type Language } from "@/lib/constants";
-import { userSelectPublicExtended, categorySelect } from "@/lib/validations";
+import { userSelectPublicExtended, categorySelect } from "@/lib/types/prisma-selects";
 import { transformUser } from "@/lib/utils";
 
 async function getUserPosts(userId: string) {

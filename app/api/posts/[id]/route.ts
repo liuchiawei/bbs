@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSession } from "@/lib/auth";
-import { updatePostSchema, commentIncludeBasic, categorySelect } from "@/lib/validations";
-import { userSelectPublicExtended } from "@/lib/validations";
+import { updatePostSchema, commentIncludeBasic } from "@/lib/validations";
+import { categorySelect } from "@/lib/types/prisma-selects";
+import { userSelectPublicExtended } from "@/lib/types/prisma-selects";
 import { softDeletePost, updatePost } from "@/lib/services/posts";
 import { z } from "zod";
 

@@ -17,7 +17,7 @@ import {
   userSelectPublicExtended,
   profileSelectPublic,
   categorySelect,
-} from "@/lib/validations";
+} from "@/lib/types/prisma-selects";
 import { transformUser } from "@/lib/utils";
 import { transformAdminUserListItem } from "@/lib/utils/admin";
 
@@ -315,10 +315,10 @@ export async function getUserComments(userId: string) {
 /**
  * Admin: Get all users with pagination and counts
  * 管理員：獲取所有用戶（分頁和計數）
- * 
+ *
  * Uses cache for performance optimization (60 second revalidate)
  * 使用快取優化效能（60秒重新驗證）
- * 
+ *
  * Transforms Prisma query results to AdminUserListItem format
  * 將 Prisma 查詢結果轉換為 AdminUserListItem 格式
  */
