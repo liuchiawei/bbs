@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Roboto, Roboto_Mono, Noto_Sans_TC } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { Navbar } from "@/components/layout/navbar";
@@ -10,13 +10,18 @@ import { NavbarLoading } from "@/components/ui/navbar-loading";
 import { ThemeProvider } from "next-themes";
 import { ThemeToggleButton } from "@/components/common/theme-toggle-button";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const robotoSans = Roboto({
+  variable: "--font-roboto",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const robotoMono = Roboto_Mono({
+  variable: "--font-roboto-mono",
+  subsets: ["latin"],
+});
+
+const notoSansTC = Noto_Sans_TC({
+  variable: "--font-noto-sans-tc",
   subsets: ["latin"],
 });
 
@@ -40,7 +45,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${robotoSans.variable} ${robotoMono.variable} ${notoSansTC.variable} antialiased`}
       >
         <ThemeProvider
           attribute="class"

@@ -30,14 +30,14 @@ interface FighterListCardProps {
 export function FighterListCard({ fighter }: FighterListCardProps) {
   const sportTypeColors: Record<string, string> = {
     boxing: "bg-red-500/20 text-red-500 border-red-500/50",
-    ufc: "bg-purple-500/20 text-purple-500 border-purple-500/50",
-    mma: "bg-orange-500/20 text-orange-500 border-orange-500/50",
+    ufc: "bg-green-500/20 text-green-500 border-green-500/50",
+    mma: "bg-purple-500/20 text-purple-500 border-purple-500/50",
     other: "bg-gray-500/20 text-gray-500 border-gray-500/50",
   };
 
   return (
     <Link href={`/fighter/${fighter.slug}`}>
-      <Card className="h-full transition-all hover:shadow-lg hover:scale-[1.02] cursor-pointer group">
+      <Card className="h-full hover-red-card cyberpunk-shadow shadow-none transition-all hover:shadow-lg hover:scale-[1.02] cursor-pointer group">
         <CardContent className="p-4">
           <div className="flex flex-col items-center text-center space-y-3">
             {/* Fighter Avatar */}
@@ -45,12 +45,12 @@ export function FighterListCard({ fighter }: FighterListCardProps) {
               thumb={fighter.cutout || fighter.thumb}
               name={fighter.name}
               size="lg"
-              className="group-hover:ring-2 group-hover:ring-primary transition-all"
+              className="group-hover:ring-1 group-hover:ring-primary transition-all"
             />
 
             {/* Fighter Name */}
             <div className="w-full">
-              <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+              <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-foreground transition-colors">
                 {fighter.name}
               </h3>
             </div>

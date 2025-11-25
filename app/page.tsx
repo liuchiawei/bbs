@@ -23,14 +23,14 @@ export default async function Home() {
           allPosts.map((post) => <PostCard key={post.id} post={post} />)
         )}
       </div>
-      <div className="h-120 border" />
-      <div className="h-120 border" />
-      <div className="h-120 border" />
-      <div className="h-120 border" />
-      <div className="h-120 border" />
-      <div className="h-120 border" />
-      <div className="h-120 border" />
-      <div className="h-120 border" />
+      <div className="flex flex-col gap-6 *:h-120 *:rounded-2xl">
+        <div className="border" />
+        <div className="border" />
+        <div className="red" />
+        <div className="border" />
+        <div className="border" />
+        <div className="border" />
+      </div>
     </section>
   );
 }
