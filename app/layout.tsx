@@ -7,6 +7,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { NavbarLoading } from "@/components/ui/navbar-loading";
+import { ThemeProvider } from "next-themes";
+import { ThemeToggleButton } from "@/components/common/theme-toggle-button";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,7 +22,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "BBS | Boxing Buddies Society",
-  description: "A boxing community for boxing buddies to share their thoughts and experiences.",
+  description:
+    "A boxing community for boxing buddies to share their thoughts and experiences.",
   // TODO: add open graph metadata
   // openGraph: {
   //   title: "BBS | Boxing Buddies Society",
@@ -39,17 +42,25 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* SuspenseでNavbarをラップして、PPRが正しく動作するようにする */}
-        {/* Wrap Navbar with Suspense to allow PPR to work correctly */}
-        <Suspense fallback={<NavbarLoading />}>
-          <Navbar />
-        </Suspense>
-        <main className="w-full max-w-3xl h-full min-h-screen mx-auto px-2 pt-12">
-          {children}
-        </main>
-        <Footer />
-        <Toaster />
-        <Analytics />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {/* SuspenseでNavbarをラップして、PPRが正しく動作するようにする */}
+          {/* Wrap Navbar with Suspense to allow PPR to work correctly */}
+          <Suspense fallback={<NavbarLoading />}>
+            <Navbar />
+          </Suspense>
+          <main className="w-full max-w-3xl h-full min-h-screen mx-auto px-2 pt-12">
+            {children}
+          </main>
+          <ThemeToggleButton className="fixed bottom-4 right-4 z-50" />
+          <Footer />
+          <Toaster />
+          <Analytics />
+        </ThemeProvider>
       </body>
     </html>
   );

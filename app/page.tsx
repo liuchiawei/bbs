@@ -1,5 +1,4 @@
 import { getPosts } from "@/lib/services/posts";
-import NewPostButtonXL from "@/components/posts/new-post-button-xl";
 import NewPostButton from "@/components/posts/new-post-button";
 import { PostCard } from "@/components/posts/post-card";
 import { PostForm } from "@/components/posts/post-form";
@@ -32,7 +31,6 @@ export default async function Home() {
       <div className="h-120 border" />
       <div className="h-120 border" />
       <div className="h-120 border" />
-      <NewPostButtonXL className="fixed -bottom-8 right-1/2 md:right-12 translate-x-1/2 z-0" />
     </section>
   );
 }

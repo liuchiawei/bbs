@@ -346,6 +346,8 @@ export const TRANSLATIONS = {
     BANNED: "Banned",
     CREATED_AT: "Created At",
     SUCCESS_RESTORED: "Restored successfully",
+    LIGHT_MODE: "Light mode",
+    DARK_MODE: "Dark mode",
   },
 
   ja: {
@@ -648,6 +650,8 @@ export const TRANSLATIONS = {
     BANNED: "禁止",
     CREATED_AT: "作成日",
     SUCCESS_RESTORED: "復元しました",
+    LIGHT_MODE: "ライトモード",
+    DARK_MODE: "ダークモード",
   },
 
   "zh-CN": {
@@ -947,6 +951,8 @@ export const TRANSLATIONS = {
     BANNED: "已封禁",
     CREATED_AT: "创建时间",
     SUCCESS_RESTORED: "恢复成功",
+    LIGHT_MODE: "浅色模式",
+    DARK_MODE: "深色模式",
   },
 
   "zh-TW": {
@@ -1233,6 +1239,8 @@ export const TRANSLATIONS = {
     BANNED: "已封禁",
     CREATED_AT: "建立時間",
     SUCCESS_RESTORED: "恢復成功",
+    LIGHT_MODE: "淺色模式",
+    DARK_MODE: "深色模式",
   },
 } as const;
 
