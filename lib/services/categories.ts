@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import type { Category } from "@/lib/types";
 import { unstable_cache } from "next/cache";
-import { categorySelect } from "@/lib/validations";
+import { categorySelect } from "@/lib/types/prisma-selects";
 
 /**
  * Get all categories (excluding soft-deleted ones)

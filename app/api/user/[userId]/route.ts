@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { userSelectWithStats } from "@/lib/validations";
+import { userSelectWithStats } from "@/lib/types/prisma-selects";
 
 export async function GET(
   request: NextRequest,

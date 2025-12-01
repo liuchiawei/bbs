@@ -197,9 +197,9 @@ model Event {
   updatedAt DateTime @updatedAt
 
   // Relationships
-  posts         Post[]
-  bets          BettingLog[] // 保留用於查詢，實際關聯到Fight
-  fights       Fight[] // 對戰組合列表
+  posts  Post[]
+  bets   BettingLog[] // 保留用於查詢，實際關聯到Fight
+  fights Fight[] // 對戰組合列表
 
   @@unique([external_id, external_source]) // 外部イベントの一意制約 / Unique constraint for external events
   @@index([external_id, external_source]) // 外部イベントの高速検索 / Fast lookup for external events
@@ -230,9 +230,9 @@ model BettingLog {
   settlement_status BetStatus @default(PENDING) // 結算狀態
   createdAt         DateTime  @default(now()) // 創建時間
 
-  user         User         @relation(fields: [userId], references: [userId])
-  event        Event        @relation(fields: [eventId], references: [id])
-  fight        Fight        @relation(fields: [fightId], references: [id])
+  user  User  @relation(fields: [userId], references: [userId])
+  event Event @relation(fields: [eventId], references: [id])
+  fight Fight @relation(fields: [fightId], references: [id])
 
   @@index([userId]) // 用戶投注查詢 / User betting queries
   @@index([eventId]) // 賽事投注查詢 / Event betting queries
@@ -257,11 +257,11 @@ model AuditLog {
 }
 
 model Fighter {
-  id              String    @id @default(uuid())
-  slug            String    @unique // URL-friendly slug (e.g., "conor-mcgregor")
+  id              String        @id @default(uuid())
+  slug            String        @unique // URL-friendly slug (e.g., "conor-mcgregor")
   name            String // Full name
   external_id     String? // TheSportsDB API idPlayer
-  external_source String?   @default("thesportsdb") // Data source
+  external_source String?       @default("thesportsdb") // Data source
   external_data   Json? // Complete API response cache
   sport_type      String? // boxing/ufc/mma
   nationality     String?
@@ -272,9 +272,11 @@ model Fighter {
   description     String? // Biography/description
   thumb           String? // Profile thumbnail URL
   cutout          String? // Cutout image URL
+  gender          FighterGender @default(MALE) // 性別 / Gender
+  titles          String[]      @default([]) // 頭銜列表 / Titles list (e.g., ["UFC Lightweight Champion", "Interim Champion"])
   last_synced_at  DateTime? // Last sync timestamp
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   // Relationships
   fightsAsFighter  Fight[] @relation("Fighter")
@@ -335,4 +337,10 @@ enum FightStatus {
   CONFIRMED // 確認
   CANCELLED // 取消
   COMPLETED // 完成
+}
+
+enum FighterGender {
+  MALE // 男性
+  FEMALE // 女性
+  OTHER // 其他
 }

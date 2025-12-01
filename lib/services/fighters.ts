@@ -630,6 +630,8 @@ async function _syncFighterOnDemand(
         description: playerData.strDescriptionEN || null,
         thumb: playerData.strThumb || null,
         cutout: playerData.strCutout || null,
+        gender: "MALE", // 預設為男性，外部 API 通常不提供性別資訊 / Default to MALE, external API usually doesn't provide gender
+        titles: [], // 預設為空陣列，外部 API 通常不提供頭銜資訊 / Default to empty array, external API usually doesn't provide titles
         last_synced_at: new Date(),
       },
     });
@@ -807,6 +809,8 @@ export async function getOrCreateFighterByName(
         description: apiPlayer?.strDescriptionEN || null,
         thumb: apiPlayer?.strThumb || null,
         cutout: apiPlayer?.strCutout || null,
+        gender: "MALE", // 預設為男性，外部 API 通常不提供性別資訊 / Default to MALE, external API usually doesn't provide gender
+        titles: [], // 預設為空陣列，外部 API 通常不提供頭銜資訊 / Default to empty array, external API usually doesn't provide titles
         last_synced_at: apiPlayer ? new Date() : null,
       },
     });
@@ -875,23 +879,64 @@ export async function syncFighterFromAPI(fighterId: string): Promise<boolean> {
 }
 
 /**
- * Get fighter events
- * 取得選手的賽事（包含作為fighter和opponent的所有對戰）
+ * Get fights for a fighter
+ * 取得選手的對戰（包含作為fighter和opponent的所有對戰）
  *
  * Returns FightWithDetails[] from lib/types.
  * 返回 lib/types 中的 FightWithDetails[] 類型。
  */
-export async function getFighterEvents(
+export async function getFights(
   fighterId: string
-): Promise<FighterWithEvents["fightsAsFighter"]> {
+): Promise<FightWithDetails[]> {
   const events = await prisma.fight.findMany({
     where: {
       OR: [{ fighter_id: fighterId }, { opponent_id: fighterId }],
     },
     include: {
-      fighter: true,
-      opponent: true,
-      event: true,
+      fighter: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          thumb: true,
+          cutout: true,
+          sport_type: true,
+          nationality: true,
+        },
+      },
+      opponent: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          thumb: true,
+          cutout: true,
+          sport_type: true,
+          nationality: true,
+        },
+      },
+      event: {
+        select: {
+          id: true,
+          name: true,
+          fight_date: true,
+          status: true,
+          sport_type: true,
+          promoter: true,
+          organization: true,
+          venue: true,
+          location: true,
+          description: true,
+          poster_url: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+      _count: {
+        select: {
+          bets: true,
+        },
+      },
     },
     orderBy: {
       event: {
@@ -902,62 +947,65 @@ export async function getFighterEvents(
 
   // Convert to FightWithDetails type
   // 轉換為 FightWithDetails 類型
+  // FightWithDetails は fightSelectWithRelations に基づいており、
+  // fighter と opponent は基本フィールドのみを含む
+  // FightWithDetails is based on fightSelectWithRelations,
+  // fighter and opponent only include basic fields
   return events.map((fe) => ({
     id: fe.id,
     fighter_id: fe.fighter_id,
     event_id: fe.event_id,
     opponent_id: fe.opponent_id,
+    fight_type: fe.fight_type,
+    fight_order: fe.fight_order,
+    weight_class: fe.weight_class,
+    is_bettable: fe.is_bettable,
+    status: fe.status,
     result: fe.result,
     method: fe.method,
     round: fe.round,
     time: fe.time,
-    weight_class: fe.weight_class,
     createdAt: fe.createdAt,
     updatedAt: fe.updatedAt,
-    event: fe.event as FighterWithEvents["fightsAsFighter"][0]["event"],
+    event: {
+      id: fe.event.id,
+      name: fe.event.name,
+      fight_date: fe.event.fight_date,
+      status: fe.event.status,
+      sport_type: fe.event.sport_type,
+      promoter: fe.event.promoter,
+      organization: fe.event.organization,
+      venue: fe.event.venue,
+      location: fe.event.location,
+      description: fe.event.description,
+      poster_url: fe.event.poster_url,
+      createdAt: fe.event.createdAt,
+      updatedAt: fe.event.updatedAt,
+    },
     fighter: {
       id: fe.fighter.id,
       slug: fe.fighter.slug,
       name: fe.fighter.name,
-      external_id: fe.fighter.external_id,
-      external_source: fe.fighter.external_source,
-      external_data: convertJsonValue(fe.fighter.external_data) as any,
-      sport_type: fe.fighter.sport_type as FighterWithEvents["sport_type"],
-      nationality: fe.fighter.nationality,
-      date_born: fe.fighter.date_born,
-      height: fe.fighter.height,
-      weight: fe.fighter.weight,
-      position: fe.fighter.position,
-      description: fe.fighter.description,
       thumb: fe.fighter.thumb,
       cutout: fe.fighter.cutout,
-      last_synced_at: fe.fighter.last_synced_at,
-      createdAt: fe.fighter.createdAt,
-      updatedAt: fe.fighter.updatedAt,
+      sport_type: fe.fighter.sport_type,
+      nationality: fe.fighter.nationality,
     },
     opponent: fe.opponent
       ? {
           id: fe.opponent.id,
           slug: fe.opponent.slug,
           name: fe.opponent.name,
-          external_id: fe.opponent.external_id,
-          external_source: fe.opponent.external_source,
-          external_data: convertJsonValue(fe.opponent.external_data) as any,
-          sport_type: fe.opponent.sport_type as FighterWithEvents["sport_type"],
-          nationality: fe.opponent.nationality,
-          date_born: fe.opponent.date_born,
-          height: fe.opponent.height,
-          weight: fe.opponent.weight,
-          position: fe.opponent.position,
-          description: fe.opponent.description,
           thumb: fe.opponent.thumb,
           cutout: fe.opponent.cutout,
-          last_synced_at: fe.opponent.last_synced_at,
-          createdAt: fe.opponent.createdAt,
-          updatedAt: fe.opponent.updatedAt,
+          sport_type: fe.opponent.sport_type,
+          nationality: fe.opponent.nationality,
         }
       : null,
-  })) as FighterWithEvents["fightsAsFighter"];
+    _count: {
+      bets: fe._count.bets,
+    },
+  })) as FightWithDetails[];
 }
 
 /**

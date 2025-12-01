@@ -155,6 +155,8 @@ export async function GET(request: NextRequest) {
  *   description?: string;
  *   thumb?: string (URL);
  *   cutout?: string (URL);
+ *   gender?: "MALE" | "FEMALE" | "OTHER" (default: "MALE");
+ *   titles?: string[] (default: []);
  * }
  */
 export async function POST(request: NextRequest) {
@@ -184,6 +186,8 @@ export async function POST(request: NextRequest) {
       description: z.string().optional(),
       thumb: z.string().url().optional().or(z.literal("")),
       cutout: z.string().url().optional().or(z.literal("")),
+      gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(), // 性別 / Gender
+      titles: z.array(z.string()).optional(), // 頭銜列表 / Titles list
     });
 
     const validatedData = schema.parse(body);
@@ -234,6 +238,8 @@ export async function POST(request: NextRequest) {
         description: validatedData.description?.trim() || null,
         thumb: validatedData.thumb?.trim() || null,
         cutout: validatedData.cutout?.trim() || null,
+        gender: validatedData.gender || "MALE", // 性別，預設為 MALE / Gender, default to MALE
+        titles: validatedData.titles || [], // 頭銜列表，預設為空陣列 / Titles list, default to empty array
       },
     });
 

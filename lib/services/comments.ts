@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db";
 import type { CommentWithUser } from "@/lib/types";
-import { userSelectPublicExtended } from "@/lib/validations";
+import { userSelectPublicExtended } from "@/lib/types/prisma-selects";
 import { transformUser } from "@/lib/utils";
 import { generateCommentId } from "@/lib/utils/id-generator";
 

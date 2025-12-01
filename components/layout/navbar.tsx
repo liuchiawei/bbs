@@ -122,7 +122,7 @@ export function Navbar() {
       {/* Center: Application name */}
       <Link
         href="/"
-        className="text-2xl font-black tracking-tighter text-primary hover:text-primary/80 transition-colors uppercase italic"
+        className="text-2xl font-[200] font-roboto tracking-tighter text-primary hover:text-primary/80 transition-colors uppercase"
       >
         {t("APP_NAME")}
       </Link>

@@ -19,6 +19,8 @@ import {
   Twitter,
   Instagram,
   Youtube,
+  Award,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { FighterAvatar } from "@/components/fighters/fighter-avatar";
@@ -61,6 +63,22 @@ export function FighterProfileCard({ fighter }: FighterProfileCardProps) {
     other: "bg-gray-500/20 text-gray-500 border-gray-500/50",
   };
 
+  const genderLabels: Record<string, string> = {
+    MALE: "男性 / Male",
+    FEMALE: "女性 / Female",
+    OTHER: "其他 / Other",
+  };
+
+  const genderColors: Record<string, string> = {
+    MALE: "bg-blue-500/20 text-blue-500 border-blue-500/50",
+    FEMALE: "bg-pink-500/20 text-pink-500 border-pink-500/50",
+    OTHER: "bg-gray-500/20 text-gray-500 border-gray-500/50",
+  };
+
+  // 處理頭銜陣列
+  // Handle titles array
+  const titles = Array.isArray(fighter.titles) ? fighter.titles : [];
+
   return (
     <Card className="overflow-hidden">
       {/* Fighter Image */}
@@ -102,6 +120,25 @@ export function FighterProfileCard({ fighter }: FighterProfileCardProps) {
                     {typeof fighter.sport_type === "string"
                       ? fighter.sport_type
                       : String(fighter.sport_type)}
+                  </Badge>
+                )}
+                {fighter.gender && (
+                  <Badge
+                    variant="outline"
+                    className={`${
+                      genderColors[
+                        typeof fighter.gender === "string"
+                          ? fighter.gender
+                          : String(fighter.gender)
+                      ] || genderColors.OTHER
+                    } border`}
+                  >
+                    <User className="w-3 h-3 mr-1" />
+                    {genderLabels[
+                      typeof fighter.gender === "string"
+                        ? fighter.gender
+                        : String(fighter.gender)
+                    ] || genderLabels.OTHER}
                   </Badge>
                 )}
                 {fighter.position && (
@@ -189,6 +226,27 @@ export function FighterProfileCard({ fighter }: FighterProfileCardProps) {
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {/* Titles */}
+        {titles.length > 0 && (
+          <div>
+            <h3 className="font-semibold mb-2 flex items-center gap-2">
+              <Award className="w-4 h-4" />
+              頭銜 / Titles
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {titles.map((title, index) => (
+                <Badge
+                  key={index}
+                  variant="outline"
+                  className="bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-500/50"
+                >
+                  {title}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Description */}
         {fighter.description && (
           <div>

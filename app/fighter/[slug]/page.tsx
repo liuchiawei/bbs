@@ -236,6 +236,8 @@ export default async function FighterPage({
     cutout: fighter.cutout ?? (fighter.external_data as any)?.strCutout ?? null,
     sport_type: fighter.sport_type ?? null,
     external_data: fighter.external_data ?? null,
+    gender: (fighter.gender as "MALE" | "FEMALE" | "OTHER") ?? "MALE", // 性別 / Gender
+    titles: Array.isArray(fighter.titles) ? fighter.titles : [], // 頭銜列表 / Titles list
   };
 
   return (

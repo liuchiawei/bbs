@@ -35,6 +35,8 @@ export function FighterCreateForm() {
   const [description, setDescription] = useState("");
   const [thumb, setThumb] = useState("");
   const [cutout, setCutout] = useState("");
+  const [gender, setGender] = useState<"MALE" | "FEMALE" | "OTHER">("MALE"); // 性別 / Gender
+  const [titlesInput, setTitlesInput] = useState(""); // 頭銜輸入（逗號分隔） / Titles input (comma-separated)
 
   // 當 name 改變時自動生成 slug 預覽（僅在 slug 未被手動編輯時）
   // Auto-generate slug preview when name changes (only if slug hasn't been manually edited)
@@ -92,6 +94,10 @@ export function FighterCreateForm() {
           description: description.trim() || undefined,
           thumb: thumb.trim() || undefined,
           cutout: cutout.trim() || undefined,
+          gender: gender,
+          titles: titlesInput.trim()
+            ? titlesInput.split(",").map((t) => t.trim()).filter((t) => t.length > 0)
+            : undefined,
         }),
       });
 
@@ -118,6 +124,8 @@ export function FighterCreateForm() {
       setDescription("");
       setThumb("");
       setCutout("");
+      setGender("MALE");
+      setTitlesInput("");
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -198,6 +206,22 @@ export function FighterCreateForm() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="gender">性別 / Gender</Label>
+                <Select value={gender} onValueChange={(value: "MALE" | "FEMALE" | "OTHER") => setGender(value)}>
+                  <SelectTrigger id="gender">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MALE">男性 / Male</SelectItem>
+                    <SelectItem value="FEMALE">女性 / Female</SelectItem>
+                    <SelectItem value="OTHER">其他 / Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
                 <Label htmlFor="nationality">國籍 / Nationality</Label>
                 <Input
                   id="nationality"
@@ -205,6 +229,19 @@ export function FighterCreateForm() {
                   onChange={(e) => setNationality(e.target.value)}
                   placeholder="例如：Ireland, USA"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="titles">頭銜 / Titles</Label>
+                <Input
+                  id="titles"
+                  value={titlesInput}
+                  onChange={(e) => setTitlesInput(e.target.value)}
+                  placeholder="例如：UFC Lightweight Champion, Interim Champion"
+                />
+                <p className="text-xs text-muted-foreground">
+                  多個頭銜請用逗號分隔 / Separate multiple titles with commas
+                </p>
               </div>
             </div>
 

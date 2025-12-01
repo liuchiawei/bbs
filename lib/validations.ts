@@ -1,105 +1,15 @@
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { APP_CONSTANTS, t } from "./constants";
+import {
+  profileSelectPublic,
+  categorySelect,
+} from "./types/prisma-selects";
 
 // Validation Constants
 export const USER_ID_REGEX = /^[a-zA-Z0-9]{1,12}$/;
 export const USER_ID_MIN_LENGTH = 1;
 export const USER_ID_MAX_LENGTH = 12;
-
-// Profile Select Constants
-export const profileSelectPublic = {
-  id: true,
-  userId: true,
-  name: true,
-  nickname: true,
-  avatar: true,
-} satisfies Prisma.ProfileSelect;
-
-export const profileSelectFull = {
-  id: true,
-  userId: true,
-  name: true,
-  nickname: true,
-  gender: true,
-  birthDate: true,
-  avatar: true,
-  height: true,
-  weight: true,
-  description: true,
-  record: true,
-  train_start: true,
-  stance: true,
-  gym: true,
-  visibility: true,
-  deletedAt: true,
-  createdAt: true,
-  updatedAt: true,
-} satisfies Prisma.ProfileSelect;
-
-// Reusable Prisma Select Fragments
-// 公開顯示用使用者資料（從Profile讀取，不包含敏感資訊）
-export const userSelectPublic = {
-  id: true,
-  userId: true,
-  profile: {
-    select: profileSelectPublic,
-  },
-} satisfies Prisma.UserSelect;
-
-// 公開顯示用使用者資料（擴展版，包含 email）
-export const userSelectPublicExtended = {
-  id: true,
-  userId: true,
-  email: true,
-  profile: {
-    select: profileSelectPublic,
-  },
-} satisfies Prisma.UserSelect;
-
-// 完整使用者資料（所有欄位 + Profile）
-export const userSelectFull = {
-  id: true,
-  userId: true,
-  email: true,
-  isAdmin: true,
-  isBanned: true,
-  points: true,
-  createdAt: true,
-  updatedAt: true,
-  profile: {
-    select: profileSelectFull,
-  },
-} satisfies Prisma.UserSelect;
-
-// 完整使用者資料 + 統計
-// 注意：_count 不是 UserSelect 的一部分，所以這裡使用 any 來繞過類型檢查
-export const userSelectWithStats = {
-  ...userSelectFull,
-  _count: {
-    select: {
-      posts: true,
-      comments: true,
-      likedPosts: true,
-      likedComments: true,
-    },
-  },
-} as any;
-
-// 向後兼容：保留 userSelectBasic 作為 userSelectPublic 的別名
-export const userSelectBasic = userSelectPublic;
-
-// Category Select
-export const categorySelect = {
-  id: true,
-  name: true,
-  slug: true,
-  description: true,
-  displayOrder: true,
-  createdAt: true,
-  updatedAt: true,
-  deletedAt: true,
-} satisfies Prisma.CategorySelect;
 
 export const postIncludeBasic = {
   user: { 

@@ -6,8 +6,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-noto-sans-tc);
+  --font-mono: var(--font-roboto-mono);
+  --font-roboto: var(--font-roboto);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -58,7 +59,7 @@
   --secondary-foreground: oklch(0.21 0.034 264.665);
   --muted: oklch(0.967 0.003 264.542);
   --muted-foreground: oklch(0.551 0.027 264.364);
-  --accent: oklch(0.967 0.003 264.542);
+  --accent: oklch(0.577 0.245 27.325);
   --accent-foreground: oklch(0.21 0.034 264.665);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.928 0.006 264.531);
@@ -83,35 +84,35 @@
   /* Dark Mode - "Fight Night" Arena Theme */
   --background: oklch(0.15 0.02 260); /* Deep Dark Blue/Black */
   --foreground: oklch(0.985 0.002 247.839);
-  --card: oklch(0.20 0.03 260); /* Slightly lighter dark */
+  --card: oklch(0.2 0.03 260); /* Slightly lighter dark */
   --card-foreground: oklch(0.985 0.002 247.839);
-  --popover: oklch(0.20 0.03 260);
+  --popover: oklch(0.2 0.03 260);
   --popover-foreground: oklch(0.985 0.002 247.839);
-  --primary: oklch(0.60 0.25 25); /* Bright Red */
+  --primary: oklch(0.6 0.25 25); /* Bright Red */
   --primary-foreground: oklch(0.985 0.002 247.839);
   --secondary: oklch(0.25 0.04 260);
   --secondary-foreground: oklch(0.985 0.002 247.839);
   --muted: oklch(0.25 0.04 260);
-  --muted-foreground: oklch(0.70 0.02 260);
-  --accent: oklch(0.75 0.18 85); /* Gold Accent */
+  --muted-foreground: oklch(0.7 0.02 260);
+  --accent: oklch(0.6 0.25 25); /* Gold Accent */
   --accent-foreground: oklch(0.15 0.02 260); /* Dark text on Gold */
-  --destructive: oklch(0.60 0.25 25);
-  --border: oklch(0.30 0.04 260);
-  --input: oklch(0.30 0.04 260);
-  --ring: oklch(0.60 0.25 25);
-  --chart-1: oklch(0.60 0.25 25); /* Red */
+  --destructive: oklch(0.6 0.25 25);
+  --border: oklch(0.3 0.04 260);
+  --input: oklch(0.3 0.04 260);
+  --ring: oklch(0.6 0.25 25);
+  --chart-1: oklch(0.6 0.25 25); /* Red */
   --chart-2: oklch(0.75 0.18 85); /* Gold */
-  --chart-3: oklch(0.30 0.04 260);
+  --chart-3: oklch(0.3 0.04 260);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.20 0.03 260);
+  --sidebar: oklch(0.2 0.03 260);
   --sidebar-foreground: oklch(0.985 0.002 247.839);
-  --sidebar-primary: oklch(0.60 0.25 25);
+  --sidebar-primary: oklch(0.6 0.25 25);
   --sidebar-primary-foreground: oklch(0.985 0.002 247.839);
   --sidebar-accent: oklch(0.25 0.04 260);
   --sidebar-accent-foreground: oklch(0.985 0.002 247.839);
-  --sidebar-border: oklch(0.30 0.04 260);
-  --sidebar-ring: oklch(0.60 0.25 25);
+  --sidebar-border: oklch(0.3 0.04 260);
+  --sidebar-ring: oklch(0.6 0.25 25);
 }
 
 @layer base {
@@ -121,4 +122,16 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.red-card {
+  @apply bg-linear-to-tr from-rose-600 via-red-600 to-orange-600;
+}
+
+.hover-red-card {
+  @apply hover:bg-linear-to-tr hover:from-rose-600 hover:via-red-600 hover:to-orange-600;
+}
+
+.cyberpunk-shadow {
+  @apply shadow-red-700/50 dark:shadow-red-600/50;
 }
