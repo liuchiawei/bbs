@@ -15,15 +15,13 @@ export default function SheetMenuButton({
     <Button
       variant="ghost"
       className={cn(
-        "group w-full justify-start py-8 gap-4 rounded-none hover:text-foreground",
+        "group w-full justify-start py-8 gap-4 rounded-none",
         className
       )}
       onClick={onClick}
     >
       <Icon />
-      <span className="group-hover:translate-x-1 transition-transform">
-        {children}
-      </span>
+      <span>{children}</span>
     </Button>
   );
 }

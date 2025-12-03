@@ -3,12 +3,13 @@ import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/next";
 import { Roboto, Roboto_Mono, Noto_Sans_TC } from "next/font/google";
 import "./globals.css";
+import AppSideBar from "@/components/layout/app-sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { NavbarLoading } from "@/components/ui/navbar-loading";
 import { ThemeProvider } from "next-themes";
-import { ThemeToggleButton } from "@/components/common/theme-toggle-button";
 
 const robotoSans = Roboto({
   variable: "--font-roboto",
@@ -55,17 +56,21 @@ export default function RootLayout({
         >
           {/* SuspenseでNavbarをラップして、PPRが正しく動作するようにする */}
           {/* Wrap Navbar with Suspense to allow PPR to work correctly */}
-          <Suspense fallback={<NavbarLoading />}>
-            <Navbar />
-          </Suspense>
-          <main className="w-full max-w-3xl h-full min-h-screen mx-auto px-2 pt-12">
-            {children}
-          </main>
-          <ThemeToggleButton className="fixed bottom-4 right-4 z-50" />
-          <Footer />
-          <Toaster />
-          <Analytics />
+          <SidebarProvider>
+            <AppSideBar />
+            <main className="w-full h-full min-h-screen mx-auto">
+              <Suspense fallback={<NavbarLoading />}>
+                <Navbar />
+              </Suspense>
+              <section className="w-full max-w-4xl h-full mx-auto">
+                {children}
+              </section>
+              <Footer />
+            </main>
+            <Toaster />
+          </SidebarProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );

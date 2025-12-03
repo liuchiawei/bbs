@@ -30,20 +30,20 @@ export function UserMenuSheet({
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button variant="outline" className="relative size-8 rounded-full hover:text-foreground">
           {isLoading ? (
-            <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+            <div className="size-8 rounded-full bg-muted animate-pulse" />
           ) : user ? (
-            <Avatar className="h-8 w-8">
+            <Avatar>
               <AvatarImage src={user.avatar as string | undefined} />
               <AvatarFallback>
                 {(user.name || user.userId || "U").charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
           ) : (
-            <Avatar className="h-8 w-8">
+            <Avatar>
               <AvatarFallback>
-                <User className="h-4 w-4" />
+                <User />
               </AvatarFallback>
             </Avatar>
           )}

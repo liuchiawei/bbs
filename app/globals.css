@@ -60,7 +60,7 @@
   --muted: oklch(0.967 0.003 264.542);
   --muted-foreground: oklch(0.551 0.027 264.364);
   --accent: oklch(0.577 0.245 27.325);
-  --accent-foreground: oklch(0.21 0.034 264.665);
+  --accent-foreground: oklch(0.985 0.002 247.839);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.928 0.006 264.531);
   --input: oklch(0.928 0.006 264.531);
@@ -94,8 +94,8 @@
   --secondary-foreground: oklch(0.985 0.002 247.839);
   --muted: oklch(0.25 0.04 260);
   --muted-foreground: oklch(0.7 0.02 260);
-  --accent: oklch(0.6 0.25 25); /* Gold Accent */
-  --accent-foreground: oklch(0.15 0.02 260); /* Dark text on Gold */
+  --accent: oklch(0.6 0.25 25);
+  --accent-foreground: oklch(0.985 0.002 247.839);
   --destructive: oklch(0.6 0.25 25);
   --border: oklch(0.3 0.04 260);
   --input: oklch(0.3 0.04 260);

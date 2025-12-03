@@ -1,6 +1,9 @@
+"use client";
+
 import { motion } from "motion/react";
 import { Dispatch, SetStateAction, useState } from "react";
 import { Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 
 const TOGGLE_CLASSES =
   "text-sm font-medium flex items-center gap-2 px-3 md:pl-3 md:pr-3.5 py-3 md:py-1.5 transition-colors relative z-10";
@@ -19,9 +22,9 @@ export default function SliderToggle({
       <button
         className={`${TOGGLE_CLASSES} ${
           selected === "light" ? "text-white" : "text-slate-300"
-        }`}
+        }`} 
         onClick={() => {
-          setSelected("light");
+          useTheme().setTheme("light");
         }}
       >
         <Moon className="relative z-10 text-lg md:text-sm" />
@@ -32,7 +35,7 @@ export default function SliderToggle({
           selected === "dark" ? "text-white" : "text-slate-800"
         }`}
         onClick={() => {
-          setSelected("dark");
+          useTheme().setTheme("dark");
         }}
       >
         <Sun className="relative z-10 text-lg md:text-sm" />
