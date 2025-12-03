@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import SheetMenuButton from "@/components/common/sheet-menu-button";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -11,39 +12,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { PanelLeft, Home, Calendar, Users, FolderTree, Search } from "lucide-react";
-import { t, TRANSLATIONS } from "@/lib/constants";
+import { PanelLeft } from "lucide-react";
+import { t, TRANSLATIONS, APP_CONSTANTS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-
-// 導航項目配置
-// Navigation items configuration
-const navigationItems = [
-  {
-    href: "/",
-    label: "NAV_HOME",
-    icon: Home,
-  },
-  {
-    href: "/event",
-    label: "NAV_EVENTS",
-    icon: Calendar,
-  },
-  {
-    href: "/fighter",
-    label: "NAV_FIGHTERS",
-    icon: Users,
-  },
-  {
-    href: "/category",
-    label: "NAV_CATEGORIES",
-    icon: FolderTree,
-  },
-  {
-    href: "/search",
-    label: "NAV_SEARCH",
-    icon: Search,
-  },
-];
 
 export function AppSideBar() {
   const pathname = usePathname();
@@ -52,39 +23,35 @@ export function AppSideBar() {
     <Sheet>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon">
-          <PanelLeft className="h-4 w-4" />
+          <PanelLeft className="size-4" />
           <span className="sr-only">{t("NAV_MENU")}</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-64 sm:w-80">
+      <SheetContent side="left">
         <SheetHeader>
           <SheetTitle>{t("APP_NAME")}</SheetTitle>
         </SheetHeader>
-        <div className="mt-6 flex flex-col gap-2">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href || 
+        <div className="mt-4 flex flex-col">
+          {APP_CONSTANTS.NAVIGATION_ITEMS.map((item) => {
+            const isActive =
+              pathname === item.href ||
               (item.href !== "/" && pathname.startsWith(item.href));
-            
             return (
-              <Link key={item.href} href={item.href}>
-                <Button
-                  variant={isActive ? "secondary" : "ghost"}
-                  className={cn(
-                    "w-full justify-start gap-3",
-                    isActive && "bg-secondary"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
+              <Link
+                key={item.href}
+                href={item.href}
+                className={isActive ? "bg-secondary" : ""}
+              >
+                <SheetMenuButton icon={item.icon}>
                   {t(item.label as keyof typeof TRANSLATIONS.en)}
-                </Button>
+                </SheetMenuButton>
               </Link>
             );
           })}
         </div>
-        
-        <Separator className="my-4" />
-        
+
+        <Separator />
+
         {/* 預留擴展區塊 */}
         {/* Reserved expansion area for future features */}
         {/* 
@@ -98,4 +65,3 @@ export function AppSideBar() {
     </Sheet>
   );
 }
-

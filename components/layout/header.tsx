@@ -1,5 +1,5 @@
 import { t } from "@/lib/constants";
-export default function HomeHeader() {
+export default function Header() {
   return (
     // TODO: style, animations, etc.
     <header className="my-8 text-center space-y-4">

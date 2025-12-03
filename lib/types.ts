@@ -34,6 +34,7 @@ import type {
   CommentWithUserAndPost as PrismaCommentWithUserAndPost,
   BettingLogFull as PrismaBettingLogFull,
 } from "@/lib/types/prisma-generated";
+import type { LucideIcon } from "lucide-react";
 
 // Re-export utility types
 // 重新導出工具類型
@@ -73,7 +74,7 @@ export interface ProfileVisibilitySettings {
 // プロフィールタイプ
 // 完整的個人資料類型定義（包含所有欄位和可見性設定）
 // Using Prisma-generated type as base
-export type Profile = PrismaProfileFull;
+export type Profile = PrismaProfileFull; //TODO: 將nickname, gender, height, weight, description, record, stance, gym 等設定的Date型轉換為string型
 
 // 公開顯示用プロフィール
 // Public profile for display (minimal fields)
@@ -503,3 +504,24 @@ export type FighterWithEvents = PrismaFighterWithEvents;
 // Fight record with full event and opponent information
 // Using Prisma-generated type, maintaining backward compatibility
 export type FightWithDetails = PrismaFightWithRelations;
+
+// User Menu Button Props
+// ユーザーメニューボタンプロパティ
+// User menu button properties
+// icon は app-sidebar と同様に Lucide React コンポーネントとして扱う
+// icon should be a Lucide React component, same as in app-sidebar
+export interface SheetMenuButtonProps {
+  icon: LucideIcon;
+  children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+}
+
+// User Menu Sheet Props
+// ユーザーメニューシートプロパティ
+// User menu sheet properties
+export interface UserMenuSheetProps {
+  user: any | null; //TODO: 修正為 ProfilePublic
+  isLoading: boolean;
+  onLogout: () => Promise<void>;
+}

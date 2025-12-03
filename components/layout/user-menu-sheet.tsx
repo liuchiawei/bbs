@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import SiderbarMenuButton from "@/components/common/siderbar/siderbar-menu-button";
+import SheetMenuButton from "@/components/common/sheet-menu-button";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -15,22 +14,15 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User, Settings, Shield } from "lucide-react";
-import { t } from "@/lib/constants";
-
-interface UserMenuSheetProps {
-  user: any | null;
-  isLoading: boolean;
-  onLogout: () => Promise<void>;
-}
+import { User, Shield, LogOut } from "lucide-react";
+import { t, TRANSLATIONS, APP_CONSTANTS } from "@/lib/constants";
+import { UserMenuSheetProps } from "@/lib/types";
 
 export function UserMenuSheet({
   user,
   isLoading,
   onLogout,
 }: UserMenuSheetProps) {
-  const router = useRouter();
-
   const handleLogout = async () => {
     await onLogout();
   };
@@ -43,7 +35,7 @@ export function UserMenuSheet({
             <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
           ) : user ? (
             <Avatar className="h-8 w-8">
-              <AvatarImage src={user.avatar || undefined} />
+              <AvatarImage src={user.avatar as string | undefined} />
               <AvatarFallback>
                 {(user.name || user.userId || "U").charAt(0).toUpperCase()}
               </AvatarFallback>
@@ -92,12 +84,13 @@ export function UserMenuSheet({
             </SheetHeader>
 
             <div className="flex flex-col mt-6">
-              <SiderbarMenuButton icon={<User />} href={`/user/${user.userId}`}>
-                {t("NAV_MY_PAGE")}
-              </SiderbarMenuButton>
-              <SiderbarMenuButton icon={<Settings />} href="/setting">
-                {t("NAV_SETTINGS")}
-              </SiderbarMenuButton>
+              {APP_CONSTANTS.USER_MENU_ITEMS.map((item) => (
+                <Link key={item.href} href={item.href}>
+                  <SheetMenuButton icon={item.icon}>
+                    {t(item.label as keyof typeof TRANSLATIONS.en)}
+                  </SheetMenuButton>
+                </Link>
+              ))}
 
               <Separator />
 
@@ -105,9 +98,11 @@ export function UserMenuSheet({
               {/* Admin link - only visible to admins */}
               {user.isAdmin && (
                 <>
-                  <SiderbarMenuButton icon={<Shield />} href="/admin">
-                    {t("NAV_ADMIN")}
-                  </SiderbarMenuButton>
+                  <Link href="/admin">
+                    <SheetMenuButton icon={Shield}>
+                      {t("NAV_ADMIN")}
+                    </SheetMenuButton>
+                  </Link>
                   <Separator />
                 </>
               )}
@@ -123,12 +118,9 @@ export function UserMenuSheet({
             </div>
 
             <SheetFooter className="mt-auto p-0">
-              <SiderbarMenuButton
-                icon={<LogOut className="size-4" />}
-                onClick={handleLogout}
-              >
+              <SheetMenuButton icon={LogOut} onClick={handleLogout}>
                 {t("LOGOUT")}
-              </SiderbarMenuButton>
+              </SheetMenuButton>
             </SheetFooter>
           </>
         ) : (

@@ -26,16 +26,18 @@ import type {
 } from "@/lib/types";
 import { t } from "@/lib/constants";
 
-export default async function UserPage({
-  params,
-}: {
-  params: Promise<{ userId: string }>;
-}) {
-  const { userId } = await params;
-  const [session, userData] = await Promise.all([
-    getSession(),
-    getUserProfilePage(userId),
-  ]);
+export default async function UserPage() {
+  // セッションから現在ログイン中のユーザー情報を取得
+  // Get current logged-in user from session
+  const session = await getSession();
+
+  if (!session) {
+    notFound();
+  }
+
+  // セッションのuserIdを使用してユーザーデータを取得
+  // Get user data using userId from session
+  const userData = await getUserProfilePage(session.userId);
 
   if (!userData) {
     notFound();
