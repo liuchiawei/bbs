@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { unstable_cache } from "next/cache";
-import { FighterListCard } from "@/components/fighters/fighter-list-card";
-import { FighterFilters } from "@/components/fighters/fighter-filters";
+import { FighterListCard } from "@/features/fighter/components/fighter-list-card";
+import { FighterFilters } from "@/features/fighter/components/fighter-filters";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Metadata } from "next";

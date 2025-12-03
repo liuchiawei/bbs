@@ -1,9 +1,9 @@
 import { getPosts } from "@/lib/services/posts";
-import NewPostButton from "@/components/posts/new-post-button";
-import { PostCard } from "@/components/posts/post-card";
-import { PostForm } from "@/components/posts/post-form";
-import HomeHeader from "@/components/home/header";
-import ScrollProgressBar from "@/components/home/scroll-progress-bar";
+import NewPostButton from "@/features/post/components/new-post-button";
+import { PostCard } from "@/features/post/components/post-card";
+import { PostForm } from "@/features/post/components/post-form";
+import HomeHeader from "@/components/common/header";
+import ScrollProgressBar from "@/components/common/scroll-progress-bar";
 import { t } from "@/lib/constants";
 
 export default async function Home() {

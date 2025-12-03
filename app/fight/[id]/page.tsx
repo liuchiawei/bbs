@@ -17,8 +17,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { FighterProfileHoverCard } from "@/components/fighters/fighter-profile-hover-card";
-import { FighterAvatar } from "@/components/fighters/fighter-avatar";
+import { FighterProfileHoverCard } from "@/features/fighter/components/fighter-profile-hover-card";
+import { FighterAvatar } from "@/features/fighter/components/fighter-avatar";
 import { getFighterRecentFights } from "@/lib/services/fights";
 
 /**

@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { getUserProfile } from "@/lib/services/users";
-import { EditProfileForm } from "@/components/profile/edit-profile-form";
+import { EditProfileForm } from "@/features/profile/components/edit-profile-form";
 import { t } from "@/lib/constants";
 
 export default async function EditUserPage({

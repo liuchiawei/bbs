@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import SiderbarMenuButton from "@/components/common/siderbar/siderbar-menu-button";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -15,7 +16,6 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { LogOut, User, Settings, Shield } from "lucide-react";
-import { toast } from "sonner";
 import { t } from "@/lib/constants";
 
 interface UserMenuSheetProps {
@@ -24,7 +24,11 @@ interface UserMenuSheetProps {
   onLogout: () => Promise<void>;
 }
 
-export function UserMenuSheet({ user, isLoading, onLogout }: UserMenuSheetProps) {
+export function UserMenuSheet({
+  user,
+  isLoading,
+  onLogout,
+}: UserMenuSheetProps) {
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -86,42 +90,28 @@ export function UserMenuSheet({ user, isLoading, onLogout }: UserMenuSheetProps)
                 </div>
               </div>
             </SheetHeader>
-            
-            <div className="flex flex-col gap-2 mt-6">
-              <Button variant="ghost" className="w-full justify-start gap-3" asChild>
-                <Link href={`/user/${user.userId}`}>
-                  <User className="h-4 w-4" />
-                  {t("NAV_MY_PAGE")}
-                </Link>
-              </Button>
-              
-              <Button variant="ghost" className="w-full justify-start gap-3" asChild>
-                <Link href="/settings">
-                  <Settings className="h-4 w-4" />
-                  {t("NAV_SETTINGS")}
-                </Link>
-              </Button>
-              
-              <Separator className="my-2" />
-              
+
+            <div className="flex flex-col mt-6">
+              <SiderbarMenuButton icon={<User />} href={`/user/${user.userId}`}>
+                {t("NAV_MY_PAGE")}
+              </SiderbarMenuButton>
+              <SiderbarMenuButton icon={<Settings />} href="/setting">
+                {t("NAV_SETTINGS")}
+              </SiderbarMenuButton>
+
+              <Separator />
+
               {/* 管理員連結 - 僅管理員可見 */}
               {/* Admin link - only visible to admins */}
               {user.isAdmin && (
                 <>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start gap-3 text-primary" 
-                    asChild
-                  >
-                    <Link href="/admin">
-                      <Shield className="h-4 w-4" />
-                      {t("NAV_ADMIN")}
-                    </Link>
-                  </Button>
-                  <Separator className="my-2" />
+                  <SiderbarMenuButton icon={<Shield />} href="/admin">
+                    {t("NAV_ADMIN")}
+                  </SiderbarMenuButton>
+                  <Separator />
                 </>
               )}
-              
+
               {/* 預留擴展區塊 */}
               {/* Reserved expansion area for future features */}
               {/* 
@@ -131,20 +121,18 @@ export function UserMenuSheet({ user, isLoading, onLogout }: UserMenuSheetProps)
               - 其他用戶功能
               */}
             </div>
-            
-            <SheetFooter className="mt-auto">
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start gap-3 text-destructive" 
+
+            <SheetFooter className="mt-auto p-0">
+              <SiderbarMenuButton
+                icon={<LogOut className="size-4" />}
                 onClick={handleLogout}
               >
-                <LogOut className="h-4 w-4" />
-                {t("NAV_LOGOUT")}
-              </Button>
+                {t("LOGOUT")}
+              </SiderbarMenuButton>
             </SheetFooter>
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full gap-4">
+          <div className="flex flex-col items-center justify-center h-full gap-4 p-4">
             <SheetHeader>
               <SheetTitle>{t("APP_NAME")}</SheetTitle>
             </SheetHeader>
@@ -162,4 +150,3 @@ export function UserMenuSheet({ user, isLoading, onLogout }: UserMenuSheetProps)
     </Sheet>
   );
 }
-

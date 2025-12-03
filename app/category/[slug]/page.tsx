@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getCategoryBySlug } from "@/lib/services/categories";
 import { getPosts } from "@/lib/services/posts";
-import { PostCard } from "@/components/posts/post-card";
+import { PostCard } from "@/features/post/components/post-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { t } from "@/lib/constants";
 

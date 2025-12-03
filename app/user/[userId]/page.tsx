@@ -12,12 +12,12 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { PostCard } from "@/components/posts/post-card";
+import { PostCard } from "@/features/post/components/post-card";
 import { Settings } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { BettingStatsCard } from "@/components/profile/betting-stats-card";
-import { BettingHistoryList } from "@/components/profile/betting-history-list";
-import { FollowButton } from "@/components/profile/follow-button";
+import { BettingStatsCard } from "@/features/profile/components/betting-stats-card";
+import { BettingHistoryList } from "@/features/profile/components/betting-history-list";
+import { FollowButton } from "@/features/profile/components/follow-button";
 import type { PostWithUser, UserProfilePage, UserBettingStats, BettingLog } from "@/lib/types";
 import { t } from "@/lib/constants";
 

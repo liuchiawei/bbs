@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
-import { AdminTabs } from "@/components/admin/admin-tabs";
+import { AdminTabs } from "@/features/admin/components/admin-tabs";
 import { t } from "@/lib/constants";
 
 export default async function AdminPage() {

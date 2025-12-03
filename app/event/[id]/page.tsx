@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { FightBettingCard } from "@/components/betting/FightBettingCard";
+import { FightBettingCard } from "@/features/betting/components/FightBettingCard";
 import { getEventWithFights } from "@/lib/services/events";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -16,9 +16,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { EventDetailCard } from "@/components/events/event-detail-card";
-import { EventFightCard } from "@/components/events/event-fight-card";
-import { FighterProfileHoverCard } from "@/components/fighters/fighter-profile-hover-card";
+import { EventDetailCard } from "@/features/event/components/event-detail-card";
+import { EventFightCard } from "@/features/event/components/event-fight-card";
+import { FighterProfileHoverCard } from "@/features/fighter/components/fighter-profile-hover-card";
 import type { Event, EventWithFights, ExternalEventSource } from "@/lib/types";
 
 /**
