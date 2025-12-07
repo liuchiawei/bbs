@@ -1,5 +1,15 @@
 # 開發日誌 / Development Log
 
+## 2025-12-08
+
+### fix/deploy-prerender-errors ★★★☆☆
+
+修復 Next.js 16 部署時的 prerender 錯誤
+
+- 修復 `lib/auth.ts` 中的 `getSession()` 函數，添加 try-catch 處理 build 時 prerender 期間 `cookies()` 被拒絕的錯誤
+- 修復 `app/layout.tsx` 中的 AppSideBar，將其包裝在 Suspense 中以符合 Next.js 16 Cache Components 模式
+- 新建 SidebarLoading 組件作為 AppSideBar 的 loading fallback
+
 ## 2025-11-24
 
 ### feat/loading-components-and-suspense-fallback ★★☆☆☆
