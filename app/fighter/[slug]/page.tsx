@@ -1,8 +1,8 @@
 import { unstable_cache } from "next/cache";
 import { notFound } from "next/navigation";
 import { getFighterBySlug } from "@/lib/services/fighters";
-import { FighterProfileCard } from "@/components/fighters/fighter-profile-card";
-import { FighterFightHistory } from "@/components/fighters/fighter-fight-history";
+import { FighterProfileCard } from "@/features/fighter/components/fighter-profile-card";
+import { FighterFightHistory } from "@/features/fighter/components/fighter-fight-history";
 import { prisma } from "@/lib/db";
 import type { FighterPublic } from "@/lib/types";
 import type { Metadata } from "next";

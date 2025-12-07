@@ -1,5 +1,14 @@
 // TODO: Replace with proper i18n translation system (e.g., next-intl, i18next)
-import { User } from "@/lib/types";
+import {
+  Home,
+  FileText,
+  Calendar,
+  Users,
+  FolderTree,
+  Search,
+  User,
+  Settings,
+} from "lucide-react";
 
 /**
  * Application-wide constants and multilingual text content
@@ -42,6 +51,53 @@ export const APP_CONSTANTS = {
     ADMIN: "admin",
     USER: "user",
   },
+
+  // Navigation items
+  NAVIGATION_ITEMS: [
+    {
+      href: "/",
+      label: "NAV_HOME",
+      icon: Home,
+    },
+    {
+      href: "/post",
+      label: "NAV_POSTS",
+      icon: FileText,
+    },
+    {
+      href: "/event",
+      label: "NAV_EVENTS",
+      icon: Calendar,
+    },
+    {
+      href: "/fighter",
+      label: "NAV_FIGHTERS",
+      icon: Users,
+    },
+    {
+      href: "/category",
+      label: "NAV_CATEGORIES",
+      icon: FolderTree,
+    },
+    {
+      href: "/search",
+      label: "NAV_SEARCH",
+      icon: Search,
+    },
+  ],
+  // User menu items
+  USER_MENU_ITEMS: [
+    {
+      href: "/user",
+      label: "NAV_MY_PAGE",
+      icon: User,
+    },
+    {
+      href: "/setting",
+      label: "NAV_SETTINGS",
+      icon: Settings,
+    },
+  ],
 } as const;
 
 // Multilingual text content
@@ -184,6 +240,7 @@ export const TRANSLATIONS = {
 
     // Navigation
     NAV_HOME: "Home",
+    NAV_POSTS: "Posts",
     NAV_EVENTS: "Events",
     NAV_FIGHTERS: "Fighters",
     NAV_CATEGORIES: "Categories",
@@ -489,6 +546,7 @@ export const TRANSLATIONS = {
 
     // Navigation
     NAV_HOME: "ホーム",
+    NAV_POSTS: "投稿一覧",
     NAV_EVENTS: "イベント",
     NAV_FIGHTERS: "ファイター",
     NAV_CATEGORIES: "カテゴリー",
@@ -791,6 +849,7 @@ export const TRANSLATIONS = {
 
     // Navigation
     NAV_HOME: "首页",
+    NAV_POSTS: "帖子",
     NAV_EVENTS: "赛事",
     NAV_FIGHTERS: "选手",
     NAV_CATEGORIES: "分类",
@@ -1083,6 +1142,7 @@ export const TRANSLATIONS = {
 
     // Navigation
     NAV_HOME: "首頁",
+    NAV_POSTS: "貼文",
     NAV_EVENTS: "賽事",
     NAV_FIGHTERS: "選手",
     NAV_CATEGORIES: "分類",

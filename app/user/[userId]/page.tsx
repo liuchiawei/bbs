@@ -12,13 +12,18 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { PostCard } from "@/components/posts/post-card";
+import { PostCard } from "@/features/post/components/post-card";
 import { Settings } from "lucide-react";
 import { prisma } from "@/lib/db";
-import { BettingStatsCard } from "@/components/profile/betting-stats-card";
-import { BettingHistoryList } from "@/components/profile/betting-history-list";
-import { FollowButton } from "@/components/profile/follow-button";
-import type { PostWithUser, UserProfilePage, UserBettingStats, BettingLog } from "@/lib/types";
+import { BettingStatsCard } from "@/features/profile/components/betting-stats-card";
+import { BettingHistoryList } from "@/features/profile/components/betting-history-list";
+import { FollowButton } from "@/features/profile/components/follow-button";
+import type {
+  PostWithUser,
+  UserProfilePage,
+  UserBettingStats,
+  BettingLog,
+} from "@/lib/types";
 import { t } from "@/lib/constants";
 
 export default async function UserPage({
@@ -45,14 +50,16 @@ export default async function UserPage({
   const [followersCount, followingCount, isFollowing] = await Promise.all([
     prisma.follows.count({ where: { followingId: user.userId } }),
     prisma.follows.count({ where: { followerId: user.userId } }),
-    session ? prisma.follows.findUnique({
-      where: {
-        followerId_followingId: {
-          followerId: session.userId,
-          followingId: user.userId,
-        },
-      },
-    }) : Promise.resolve(null),
+    session
+      ? prisma.follows.findUnique({
+          where: {
+            followerId_followingId: {
+              followerId: session.userId,
+              followingId: user.userId,
+            },
+          },
+        })
+      : Promise.resolve(null),
   ]);
 
   // Fetch betting logs
@@ -62,12 +69,12 @@ export default async function UserPage({
   });
 
   // Fetch event names for logs
-  const eventIds = [...new Set(bettingLogs.map(log => log.eventId))];
+  const eventIds = [...new Set(bettingLogs.map((log) => log.eventId))];
   const events = await prisma.event.findMany({
     where: { id: { in: eventIds } },
     select: { id: true, name: true },
   });
-  const eventMap = new Map(events.map(e => [e.id, e.name]));
+  const eventMap = new Map(events.map((e) => [e.id, e.name]));
 
   // Calculate stats
   const stats: UserBettingStats = {
@@ -83,7 +90,7 @@ export default async function UserPage({
     winRate: 0,
   };
 
-  bettingLogs.forEach(log => {
+  bettingLogs.forEach((log) => {
     const amount = Number(log.bet_amount);
     stats.totalWagered += amount;
 
@@ -102,27 +109,35 @@ export default async function UserPage({
   });
 
   stats.netProfit = stats.totalPayout - stats.totalWagered;
-  
+
   // ROI calculation (only for settled bets: WON/LOST)
   const settledWagered = bettingLogs
-    .filter(l => l.settlement_status === "WON" || l.settlement_status === "LOST")
+    .filter(
+      (l) => l.settlement_status === "WON" || l.settlement_status === "LOST"
+    )
     .reduce((acc, l) => acc + Number(l.bet_amount), 0);
-    
+
   if (settledWagered > 0) {
     const settledProfit = stats.totalPayout - stats.totalWagered; // Simplified for now, assumes pending/void handled correctly or ignored
     // Actually, netProfit includes pending wagers as negative if we just subtract totalWagered.
     // Correct ROI = (Net Profit on Settled Bets / Total Wagered on Settled Bets) * 100
-    
+
     const profitOnSettled = bettingLogs
-      .filter(l => l.settlement_status === "WON" || l.settlement_status === "LOST")
+      .filter(
+        (l) => l.settlement_status === "WON" || l.settlement_status === "LOST"
+      )
       .reduce((acc, l) => {
         if (l.settlement_status === "WON") {
-          return acc + (Number(l.bet_amount) * Number(l.odds_snapshot)) - Number(l.bet_amount);
+          return (
+            acc +
+            Number(l.bet_amount) * Number(l.odds_snapshot) -
+            Number(l.bet_amount)
+          );
         } else {
           return acc - Number(l.bet_amount);
         }
       }, 0);
-      
+
     stats.roi = (profitOnSettled / settledWagered) * 100;
   }
 
@@ -176,11 +191,15 @@ export default async function UserPage({
               <div className="flex items-center gap-4 mt-2">
                 <div className="flex items-center gap-1">
                   <span className="font-bold">{followersCount}</span>
-                  <span className="text-sm text-muted-foreground">Followers</span>
+                  <span className="text-sm text-muted-foreground">
+                    Followers
+                  </span>
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="font-bold">{followingCount}</span>
-                  <span className="text-sm text-muted-foreground">Following</span>
+                  <span className="text-sm text-muted-foreground">
+                    Following
+                  </span>
                 </div>
               </div>
 
@@ -194,9 +213,12 @@ export default async function UserPage({
                 </Badge>
               </div>
             </div>
-            
+
             {!isOwnProfile && session && (
-              <FollowButton targetUserId={user.userId} initialIsFollowing={!!isFollowing} />
+              <FollowButton
+                targetUserId={user.userId}
+                initialIsFollowing={!!isFollowing}
+              />
             )}
           </div>
         </CardHeader>
@@ -316,7 +338,9 @@ export default async function UserPage({
               )}
               {profile.description && (
                 <div>
-                  <p className="text-sm text-muted-foreground">{t("DESCRIPTION")}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("DESCRIPTION")}
+                  </p>
                   <p className="font-medium whitespace-pre-wrap">
                     {typeof profile.description === "string"
                       ? profile.description
@@ -340,7 +364,9 @@ export default async function UserPage({
               )}
               {profile.train_start && (
                 <div>
-                  <p className="text-sm text-muted-foreground">{t("TRAIN_START_YEAR")}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("TRAIN_START_YEAR")}
+                  </p>
                   <p className="font-medium">
                     {typeof profile.train_start === "number"
                       ? profile.train_start
@@ -406,7 +432,25 @@ export default async function UserPage({
           <div className="space-y-4">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <span className="bg-primary/10 p-2 rounded-full text-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trophy"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="lucide lucide-trophy"
+                >
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                  <path d="M4 22h16" />
+                  <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                  <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                  <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                </svg>
               </span>
               Performance Stats
             </h2>

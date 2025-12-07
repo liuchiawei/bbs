@@ -41,12 +41,18 @@ export async function verifyToken(token: string) {
 }
 
 export async function getSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token");
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token");
 
-  if (!token) return null;
+    if (!token) return null;
 
-  return await verifyToken(token.value);
+    return await verifyToken(token.value);
+  } catch (error) {
+    // ビルド時のprerender中にcookies()が拒否された場合、nullを返す
+    // During build-time prerendering, cookies() may reject, return null
+    return null;
+  }
 }
 
 export async function setSession(token: string) {

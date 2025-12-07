@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth";
 import type { PostWithUser, CommentWithUserAndPost } from "@/lib/types";
 import { transformUser } from "@/lib/utils";
 import { redirect } from "next/navigation";
-import { PostCard } from "@/components/posts/post-card";
+import { PostCard } from "@/features/post/components/post-card";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";

@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { EventCard } from "@/components/betting/EventCard";
-import { EventFilters } from "@/components/events/event-filters";
+import { EventCard } from "@/features/betting/components/EventCard";
+import { EventFilters } from "@/features/event/components/event-filters";
 import { getCurrentUser } from "@/lib/auth";
 import { getCombatEvents } from "@/lib/services/events";
 import type { SportType } from "@/lib/types";

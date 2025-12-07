@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import SheetMenuButton from "@/components/common/sheet-menu-button";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -14,19 +14,15 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { LogOut, User, Settings, Shield } from "lucide-react";
-import { toast } from "sonner";
-import { t } from "@/lib/constants";
+import { User, Shield, LogOut } from "lucide-react";
+import { t, TRANSLATIONS, APP_CONSTANTS } from "@/lib/constants";
+import { UserMenuSheetProps } from "@/lib/types";
 
-interface UserMenuSheetProps {
-  user: any | null;
-  isLoading: boolean;
-  onLogout: () => Promise<void>;
-}
-
-export function UserMenuSheet({ user, isLoading, onLogout }: UserMenuSheetProps) {
-  const router = useRouter();
-
+export function UserMenuSheet({
+  user,
+  isLoading,
+  onLogout,
+}: UserMenuSheetProps) {
   const handleLogout = async () => {
     await onLogout();
   };
@@ -34,20 +30,20 @@ export function UserMenuSheet({ user, isLoading, onLogout }: UserMenuSheetProps)
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Button variant="outline" className="relative size-8 rounded-full hover:text-foreground">
           {isLoading ? (
-            <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+            <div className="size-8 rounded-full bg-muted animate-pulse" />
           ) : user ? (
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={user.avatar || undefined} />
+            <Avatar>
+              <AvatarImage src={user.avatar as string | undefined} />
               <AvatarFallback>
                 {(user.name || user.userId || "U").charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
           ) : (
-            <Avatar className="h-8 w-8">
+            <Avatar>
               <AvatarFallback>
-                <User className="h-4 w-4" />
+                <User />
               </AvatarFallback>
             </Avatar>
           )}
@@ -86,42 +82,31 @@ export function UserMenuSheet({ user, isLoading, onLogout }: UserMenuSheetProps)
                 </div>
               </div>
             </SheetHeader>
-            
-            <div className="flex flex-col gap-2 mt-6">
-              <Button variant="ghost" className="w-full justify-start gap-3" asChild>
-                <Link href={`/user/${user.userId}`}>
-                  <User className="h-4 w-4" />
-                  {t("NAV_MY_PAGE")}
+
+            <div className="flex flex-col mt-6">
+              {APP_CONSTANTS.USER_MENU_ITEMS.map((item) => (
+                <Link key={item.href} href={item.href}>
+                  <SheetMenuButton icon={item.icon}>
+                    {t(item.label as keyof typeof TRANSLATIONS.en)}
+                  </SheetMenuButton>
                 </Link>
-              </Button>
-              
-              <Button variant="ghost" className="w-full justify-start gap-3" asChild>
-                <Link href="/settings">
-                  <Settings className="h-4 w-4" />
-                  {t("NAV_SETTINGS")}
-                </Link>
-              </Button>
-              
-              <Separator className="my-2" />
-              
+              ))}
+
+              <Separator />
+
               {/* 管理員連結 - 僅管理員可見 */}
               {/* Admin link - only visible to admins */}
               {user.isAdmin && (
                 <>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start gap-3 text-primary" 
-                    asChild
-                  >
-                    <Link href="/admin">
-                      <Shield className="h-4 w-4" />
+                  <Link href="/admin">
+                    <SheetMenuButton icon={Shield}>
                       {t("NAV_ADMIN")}
-                    </Link>
-                  </Button>
-                  <Separator className="my-2" />
+                    </SheetMenuButton>
+                  </Link>
+                  <Separator />
                 </>
               )}
-              
+
               {/* 預留擴展區塊 */}
               {/* Reserved expansion area for future features */}
               {/* 
@@ -131,20 +116,15 @@ export function UserMenuSheet({ user, isLoading, onLogout }: UserMenuSheetProps)
               - 其他用戶功能
               */}
             </div>
-            
-            <SheetFooter className="mt-auto">
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start gap-3 text-destructive" 
-                onClick={handleLogout}
-              >
-                <LogOut className="h-4 w-4" />
-                {t("NAV_LOGOUT")}
-              </Button>
+
+            <SheetFooter className="mt-auto p-0">
+              <SheetMenuButton icon={LogOut} onClick={handleLogout}>
+                {t("LOGOUT")}
+              </SheetMenuButton>
             </SheetFooter>
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full gap-4">
+          <div className="flex flex-col items-center justify-center h-full gap-4 p-4">
             <SheetHeader>
               <SheetTitle>{t("APP_NAME")}</SheetTitle>
             </SheetHeader>
@@ -162,4 +142,3 @@ export function UserMenuSheet({ user, isLoading, onLogout }: UserMenuSheetProps)
     </Sheet>
   );
 }
-

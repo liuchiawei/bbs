@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
-import { DeleteCommentButton } from "@/components/comments/delete-comment-button";
+import { DeleteCommentButton } from "@/features/comment/components/delete-comment-button";
 import { getUserComments } from "@/lib/services/users";
 import { t } from "@/lib/constants";
 

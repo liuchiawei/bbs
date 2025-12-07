@@ -317,7 +317,7 @@ model Fight {
 
   bets BettingLog[] // 投注關聯到對戰
 
-  @@unique([event_id, fight_order]) // 同一賽事中對戰順序唯一 / Unique fight order per event
+  @@unique([event_id, fight_order, fighter_id]) // 同一賽事中對戰順序與選手的唯一組合（支持雙向記錄）/ Unique combination of event, fight order, and fighter (supports bidirectional records)
   @@index([event_id]) // 快速查找賽事的對戰 / Fast lookup by event
   @@index([fighter_id]) // 快速查找選手的對戰 / Fast lookup by fighter
   @@index([opponent_id]) // 快速查找對手的對戰 / Fast lookup by opponent
