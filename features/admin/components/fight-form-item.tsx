@@ -153,6 +153,7 @@ export function FightFormItem({
 
         <div className="flex items-center space-x-2">
           <input
+            title="開放預測 / Bettable"
             type="checkbox"
             id={`is-bettable-${index}`}
             checked={fight.isBettable !== false}
@@ -165,7 +166,7 @@ export function FightFormItem({
             htmlFor={`is-bettable-${index}`}
             className="text-sm font-normal cursor-pointer"
           >
-            開放投注 / Bettable
+            開放預測 / Bettable
           </Label>
         </div>
       </CardContent>

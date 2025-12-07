@@ -62,8 +62,7 @@ export function FighterListCard({ fighter }: FighterListCardProps) {
                   variant="outline"
                   className={cn(
                     "text-xs capitalize",
-                    sportTypeColors[fighter.sport_type] ||
-                      sportTypeColors.other
+                    sportTypeColors[fighter.sport_type] || sportTypeColors.other
                   )}
                 >
                   {fighter.sport_type}
@@ -94,6 +93,3 @@ export function FighterListCard({ fighter }: FighterListCardProps) {
     </Link>
   );
 }
-
-
-

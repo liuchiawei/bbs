@@ -26,7 +26,8 @@ import { FilterLoading } from "@/components/ui/filter-loading";
  */
 export const metadata: Metadata = {
   title: "Fighters | Combat Sports BBS",
-  description: "Browse and search combat sports fighters. View profiles, stats, and fight history.",
+  description:
+    "Browse and search combat sports fighters. View profiles, stats, and fight history.",
   openGraph: {
     title: "Fighters | Combat Sports BBS",
     description: "Browse and search combat sports fighters",
@@ -165,7 +166,9 @@ async function getFighters(params: {
   )();
 }
 
-export default async function FightersPage({ searchParams }: FightersPageProps) {
+export default async function FightersPage({
+  searchParams,
+}: FightersPageProps) {
   const user = await getCurrentUser();
   const params = await searchParams;
 
@@ -242,7 +245,7 @@ export default async function FightersPage({ searchParams }: FightersPageProps) 
            * 2. 使用 Intersection Observer API 偵測滾動到底部
            * 3. 將分頁邏輯改為 append 模式而非 replace 模式
            * 4. 保留分頁 API 結構，但改為增量載入
-           * 
+           *
            * TODO: 未来無限スクロールに変換する際は：
            * 1. React Query または SWR を使用してデータ取得
            * 2. Intersection Observer API を使用してスクロール検出
@@ -256,11 +259,16 @@ export default async function FightersPage({ searchParams }: FightersPageProps) 
                   {/* Previous Button */}
                   {pagination.page > 1 ? (
                     <PaginationItem>
-                      <PaginationPrevious href={createPaginationUrl(pagination.page - 1)} />
+                      <PaginationPrevious
+                        href={createPaginationUrl(pagination.page - 1)}
+                      />
                     </PaginationItem>
                   ) : (
                     <PaginationItem>
-                      <PaginationPrevious href="#" className="pointer-events-none opacity-50" />
+                      <PaginationPrevious
+                        href="#"
+                        className="pointer-events-none opacity-50"
+                      />
                     </PaginationItem>
                   )}
 
@@ -350,11 +358,16 @@ export default async function FightersPage({ searchParams }: FightersPageProps) 
                   {/* Next Button */}
                   {pagination.page < pagination.totalPages ? (
                     <PaginationItem>
-                      <PaginationNext href={createPaginationUrl(pagination.page + 1)} />
+                      <PaginationNext
+                        href={createPaginationUrl(pagination.page + 1)}
+                      />
                     </PaginationItem>
                   ) : (
                     <PaginationItem>
-                      <PaginationNext href="#" className="pointer-events-none opacity-50" />
+                      <PaginationNext
+                        href="#"
+                        className="pointer-events-none opacity-50"
+                      />
                     </PaginationItem>
                   )}
                 </PaginationContent>
@@ -367,7 +380,10 @@ export default async function FightersPage({ searchParams }: FightersPageProps) 
             Showing {fighters.length} of {pagination.total} fighter
             {pagination.total !== 1 ? "s" : ""}
             {pagination.totalPages > 1 && (
-              <> (Page {pagination.page} of {pagination.totalPages})</>
+              <>
+                {" "}
+                (Page {pagination.page} of {pagination.totalPages})
+              </>
             )}
           </div>
         </>
@@ -386,4 +402,3 @@ export default async function FightersPage({ searchParams }: FightersPageProps) 
     </div>
   );
 }
-

@@ -160,3 +160,6 @@ export function EventDetailCard({ event }: EventDetailCardProps) {
   );
 }
 
+
+
+

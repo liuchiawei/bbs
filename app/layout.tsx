@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { NavbarLoading } from "@/components/ui/navbar-loading";
+import { SidebarLoading } from "@/components/ui/sidebar-loading";
 import { ThemeProvider } from "next-themes";
 
 const robotoSans = Roboto({
@@ -57,7 +58,9 @@ export default function RootLayout({
           {/* SuspenseでNavbarをラップして、PPRが正しく動作するようにする */}
           {/* Wrap Navbar with Suspense to allow PPR to work correctly */}
           <SidebarProvider>
-            <AppSideBar />
+            <Suspense fallback={<SidebarLoading />}>
+              <AppSideBar />
+            </Suspense>
             <main className="w-full h-full min-h-screen mx-auto">
               <Suspense fallback={<NavbarLoading />}>
                 <Navbar />

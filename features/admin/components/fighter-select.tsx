@@ -49,16 +49,37 @@ export function FighterSelect({
     try {
       // 獲取選手列表（可以根據運動類型過濾）
       // Fetch fighters list (can filter by sport type)
-      const url = sportType
-        ? `/api/fighters?sport_type=${sportType}`
-        : "/api/fighters";
+      // API は { data: Fighter[], pagination: {...} } 形式で返す
+      // API returns { data: Fighter[], pagination: {...} } format
+      const params = new URLSearchParams();
+      if (sportType) {
+        params.append("sport_type", sportType);
+      }
+      params.append("limit", "50"); // 最大50件まで取得 / Get up to 50 items
+
+      const url = `/api/fighters?${params.toString()}`;
       const response = await fetch(url);
+
       if (response.ok) {
-        const data = await response.json();
-        setFighters(Array.isArray(data) ? data : []);
+        const result = await response.json();
+        // API レスポンスから data 配列を抽出
+        // Extract data array from API response
+        const fightersData = result?.data || [];
+        setFighters(Array.isArray(fightersData) ? fightersData : []);
+      } else {
+        // API エラーレスポンスを処理
+        // Handle API error response
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Failed to fetch fighters:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData.error || "Unknown error",
+        });
+        setFighters([]);
       }
     } catch (error) {
       console.error("Failed to fetch fighters:", error);
+      setFighters([]);
     } finally {
       setIsLoading(false);
     }
@@ -113,4 +134,3 @@ export function FighterSelect({
     </div>
   );
 }
-
